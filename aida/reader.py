@@ -9,6 +9,10 @@ from aida.interpolator import interpolator
 import warnings
 from scipy.io import savemat
 import yaml
+import os
+import re
+
+# %%
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -738,6 +742,54 @@ def gosat_reader(product_dir: str, ctm_models_coordinate: dict, YYYYMM: str, rea
         L2_files[k], ctm_models_coordinate=ctm_models_coordinate, read_ak=read_ak) for k in range(len(L2_files)))
     return outputs_sat
 
+def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_saved:list, num_job=1):
+    print('inside of CMAQ_reader')
+   
+    def cmaq_reader_wrapper(dir_mcip:str, dir_cmaq:str, YYYYMM:str, k:int):
+        print(k)
+        date = datetime.datetime.strptime(str(k),'%j').date()
+        cmaq_target_file = product_dir + "/CCTM_CONC_v52_" + YYYYMM[:4] + "%03d" % int(k) + "_CO.nc"
+        met_file_2d = mcip_product_dir + "/METCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
+        met_file_3d = mcip_product_dir + "/METCRO3D_" + YYYYMM[2:4] + date.strftime('%m%d')
+        
+        
+   
+    
+    if int(YYYYMM[:4])%4 != 0:
+        leap_year = 0
+    elif int(YYYYMM[:4])%400 == 0:
+        leap_year = 1
+    elif int(YYYYMM[:4])%100 == 0:
+        leap_year = 0
+    else:
+        leap_year = 1
+        
+    if leap_year == 1:
+        jday_mm_st = np.array([1, 32, 61, 92, 122, 153, 183, 214, 245,
+                               275, 306, 336]) 
+        jday_mm_ed = np.array([31, 60, 91, 121, 152, 182, 213, 244, 274, 
+                               305, 335, 366])
+    elif leap_year == 0:
+        jday_mm_st = np.array([1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 
+                               305, 335])
+        jday_mm_ed = np.array([31, 59, 90, 120, 151, 181, 212, 243, 273,
+                               304, 334, 365])
+
+    target_jdays = range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
+    
+    output = Parallel(n_jobs=num_job)(delayed(cmaq_reader_wrapper)(mcip_product_dir,
+                                                                  product_dir,YYYYMM,k) for k in target_jdays)
+    print(jday_mm_st[int(YYYYMM[-2:])-1])    
+    
+    cmaq_target_file = sorted(glob.glob(product_dir + "/CCTM_CONC_v52_" + 
+                                        YYYY)) 
+    
+    met_files_2d = sorted(glob.glob(mcip_product_dir + "/METCRO2D_" + YYYYMM[2:] + "*"))
+    met_files_3d = sorted(glob.glob(mcip_product_dir + "/METCRO3D_" + YYYYMM[2:] + "*"))
+    met
+    print(mcip_product_dir + "/" + YYYYMM[2:] + "*")
+    print(met_files_2d)
+    
 
 class readers(object):
 
@@ -763,7 +815,7 @@ class readers(object):
         self.satellite_product_dir = product_dir
         self.satellite_product_name = product_name
 
-    def add_ctm_data(self, product_name: int, product_dir: Path):
+    def add_ctm_data(self, product_name: int, product_dir: Path, mcip_dir: Path):
         '''
             add CTM data
             Input:
@@ -773,6 +825,8 @@ class readers(object):
         '''
 
         self.ctm_product_dir = product_dir
+        self.mcip_product_dir = mcip_dir
+        
         self.ctm_product = product_name
 
     def read_satellite_data(self, YYYYMM: str, read_ak=True, trop=False, num_job=1):
@@ -807,7 +861,9 @@ class readers(object):
         else:
             raise Exception("the satellite is not supported, come tomorrow!")
 
-    def read_ctm_data(self, YYYYMM: str, gas: str, num_job=1):
+
+
+    def read_ctm_data(self, YYYYMM: str, gas: str, averaged=False, num_job=1):
         '''
             read ctm data
             Input:
@@ -815,18 +871,26 @@ class readers(object):
              gases_to_be_saved [str]: name of the gas to be loaded. e.g., 'NO2'
              num_job [int]: the number of jobs for parallel computation
         '''
-        if self.ctm_product == 'GMI':
-            pass
+        
+        if self.ctm_product == 'CMAQ':
+            ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(), 
+                                   self.mcip_product_dir.as_posix(),YYYYMM,gas)
             #TODO
             #ctm_data = GMI_reader(self.ctm_product_dir.as_posix(), YYYYMM, gas,
             #                      frequency_opt=frequency_opt, num_job=num_job)
 
+
+        
 # testing
 if __name__ == "__main__":
     reader_obj = readers()
-    reader_obj.add_ctm_data('GMI', Path('download_bucket/gmi/'))
-    reader_obj.read_ctm_data(
-        '200905', 'CH4', frequency_opt='3-hourly', averaged=True)
+    reader_obj.add_ctm_data('CMAQ', Path(r'C:\Users\jjung13\OneDrive - NASA\Documents\ACMAP\AIDA_reader'),\
+                            Path(r'C:\Users\jjung13\OneDrive - NASA\Documents\ACMAP\AIDA_reader'))
+
+    reader_obj.read_ctm_data('201905', 'CO', averaged=False)
+    
+    
+    #%%
     reader_obj.add_satellite_data(
         'GOSAT', Path('/media/asouri/Amir_5TB/NASA/GOSAT_XCH4/CH4_GOS_OCPR'))
     reader_obj.read_satellite_data(
