@@ -745,13 +745,24 @@ def gosat_reader(product_dir: str, ctm_models_coordinate: dict, YYYYMM: str, rea
 def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_saved:list, num_job=1):
     print('inside of CMAQ_reader')
    
-    def cmaq_reader_wrapper(dir_mcip:str, dir_cmaq:str, YYYYMM:str, k:int):
+    def cmaq_reader_wrapper(dir_mcip:str, dir_cmaq:str, YYYYMM:str, k:int, gasname:str):
         print(k)
         date = datetime.datetime.strptime(str(k),'%j').date()
         cmaq_target_file = product_dir + "/CCTM_CONC_v52_" + YYYYMM[:4] + "%03d" % int(k) + "_CO.nc"
+        grd_file_2d = mcip_product_dir + "/GRIDCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
         met_file_2d = mcip_product_dir + "/METCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
         met_file_3d = mcip_product_dir + "/METCRO3D_" + YYYYMM[2:4] + date.strftime('%m%d')
         
+        lat = _read_nc(grd_file_2d,'LAT')
+        lon = _read_nc(grd_file_2d,'LON')
+        
+        prs = _read_nc(met_file_3d,'PRES')/100 #hpa
+        gas = _read_nc(cmaq_target_file,gasname)*1000 #ppb
+        del_p = [] #not sure if it needs
+        
+        cmaq_data = ctm_model(lat,lon,[],gas,prs,[],[],'CMAQ',False) 
+        
+        return cmaq_data
         
    
     
@@ -775,20 +786,12 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         jday_mm_ed = np.array([31, 59, 90, 120, 151, 181, 212, 243, 273,
                                304, 334, 365])
 
-    target_jdays = range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
+    target_jdays = range(121,122)#range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
     
-    output = Parallel(n_jobs=num_job)(delayed(cmaq_reader_wrapper)(mcip_product_dir,
-                                                                  product_dir,YYYYMM,k) for k in target_jdays)
-    print(jday_mm_st[int(YYYYMM[-2:])-1])    
-    
-    cmaq_target_file = sorted(glob.glob(product_dir + "/CCTM_CONC_v52_" + 
-                                        YYYY)) 
-    
-    met_files_2d = sorted(glob.glob(mcip_product_dir + "/METCRO2D_" + YYYYMM[2:] + "*"))
-    met_files_3d = sorted(glob.glob(mcip_product_dir + "/METCRO3D_" + YYYYMM[2:] + "*"))
-    met
-    print(mcip_product_dir + "/" + YYYYMM[2:] + "*")
-    print(met_files_2d)
+    outputs = Parallel(n_jobs=num_job)(delayed(cmaq_reader_wrapper)(mcip_product_dir,
+                                                                  product_dir,YYYYMM,k,gas_to_be_saved) for k in target_jdays)
+    return outputs
+
     
 
 class readers(object):
