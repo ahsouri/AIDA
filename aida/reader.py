@@ -759,7 +759,6 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         prs = _read_nc(met_file_3d,'PRES')/100 #hpa
         surf_prs = _read_nc(met_file_2d,'PRSFC')/100
         temp_delp = prs
-        print(np.shape(temp_delp))
         for i in range(0,np.shape(prs)[1]):
             if i == 0:
                 temp_delp[:,i,:,:] = surf_prs - prs[:,0,:,:]
@@ -769,8 +768,7 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         del_p = temp_delp
         gas = _read_nc(cmaq_target_file,gasname)*1000 #ppb
         
-        
-        
+              
         cmaq_data = ctm_model(lat,lon,[],gas,prs,[],del_p,'CMAQ',False) 
         
         return cmaq_data
@@ -905,12 +903,11 @@ if __name__ == "__main__":
 
     reader_obj.read_ctm_data('201905', 'CO', averaged=False)
     
-    
-    #%%
     reader_obj.add_satellite_data(
-        'GOSAT', Path('/media/asouri/Amir_5TB/NASA/GOSAT_XCH4/CH4_GOS_OCPR'))
+        'MOPITT',Path(r'C:\Users\jjung13\OneDrive - NASA\Documents\ACMAP\AIDA_reader'))
+
     reader_obj.read_satellite_data(
-        '200905', read_ak=True, num_job=1)
+        '201905', read_ak=True, num_job=1)
 # %%
     latitude = reader_obj.ctm_data[0].latitude
     longitude = reader_obj.ctm_data[0].longitude
