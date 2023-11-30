@@ -748,7 +748,7 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
     def cmaq_reader_wrapper(dir_mcip:str, dir_cmaq:str, YYYYMM:str, k:int, gasname:str):
         
         date = datetime.datetime.strptime(str(k),'%j').date()
-        cmaq_target_file = product_dir + "/CCTM_CONC_v52_" + YYYYMM[:4] + "%03d" % int(k) + "_CO.nc"
+        cmaq_target_file = product_dir + "/CCTM_CONC_v52_" + YYYYMM[:4] + "%03d" % int(k) + ".nc"
         grd_file_2d = mcip_product_dir + "/GRIDCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
         met_file_2d = mcip_product_dir + "/METCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
         met_file_3d = mcip_product_dir + "/METCRO3D_" + YYYYMM[2:4] + date.strftime('%m%d')
