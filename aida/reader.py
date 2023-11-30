@@ -757,10 +757,21 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         lon = _read_nc(grd_file_2d,'LON')
         
         prs = _read_nc(met_file_3d,'PRES')/100 #hpa
+        surf_prs = _read_nc(met_file_2d,'PRSFC')/100
+        temp_delp = prs
+        print(np.shape(temp_delp))
+        for i in range(0,np.shape(prs)[1]):
+            if i == 0:
+                temp_delp[:,i,:,:] = surf_prs - prs[:,0,:,:]
+            else:
+                temp_delp[:,i,:,:] = prs[:,i-1,:,:] - prs[:,i,:,:]
+            
+        del_p = temp_delp
         gas = _read_nc(cmaq_target_file,gasname)*1000 #ppb
-        del_p = [] #not sure if it needs
         
-        cmaq_data = ctm_model(lat,lon,[],gas,prs,[],[],'CMAQ',False) 
+        
+        
+        cmaq_data = ctm_model(lat,lon,[],gas,prs,[],del_p,'CMAQ',False) 
         
         return cmaq_data
         
@@ -878,6 +889,8 @@ class readers(object):
         if self.ctm_product == 'CMAQ':
             ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(), 
                                    self.mcip_product_dir.as_posix(),YYYYMM,gas)
+            self.ctm_data = ctm_data
+            ctm_data = []
             #TODO
             #ctm_data = GMI_reader(self.ctm_product_dir.as_posix(), YYYYMM, gas,
             #                      frequency_opt=frequency_opt, num_job=num_job)
@@ -898,9 +911,11 @@ if __name__ == "__main__":
         'GOSAT', Path('/media/asouri/Amir_5TB/NASA/GOSAT_XCH4/CH4_GOS_OCPR'))
     reader_obj.read_satellite_data(
         '200905', read_ak=True, num_job=1)
-
-    latitude = reader_obj.sat_data[0].latitude_center
-    longitude = reader_obj.sat_data[0].longitude_center
+# %%
+    latitude = reader_obj.ctm_data[0].latitude
+    longitude = reader_obj.ctm_data[0].longitude
+    gas = reader_obj.ctm_data[0].gas_profile
+    pres = reader_obj.ctm_data[0].pressure_mid
 
     output = np.zeros((np.shape(latitude)[0], np.shape(
         latitude)[1], len(reader_obj.sat_data)))
