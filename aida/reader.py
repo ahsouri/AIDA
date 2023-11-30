@@ -795,7 +795,7 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         jday_mm_ed = np.array([31, 59, 90, 120, 151, 181, 212, 243, 273,
                                304, 334, 365])
 
-    target_jdays = range(121,122)#range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
+    target_jdays = range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
     
     outputs = Parallel(n_jobs=num_job)(delayed(cmaq_reader_wrapper)(mcip_product_dir,
                                                                   product_dir,YYYYMM,k,gas_to_be_saved) for k in target_jdays)
