@@ -757,7 +757,7 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         lon = _read_nc(grd_file_2d,'LON')
         
         time_var = _read_nc(cmaq_target_file,'TFLAG')
-        print(np.shape(time_var))
+        
         time = []
         for t in range(0,np.shape(time_var)[0]):
             cmaq_date = datetime.datetime.strptime(str(time_var[t,0,0]),'%Y%j').date()
@@ -803,7 +803,7 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         jday_mm_ed = np.array([31, 59, 90, 120, 151, 181, 212, 243, 273,
                                304, 334, 365])
 
-    target_jdays = range(121,122) #range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
+    target_jdays = range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
     
     outputs = Parallel(n_jobs=num_job)(delayed(cmaq_reader_wrapper)(mcip_product_dir,
                                                                   product_dir,YYYYMM,k,gas_to_be_saved) for k in target_jdays)
