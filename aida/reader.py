@@ -748,7 +748,7 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
     def cmaq_reader_wrapper(dir_mcip:str, dir_cmaq:str, YYYYMM:str, k:int, gasname:str):
         
         date = datetime.datetime.strptime(str(k),'%j').date()
-        cmaq_target_file = product_dir + "/CCTM_CONC_v52_" + YYYYMM[:4] + "%03d" % int(k) + ".nc"
+        cmaq_target_file = product_dir + "/CCTM_CONC_v52_" + YYYYMM[:4] + "%03d" % int(k) + "_merge.nc"
         grd_file_2d = mcip_product_dir + "/GRIDCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
         met_file_2d = mcip_product_dir + "/METCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
         met_file_3d = mcip_product_dir + "/METCRO3D_" + YYYYMM[2:4] + date.strftime('%m%d')
@@ -756,6 +756,14 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         lat = _read_nc(grd_file_2d,'LAT')
         lon = _read_nc(grd_file_2d,'LON')
         
+        time_var = _read_nc(cmaq_target_file,'TFLAG')
+        print(np.shape(time_var))
+        time = []
+        for t in range(0,np.shape(time_var)[0]):
+            cmaq_date = datetime.datetime.strptime(str(time_var[t,0,0]),'%Y%j').date()
+            time.append(datetime.datetime(int(cmaq_date.strftime('%Y')),int(cmaq_date.strftime('%m')),
+                                          int(cmaq_date.strftime('%d')),int(time_var[t,0,1]/10000),0,0))
+             
         prs = _read_nc(met_file_3d,'PRES')/100 #hpa
         surf_prs = _read_nc(met_file_2d,'PRSFC')/100
         temp_delp = prs
@@ -769,7 +777,7 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         gas = _read_nc(cmaq_target_file,gasname)*1000 #ppb
         
               
-        cmaq_data = ctm_model(lat,lon,[],gas,prs,[],del_p,'CMAQ',False) 
+        cmaq_data = ctm_model(lat,lon,time,gas,prs,[],del_p,'CMAQ',False) 
         
         return cmaq_data
         
@@ -795,7 +803,7 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         jday_mm_ed = np.array([31, 59, 90, 120, 151, 181, 212, 243, 273,
                                304, 334, 365])
 
-    target_jdays = range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
+    target_jdays = range(121,122) #range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
     
     outputs = Parallel(n_jobs=num_job)(delayed(cmaq_reader_wrapper)(mcip_product_dir,
                                                                   product_dir,YYYYMM,k,gas_to_be_saved) for k in target_jdays)
@@ -913,6 +921,7 @@ if __name__ == "__main__":
     longitude = reader_obj.ctm_data[0].longitude
     gas = reader_obj.ctm_data[0].gas_profile
     pres = reader_obj.ctm_data[0].pressure_mid
+    tt = reader_obj.ctm_data[0].time
 
     output = np.zeros((np.shape(latitude)[0], np.shape(
         latitude)[1], len(reader_obj.sat_data)))
