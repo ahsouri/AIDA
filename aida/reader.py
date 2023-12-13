@@ -762,19 +762,21 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         for t in range(0,np.shape(time_var)[0]):
             cmaq_date = datetime.datetime.strptime(str(time_var[t,0,0]),'%Y%j').date()
             time.append(datetime.datetime(int(cmaq_date.strftime('%Y')),int(cmaq_date.strftime('%m')),
-                                          int(cmaq_date.strftime('%d')),int(time_var[t,0,1]/10000),0,0))
+                                          int(cmaq_date.strftime('%d')),int(time_var[t,0,1]/10000.0),0,0))
              
-        prs = _read_nc(met_file_3d,'PRES')/100 #hpa
-        surf_prs = _read_nc(met_file_2d,'PRSFC')/100
+        prs = _read_nc(met_file_3d,'PRES')/100.0 #hpa
+        surf_prs = _read_nc(met_file_2d,'PRSFC')/100.0
         temp_delp = prs
         for i in range(0,np.shape(prs)[1]):
             if i == 0:
-                temp_delp[:,i,:,:] = surf_prs - prs[:,0,:,:]
+                temp_delp[:,i,:,:] = surf_prs - (prs[:,0,:,:] + surf_prs)*0.5
+            elif i==1:
+                temp_delp[:,i,:,:] = (prs[:,0,:,:] + surf_prs)*0.5 - (prs[:,1,:,:] + prs[:,0,:,:])*0.5
             else:
-                temp_delp[:,i,:,:] = prs[:,i-1,:,:] - prs[:,i,:,:]
+                temp_delp[:,i,:,:] = (prs[:,i-1,:,:] - prs[:,i-2,:,:])*0.5 - (prs[:,i,:,:] - prs[:,i-1,:,:])*0.5
             
         del_p = temp_delp
-        gas = _read_nc(cmaq_target_file,gasname)*1000 #ppb
+        gas = _read_nc(cmaq_target_file,gasname)*1000.0 #ppb
         
               
         cmaq_data = ctm_model(lat,lon,time,gas,prs,[],del_p,'CMAQ',False) 
@@ -883,7 +885,7 @@ class readers(object):
 
 
 
-    def read_ctm_data(self, YYYYMM: str, gas: str, averaged=False, num_job=1):
+    def read_ctm_data(self, YYYYMM: str, gas: str, num_job=1):
         '''
             read ctm data
             Input:
@@ -894,7 +896,7 @@ class readers(object):
         
         if self.ctm_product == 'CMAQ':
             ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(), 
-                                   self.mcip_product_dir.as_posix(),YYYYMM,gas)
+                                   self.mcip_product_dir.as_posix(),YYYYMM,gas,num_job=num_job)
             self.ctm_data = ctm_data
             ctm_data = []
             #TODO
