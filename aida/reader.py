@@ -885,7 +885,7 @@ class readers(object):
 
 
 
-    def read_ctm_data(self, YYYYMM: str, gas: str, num_job=1):
+    def read_ctm_data(self, YYYYMM: str, gas: str, average=False, num_job=1):
         '''
             read ctm data
             Input:
