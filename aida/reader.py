@@ -766,16 +766,17 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
              
         prs = _read_nc(met_file_3d,'PRES')/100.0 #hpa
         surf_prs = _read_nc(met_file_2d,'PRSFC')/100.0
-        temp_delp = prs
+        temp_delp = prs.copy()
         for i in range(0,np.shape(prs)[1]):
             if i == 0:
-                temp_delp[:,i,:,:] = surf_prs - (prs[:,0,:,:] + surf_prs)*0.5
-            elif i==1:
-                temp_delp[:,i,:,:] = (prs[:,0,:,:] + surf_prs)*0.5 - (prs[:,1,:,:] + prs[:,0,:,:])*0.5
+                temp_delp[:,i,:,:] = (surf_prs - prs[:,0,:,:])*2
+            elif i == 34: #[[0.5*(p33 + p34) - p34]]*2
+                temp_delp[:,i,:,:] = prs[:,i-1,:,:] - prs[:,i,:,:]                
             else:
-                temp_delp[:,i,:,:] = (prs[:,i-1,:,:] - prs[:,i-2,:,:])*0.5 - (prs[:,i,:,:] - prs[:,i-1,:,:])*0.5
-            
+                temp_delp[:,i,:,:] = (prs[:,i,:,:] + prs[:,i-1,:,:])*0.5 - (prs[:,i+1,:,:] + prs[:,i,:,:])*0.5
+           
         del_p = temp_delp
+
         gas = _read_nc(cmaq_target_file,gasname)*1000.0 #ppb
         
               
@@ -911,7 +912,7 @@ if __name__ == "__main__":
     reader_obj.add_ctm_data('CMAQ', Path(r'C:\Users\jjung13\OneDrive - NASA\Documents\ACMAP\AIDA_reader'),\
                             Path(r'C:\Users\jjung13\OneDrive - NASA\Documents\ACMAP\AIDA_reader'))
 
-    reader_obj.read_ctm_data('201905', 'CO', averaged=False)
+    reader_obj.read_ctm_data('201905', 'CO', average=False)
     
     reader_obj.add_satellite_data(
         'MOPITT',Path(r'C:\Users\jjung13\OneDrive - NASA\Documents\ACMAP\AIDA_reader'))
