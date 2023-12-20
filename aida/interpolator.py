@@ -1,5 +1,5 @@
 import numpy as np
-from oisatgmi.config import satellite_amf, satellite_opt
+from aida.config import satellite_amf, satellite_opt
 from scipy.spatial import Delaunay
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 from scipy.interpolate import RBFInterpolator
