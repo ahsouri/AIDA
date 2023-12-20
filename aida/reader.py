@@ -770,7 +770,7 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         for i in range(0,np.shape(prs)[1]):
             if i == 0:
                 temp_delp[:,i,:,:] = 2.0*(surf_prs - prs[:,0,:,:])
-            elif i == 34: #[[0.5*(p33 + p34) - p34]]*2
+            elif i == np.shape(prs)[1]-1: #[[0.5*(p33 + p34) - p34]]*2
                 temp_delp[:,i,:,:] = prs[:,i-1,:,:] - prs[:,i,:,:]                
             else:
                 temp_delp[:,i,:,:] = (prs[:,i,:,:] + prs[:,i-1,:,:])*0.5 - (prs[:,i+1,:,:] + prs[:,i,:,:])*0.5
