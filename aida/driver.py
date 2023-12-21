@@ -17,12 +17,11 @@ class aida(object):
     def __init__(self) -> None:
         pass
 
-    def read_data(self, ctm_type: str, ctm_path: Path, ctm_gas_name: str, ctm_frequency: str,
+    def read_data(self, ctm_type: str, ctm_path: Path, mcip_path: Path, ctm_gas_name: str,
                   sat_type: str, sat_path: Path, YYYYMM: str, averaged=False, read_ak=True, trop=False, num_job=1):
         reader_obj = readers()
-        reader_obj.add_ctm_data(ctm_type, ctm_path)
-        reader_obj.read_ctm_data(YYYYMM, ctm_gas_name,
-                                 frequency_opt=ctm_frequency, averaged=averaged, num_job=num_job)
+        reader_obj.add_ctm_data(ctm_type, ctm_path, mcip_path)
+        reader_obj.read_ctm_data(YYYYMM, ctm_gas_name, averaged=averaged, num_job=num_job)
         reader_obj.add_satellite_data(
             sat_type, sat_path)
         reader_obj.read_satellite_data(
@@ -144,12 +143,13 @@ class aida(object):
 if __name__ == "__main__":
 
     aida_obj = aida()
-    aida_obj.read_data('FREE', Path('/home/asouri/git_repos/mule/eccoh_sample'), 'NO2', 'monthly', 'OMI_NO2',
-                           Path('download_bucket/omi_no2/'), '201803',
-                           averaged=True, read_ak=False, trop=True, num_job=1)
+    aida_obj.read_data('CMAQ', Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/BC_monthly'),
+                           Path('/nobackup/jjung13/ACMAP_mcipout/2019/'), 'NO2', 'OMI',
+                           Path('/nobackup/jjung13/ACMAP_satellite/OMI_NO2_MINDS_2019/'), '201905',
+                           averaged=True, read_ak=True, trop=True, num_job=12)
     aida_obj.recal_amf()
-    #oisatgmi_obj.conv_ak()
-    aida_obj.average('2018-03-01', '2018-04-01')
+    #aida_obj.conv_ak()
+    aida_obj.average('2019-05-01', '2019-06-01')
     aida_obj.oi(error_ctm=10.0)
-    aida_obj.reporting('NO2_200503_new', 'NO2', folder='report')
-    aida_obj.write_to_nc('NO2_200503_new', 'diag')
+    aida_obj.reporting('OMI_NO2_new', 'NO2', folder='report')
+    #aida_obj.write_to_nc('NO2_200503_new', 'diag')

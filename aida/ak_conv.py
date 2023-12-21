@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import interpolate
-from oisatgmi.interpolator import _upscaler
+from aida.interpolator import _upscaler
 from scipy.spatial import Delaunay
 from scipy.io import savemat
 
@@ -39,40 +39,32 @@ def ak_conv(ctm_data: list, sat_data: list):
             counter += 1
             continue
         time_sat_datetime = L2_granule.time
-        # currently we only use monthly ECCOH so it's not worth going into hours or mins
         time_sat = time_sat_datetime.year*10000 + time_sat_datetime.month*100 +\
-            time_sat_datetime.day
+            time_sat_datetime.day + time_sat_datetime.hour/24.0 + time_sat_datetime.minute / \
+            60.0/24.0 + time_sat_datetime.second/3600.0/24.0
         # find the closest day
         if ctm_data[0].averaged == False:
             closest_index = np.argmin(np.abs(time_sat - time_ctm))
             # find the closest hour (this only works for monthly frequency)
-            closest_index_day = int(np.floor(closest_index))
+            closest_index_day = int(np.floor(closest_index/25.0))
+            closest_index_hour = int(closest_index % 25)
         else:
-            closest_index = int(0)
+            closest_index = np.argmin(
+                np.abs(time_sat_hour_only - time_ctm_hour_only))
+            # find the closest hour
+            closest_index_hour = int(closest_index)
             closest_index_day = int(0)
 
         print("The closest GMI file used for the L2 at " + str(L2_granule.time) +
-              " is at " + str(time_ctm_datetype[closest_index_day]))
+              " is at " + str(time_ctm_datetype[closest_index_day][closest_index_hour]))
         # take the profile and pressure from the right ctm data
         Mair = 28.97e-3
         g = 9.80665
         N_A = 6.02214076e23
-        if (ctm_data[0].ctmtype == "ECCOH") or (ctm_data[0].ctmtype == "FREE"):
-           ctm_mid_pressure = ctm_data[closest_index_day].pressure_mid[ :, :, :].squeeze(
-           )
-           ctm_profile = ctm_data[closest_index_day].gas_profile[ :, :, :].squeeze(
-           )
-           ctm_deltap = ctm_data[closest_index_day].delta_p[ :, :, :].squeeze(
-           )
-           ctm_partial_column = ctm_deltap*ctm_profile/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
-           ctm_air_partial_column = ctm_deltap/g/Mair*N_A*1e-4*1e-15*100.0
-        elif ctm_data[0].ctmtype == "GMI":
-           ctm_mid_pressure = np.nanmean(ctm_data[closest_index_day].pressure_mid[:, :, :, :], axis=0).squeeze(
-           )
-           ctm_profile = np.nanmean(ctm_data[closest_index_day].gas_profile[:, :, :, :], axis=0).squeeze(
-           )
-           ctm_deltap = np.nanmean(ctm_data[closest_index_day].delta_p[:, :, :, :], axis=0).squeeze(
-           )
+        if ctm_data[0].ctmtype == "CMAQ":
+           ctm_mid_pressure = ctm_data[closest_index_day].pressure_mid[closest_index_hour, :, :, :].squeeze()
+           ctm_profile = ctm_data[closest_index_day].gas_profile[closest_index_hour, :, :, :].squeeze()
+           ctm_deltap = ctm_data[closest_index_day].delta_p[closest_index_hour, :, :, :].squeeze()
            ctm_partial_column = ctm_deltap*ctm_profile/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
            ctm_air_partial_column = ctm_deltap/g/Mair*N_A*1e-4*1e-15*100.0
         # see if we need to upscale the ctm fields

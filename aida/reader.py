@@ -12,7 +12,6 @@ import yaml
 import os
 import re
 
-# %%
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -743,49 +742,41 @@ def gosat_reader(product_dir: str, ctm_models_coordinate: dict, YYYYMM: str, rea
     return outputs_sat
 
 def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_saved:list, num_job=1):
-  
-   
+
     def cmaq_reader_wrapper(dir_mcip:str, dir_cmaq:str, YYYYMM:str, k:int, gasname:str):
-        
         date = datetime.datetime.strptime(str(k),'%j').date()
-        cmaq_target_file = product_dir + "/CCTM_CONC_v52_" + YYYYMM[:4] + "%03d" % int(k) + "_merge.nc"
+        cmaq_target_file = product_dir + "/CCTM_CONC_v52_" + YYYYMM[:4] + "%03d" % int(k) + ".nc"
         grd_file_2d = mcip_product_dir + "/GRIDCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
         met_file_2d = mcip_product_dir + "/METCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
         met_file_3d = mcip_product_dir + "/METCRO3D_" + YYYYMM[2:4] + date.strftime('%m%d')
-        
+        print("Currently reading: " + cmaq_target_file.split('/')[-1])
         lat = _read_nc(grd_file_2d,'LAT')
         lon = _read_nc(grd_file_2d,'LON')
-        
+
         time_var = _read_nc(cmaq_target_file,'TFLAG')
-        
+
         time = []
         for t in range(0,np.shape(time_var)[0]):
             cmaq_date = datetime.datetime.strptime(str(time_var[t,0,0]),'%Y%j').date()
             time.append(datetime.datetime(int(cmaq_date.strftime('%Y')),int(cmaq_date.strftime('%m')),
-                                          int(cmaq_date.strftime('%d')),int(time_var[t,0,1]/10000.0),0,0))
-             
-        prs = _read_nc(met_file_3d,'PRES')/100.0 #hpa
+                                          int(cmaq_date.strftime('%d')),int(time_var[t,0,1]/10000.0),0,0) +
+                        datetime.timedelta(minutes=0))
+
+        prs = _read_nc(met_file_3d,'PRES')/100.0 #hPa
         surf_prs = _read_nc(met_file_2d,'PRSFC')/100.0
-        temp_delp = prs.copy()
+        delp = prs.copy()
         for i in range(0,np.shape(prs)[1]):
-            if i == 0:
-                temp_delp[:,i,:,:] = 2.0*(surf_prs - prs[:,0,:,:])
-            elif i == 34: #[[0.5*(p33 + p34) - p34]]*2
-                temp_delp[:,i,:,:] = prs[:,i-1,:,:] - prs[:,i,:,:]                
-            else:
-                temp_delp[:,i,:,:] = (prs[:,i,:,:] + prs[:,i-1,:,:])*0.5 - (prs[:,i+1,:,:] + prs[:,i,:,:])*0.5
-           
-        del_p = temp_delp
+            if i == 0: #the first layer
+                delp[:,i,:,:] = 2.0*(surf_prs - prs[:,0,:,:])
+            elif i == np.shape(delp)[1]-1: #the last layer
+                delp[:,i,:,:] = prs[:,i-1,:,:] - prs[:,i,:,:]
+            else: # the between
+                delp[:,i,:,:] = (prs[:,i,:,:] + prs[:,i-1,:,:])*0.5 - (prs[:,i+1,:,:] + prs[:,i,:,:])*0.5
 
         gas = _read_nc(cmaq_target_file,gasname)*1000.0 #ppb
-        
-              
-        cmaq_data = ctm_model(lat,lon,time,gas,prs,[],del_p,'CMAQ',False) 
-        
+        cmaq_data = ctm_model(lat,lon,time,gas,prs,[],delp,'CMAQ',False)
         return cmaq_data
-        
-   
-    
+
     if int(YYYYMM[:4])%4 != 0:
         leap_year = 0
     elif int(YYYYMM[:4])%400 == 0:
@@ -794,25 +785,24 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
         leap_year = 0
     else:
         leap_year = 1
-        
+
     if leap_year == 1:
         jday_mm_st = np.array([1, 32, 61, 92, 122, 153, 183, 214, 245,
-                               275, 306, 336]) 
-        jday_mm_ed = np.array([31, 60, 91, 121, 152, 182, 213, 244, 274, 
+                               275, 306, 336])
+        jday_mm_ed = np.array([31, 60, 91, 121, 152, 182, 213, 244, 274,
                                305, 335, 366])
     elif leap_year == 0:
-        jday_mm_st = np.array([1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 
+        jday_mm_st = np.array([1, 32, 60, 91, 121, 152, 182, 213, 244, 274,
                                305, 335])
         jday_mm_ed = np.array([31, 59, 90, 120, 151, 181, 212, 243, 273,
                                304, 334, 365])
 
     target_jdays = range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
-    
+
     outputs = Parallel(n_jobs=num_job)(delayed(cmaq_reader_wrapper)(mcip_product_dir,
                                                                   product_dir,YYYYMM,k,gas_to_be_saved) for k in target_jdays)
     return outputs
 
-    
 
 class readers(object):
 
@@ -843,8 +833,9 @@ class readers(object):
             add CTM data
             Input:
                 product_name [str]: an string specifying the type of data to read:
-                                "WRF-CMAQ"
+                                "CMAQ"
                 product_dir  [Path]: a path object describing the path of CTM files
+                mcip_dir  [Path]: a path object describing the path of MCIP files
         '''
 
         self.ctm_product_dir = product_dir
@@ -886,7 +877,7 @@ class readers(object):
 
 
 
-    def read_ctm_data(self, YYYYMM: str, gas: str, average=False, num_job=1):
+    def read_ctm_data(self, YYYYMM: str, gas: str, averaged=False, num_job=1):
         '''
             read ctm data
             Input:
@@ -894,28 +885,48 @@ class readers(object):
              gases_to_be_saved [str]: name of the gas to be loaded. e.g., 'NO2'
              num_job [int]: the number of jobs for parallel computation
         '''
-        
+
         if self.ctm_product == 'CMAQ':
-            ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(), 
-                                   self.mcip_product_dir.as_posix(),YYYYMM,gas,num_job=num_job)
-            self.ctm_data = ctm_data
-            ctm_data = []
-            #TODO
-            #ctm_data = GMI_reader(self.ctm_product_dir.as_posix(), YYYYMM, gas,
-            #                      frequency_opt=frequency_opt, num_job=num_job)
+            ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
+                                   self.mcip_product_dir.as_posix(),
+                                   YYYYMM,gas,num_job=num_job)
+            if averaged == True:
+               # constant variables
+               print("Averaging CTM files ...")
+               latitude = ctm_data[0].latitude
+               longitude = ctm_data[0].longitude
+               time = ctm_data[0].time
+               ctm_type = 'CMAQ'
+               # averaging over variable things
+               gas_profile = []
+               pressure_mid = []
+               delta_p = []
+               for ctm in ctm_data:
+                   gas_profile.append(ctm.gas_profile)
+                   pressure_mid.append(ctm.pressure_mid)
+                   delta_p.append(ctm.delta_p)
 
+               gas_profile = np.nanmean(np.array(gas_profile), axis=0)
+               pressure_mid = np.nanmean(np.array(pressure_mid), axis=0)
+               delta_p = np.nanmean(np.array(delta_p), axis=0)
+               # shape up the ctm class
+               self.ctm_data = []
+               self.ctm_data.append(ctm_model(latitude, longitude, time, gas_profile,
+                                               pressure_mid, [], delta_p, ctm_type, True))
+               ctm_data = []
+            else:
+               self.ctm_data = ctm_data
+               ctm_data = []
 
-        
 # testing
 if __name__ == "__main__":
     reader_obj = readers()
-    reader_obj.add_ctm_data('CMAQ', Path(r'C:\Users\jjung13\OneDrive - NASA\Documents\ACMAP\AIDA_reader'),\
-                            Path(r'C:\Users\jjung13\OneDrive - NASA\Documents\ACMAP\AIDA_reader'))
+    reader_obj.add_ctm_data('CMAQ', Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/BC_monthly'),\
+                            Path('/nobackup/jjung13/ACMAP_mcipout/2019'))
 
     reader_obj.read_ctm_data('201905', 'CO', average=False)
-    
     reader_obj.add_satellite_data(
-        'MOPITT',Path(r'C:\Users\jjung13\OneDrive - NASA\Documents\ACMAP\AIDA_reader'))
+        'MOPITT',Path('/nobackup/jjung13/ACMAP_MOPITT/'))
 
     reader_obj.read_satellite_data(
         '201905', read_ak=True, num_job=1)
@@ -925,7 +936,6 @@ if __name__ == "__main__":
     gas = reader_obj.ctm_data[0].gas_profile
     pres = reader_obj.ctm_data[0].pressure_mid
     tt = reader_obj.ctm_data[0].time
-
     output = np.zeros((np.shape(latitude)[0], np.shape(
         latitude)[1], len(reader_obj.sat_data)))
     output2 = np.zeros_like(output)
@@ -934,13 +944,12 @@ if __name__ == "__main__":
         counter = counter + 1
         if trop is None:
             continue
-        output[:, :, counter] = trop.vcd
-        output2[:, :, counter] = trop.uncertainty
+        output[:, :, counter] = trop.x_col
+        output2[:, :, counter] = trop.ctm_xcol
 
-    #output[output <= 0.0] = np.nan
     moutput = {}
-    moutput["vcds"] = output
-    moutput["quality_flag"] = output2
+    moutput["xco_sat"] = output
+    moutput["xco_model"] = output2
     moutput["lat"] = latitude
     moutput["lon"] = longitude
     savemat("vcds_mopitt.mat", moutput)

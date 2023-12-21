@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import interpolate
-from oisatgmi.interpolator import _upscaler
+from aida.interpolator import _upscaler
 from scipy.spatial import Delaunay
 from scipy.io import savemat
 
