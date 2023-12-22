@@ -741,14 +741,26 @@ def gosat_reader(product_dir: str, ctm_models_coordinate: dict, YYYYMM: str, rea
         L2_files[k], ctm_models_coordinate=ctm_models_coordinate, read_ak=read_ak) for k in range(len(L2_files)))
     return outputs_sat
 
-def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_saved:list, num_job=1):
-
+def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_saved:str, num_job=1):
+    '''
+       GMI reader
+       Inputs:
+             product_dir [str]: the folder containing the CMAQ data
+             mcip_product_dir [str]: the folder containing the MCIP data
+             YYYYMM [str]: the target month and year, e.g., 202005 (May 2020)
+             gases_to_be_saved [str]: name of gases to be loaded. e.g., ['NO2']
+             num_obj [int]: number of jobs for parallel computation
+       Output:
+             cmaq_fields [ctm_model]: a dataclass format (see config.py)
+    '''
+    # a nested function
     def cmaq_reader_wrapper(dir_mcip:str, dir_cmaq:str, YYYYMM:str, k:int, gasname:str):
+
         date = datetime.datetime.strptime(str(k),'%j').date()
-        cmaq_target_file = product_dir + "/CCTM_CONC_v52_" + YYYYMM[:4] + "%03d" % int(k) + ".nc"
-        grd_file_2d = mcip_product_dir + "/GRIDCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
-        met_file_2d = mcip_product_dir + "/METCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
-        met_file_3d = mcip_product_dir + "/METCRO3D_" + YYYYMM[2:4] + date.strftime('%m%d')
+        cmaq_target_file = dir_cmaq + "/CCTM_CONC_v52_" + YYYYMM[:4] + "%03d" % int(k) + ".nc"
+        grd_file_2d = dir_mcip + "/GRIDCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
+        met_file_2d = dir_mcip + "/METCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
+        met_file_3d = dir_mcip + "/METCRO3D_" + YYYYMM[2:4] + date.strftime('%m%d')
         print("Currently reading: " + cmaq_target_file.split('/')[-1])
         lat = _read_nc(grd_file_2d,'LAT')
         lon = _read_nc(grd_file_2d,'LON')
@@ -762,8 +774,8 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
                                           int(cmaq_date.strftime('%d')),int(time_var[t,0,1]/10000.0),0,0) +
                         datetime.timedelta(minutes=0))
 
-        prs = _read_nc(met_file_3d,'PRES')/100.0 #hPa
-        surf_prs = _read_nc(met_file_2d,'PRSFC')/100.0
+        prs = _read_nc(met_file_3d,'PRES').astype('float32')/100.0 #hPa
+        surf_prs = _read_nc(met_file_2d,'PRSFC').astype('float32')/100.0
         delp = prs.copy()
         for i in range(0,np.shape(prs)[1]):
             if i == 0: #the first layer
@@ -774,6 +786,7 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
                 delp[:,i,:,:] = (prs[:,i,:,:] + prs[:,i-1,:,:])*0.5 - (prs[:,i+1,:,:] + prs[:,i,:,:])*0.5
 
         gas = _read_nc(cmaq_target_file,gasname)*1000.0 #ppb
+        gas = gas.astype('float32')
         cmaq_data = ctm_model(lat,lon,time,gas,prs,[],delp,'CMAQ',False)
         return cmaq_data
 
@@ -840,7 +853,6 @@ class readers(object):
 
         self.ctm_product_dir = product_dir
         self.mcip_product_dir = mcip_dir
-        
         self.ctm_product = product_name
 
     def read_satellite_data(self, YYYYMM: str, read_ak=True, trop=False, num_job=1):
