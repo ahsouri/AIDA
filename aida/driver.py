@@ -49,8 +49,6 @@ class aida(object):
         '''
         self.sat_averaged_vcd, self.sat_averaged_error, self.ctm_averaged_vcd, self.aux1, self.aux2 = averaging(
             startdate, enddate, self.reader_obj)
-        if gasname == 'O3':
-            self.ctm_averaged_vcd = self.ctm_averaged_vcd/(2.69e16*1e-15)
 
     def oi(self, error_ctm=50.0):
 
@@ -143,13 +141,13 @@ class aida(object):
 if __name__ == "__main__":
 
     aida_obj = aida()
-    aida_obj.read_data('CMAQ', Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/BC_monthly'),
-                           Path('/nobackup/jjung13/ACMAP_mcipout/2019/'), 'NO2', 'OMI',
-                           Path('/nobackup/jjung13/ACMAP_satellite/OMI_NO2_MINDS_2019/'), '201905',
+    aida_obj.read_data('CMAQ', Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/BC_monthly/'),
+                           Path('/nobackup/jjung13/ACMAP_mcipout/2019/'), 'NO2', 'OMI_NO2',
+                           Path('/nobackup/asouri/GITS/AIDA/aida/download_bucket/omi_no2/'), '201905',
                            averaged=True, read_ak=True, trop=True, num_job=12)
     aida_obj.recal_amf()
     #aida_obj.conv_ak()
     aida_obj.average('2019-05-01', '2019-06-01')
-    aida_obj.oi(error_ctm=10.0)
+    aida_obj.oi(error_ctm=50.0)
     aida_obj.reporting('OMI_NO2_new', 'NO2', folder='report')
     #aida_obj.write_to_nc('NO2_200503_new', 'diag')

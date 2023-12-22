@@ -1,7 +1,7 @@
 import numpy as np
 import datetime
 from scipy.io import savemat
-from oisatgmi.config import satellite_amf
+from aida.config import satellite_amf
 
 
 def _daterange(start_date, end_date):
