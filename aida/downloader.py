@@ -204,11 +204,9 @@ class downloader(object):
                     result.raise_for_status()
                     urls = result.text.split('\n')
                     for url in urls:
-                        cmd = "wget -nH -nc --no-check-certificate "
-                        if product_tag != 'O3':
-                            cmd += "--content-disposition "
+                        cmd = "wget "
                         cmd += "--continue --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-challenge=on "
-                        cmd += "--keep-session-cookies "
+                        cmd += "--keep-session-cookies --timeout=600 "
                         cmd += '"' + str(url)[:-1] + '"'
                         cmd += " -P " + (output_fld.as_posix())
                         if not os.path.exists(output_fld.as_posix()):
@@ -323,10 +321,10 @@ class downloader(object):
 # testing
 if __name__ == "__main__":
 
-    dl_obj = downloader(19, 61, -136, -54, '2019-05-01', '2019-10-01')
+    dl_obj = downloader(19, 61, -136, -54, '2019-05-01', '2019-06-01')
     #dl_obj = downloader(-90, 90, -180, 180, '2005-06-01', '2005-07-01')
-    dl_obj.download_tropomi_l2('HCHO', Path('download_bucket/trop_hcho/'))
-    #dl_obj.download_omi_l2('HCHO', Path('download_bucket/omi_no2/'))
+    #dl_obj.download_tropomi_l2('HCHO', Path('download_bucket/trop_hcho/'))
+    dl_obj.download_omi_l2('NO2', Path('download_bucket/omi_no2/'))
     #dl_obj.omi_hcho_cfa( Path('download_bucket/omi_hcho_PO3/'))
     #dl_obj.download_omi_l2('O3', Path('download_bucket/omi_o3/'))
     #dl_obj.download_mopitt_l2(Path('download_bucket/mopitt_CO/'))

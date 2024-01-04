@@ -112,7 +112,7 @@ def tropomi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) ->
     tm5_b = _read_group_nc(
         fname, ['PRODUCT', 'SUPPORT_DATA', 'INPUT_DATA'], 'tm5_constant_b')
     ps = _read_group_nc(fname, [
-                        'PRODUCT', 'SUPPORT_DATA', 'INPUT_DATA'], 'surface_pressure').astype('float16')/100.0
+                        'PRODUCT', 'SUPPORT_DATA', 'INPUT_DATA'], 'surface_pressure').astype('float32')/100.0
     p_mid = np.zeros(
         (34, np.shape(vcd)[0], np.shape(vcd)[1])).astype('float32')
     if read_ak == True:
@@ -771,7 +771,8 @@ def cmaq_reader_wrapper(dir_mcip:str, dir_cmaq:str, YYYYMM:str, k:int, gasname:s
                 delp[:,i,:,:] = prs[:,i-1,:,:] - prs[:,i,:,:]
         else: # the between
                 delp[:,i,:,:] = (prs[:,i,:,:] + prs[:,i-1,:,:])*0.5 - (prs[:,i+1,:,:] + prs[:,i,:,:])*0.5
-
+    if gasname == 'HCHO':
+       gasname = 'FORM'
     gas = _read_nc(cmaq_target_file,gasname)*1000.0 #ppb
     gas = gas.astype('float32')
     cmaq_data = ctm_model(lat,lon,time,gas,prs,[],delp,'CMAQ',False)
@@ -937,18 +938,15 @@ if __name__ == "__main__":
     reader_obj.add_ctm_data('CMAQ', Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/BC_monthly'),\
                             Path('/nobackup/jjung13/ACMAP_mcipout/2019'))
 
-    reader_obj.read_ctm_data('201905', 'CO', average=False)
+    reader_obj.read_ctm_data('201905', 'NO2', average=True)
     reader_obj.add_satellite_data(
-        'MOPITT',Path('/nobackup/jjung13/ACMAP_MOPITT/'))
+        'TROPOMI_NO2',Path('/nobackup/jjung13/ACMAP_satellite/TROPOMI_NO2/'))
 
     reader_obj.read_satellite_data(
-        '201905', read_ak=True, num_job=1)
+        '201905', read_ak=False, num_job=18)
 # %%
     latitude = reader_obj.ctm_data[0].latitude
     longitude = reader_obj.ctm_data[0].longitude
-    gas = reader_obj.ctm_data[0].gas_profile
-    pres = reader_obj.ctm_data[0].pressure_mid
-    tt = reader_obj.ctm_data[0].time
     output = np.zeros((np.shape(latitude)[0], np.shape(
         latitude)[1], len(reader_obj.sat_data)))
     output2 = np.zeros_like(output)
@@ -957,12 +955,11 @@ if __name__ == "__main__":
         counter = counter + 1
         if trop is None:
             continue
-        output[:, :, counter] = trop.x_col
-        output2[:, :, counter] = trop.ctm_xcol
+        output[:, :, counter] = trop.vcd
+        #output2[:, :, counter] = trop.ctm_xcol
 
     moutput = {}
-    moutput["xco_sat"] = output
-    moutput["xco_model"] = output2
+    moutput["sat"] = output
     moutput["lat"] = latitude
     moutput["lon"] = longitude
     savemat("vcds_mopitt.mat", moutput)
