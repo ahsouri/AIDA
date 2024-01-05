@@ -17,11 +17,8 @@ def plotter(X, Y, Z, fname: str, title: str, unit: int, vmin, vmax):
     ax = plt.axes()
     map = Basemap(projection='cyl',llcrnrlat=np.min(Y.flatten()),urcrnrlat= np.max(Y.flatten()),\
             llcrnrlon=np.min(X.flatten()),urcrnrlon= np.max(X.flatten()),resolution="i")
-    im = ax.imshow(Z, origin='lower',
-                   extent=[np.min(X.flatten()), np.max(X.flatten()),
-                   np.min(Y.flatten()), np.max(Y.flatten())],
-                   interpolation='nearest', aspect='auto', vmin=vmin, vmax=vmax,
-                   cmap=mpl.colormaps['rainbow'])
+    levels = np.linspace(vmin,vmax, 1000)
+    map.contourf(X,Y,Z,levels=levels,vmin=vmin,vmax=vmax,cmap=mpl.colormaps['rainbow'],extend='both')
     map.drawcoastlines()
     map.drawcountries()
     x_ticks = np.arange(np.min(X.flatten()),
@@ -38,7 +35,7 @@ def plotter(X, Y, Z, fname: str, title: str, unit: int, vmin, vmax):
     # plotting lat and lon
     plt.xlabel('Lon', fontsize=20)
     plt.ylabel('Lat', fontsize=20)
-    cbar = plt.colorbar(im)
+    cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=18)
     if unit == 1:
         cbar.set_label(r'$[ \times 10^{15}molec.cm^{-2}] $', fontsize=18)
