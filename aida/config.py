@@ -58,3 +58,11 @@ class ctm_model:
     delta_p: np.ndarray
     ctmtype: str
     averaged: bool
+
+@dataclass
+class ddm_model:
+    ddm_out: np.ndarray
+    emis_beis: np.ndarray
+    emis_fire: np.ndarray
+    emis_gas: np.ndarray
+    emis_tot: np.ndarray
