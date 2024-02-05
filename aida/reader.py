@@ -4,7 +4,7 @@ import datetime
 import glob
 from joblib import Parallel, delayed
 from netCDF4 import Dataset
-from aida.config import satellite_amf, satellite_opt, ctm_model, ddm_model
+from aida.config import satellite_amf, satellite_opt, ctm_model, ddm_emis_model
 from aida.interpolator import interpolator
 import warnings
 from scipy.io import savemat
@@ -821,9 +821,9 @@ def cmaq_reader_ddm_wrapper(dir_ddm:str,dir_emis:str, YYYYMM:str, k:int, gasname
     emis_beis = np.sum(emis_beis,axis=0) #unit g/s, time: 0~25 UTC but always zero at 0 UTC
     emis_fire = np.sum(emis_fire,axis=0)
     emis_gas  = np.sum(emis_gas,axis=0)
-    emis_tot  = emis_beis + emis_fire + emis_gas
+    emis_tot  = emis_beis + emis_fire + emis_gas #emission for model has lightning and aviation emissions in addition to emis_tot
     
-    inv_data = ddm_model(ddm_out,emis_beis,emis_fire,emis_gas,emis_tot)
+    inv_data = ddm_emis_model(ddm_out,emis_beis,emis_fire,emis_gas,emis_tot)
     return inv_data
     
 
@@ -833,6 +833,8 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, ddm_product_dir:str, emis
        Inputs:
              product_dir [str]: the folder containing the CMAQ data
              mcip_product_dir [str]: the folder containing the MCIP data
+             ddm_product_dir [str]: the folder containing the CMAQ DDM output
+             emis_product_dir [str]: the folder containing the emission data
              YYYYMM [str]: the target month and year, e.g., 202005 (May 2020)
              gases_to_be_saved [str]: name of gases to be loaded. e.g., ['NO2']
              read_inv [str]: whether read ddm output and emissions or not
@@ -860,7 +862,7 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, ddm_product_dir:str, emis
         jday_mm_ed = np.array([31, 59, 90, 120, 151, 181, 212, 243, 273,
                                304, 334, 365])
 
-    target_jdays = range(91,98) #range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
+    target_jdays = range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
     #outputs = Parallel(n_jobs=num_job)(delayed(cmaq_reader_wrapper)(mcip_product_dir,product_dir,YYYYMM,k,gas_to_be_saved) for k in target_jdays)
     outputs_ctm = []
     outputs_ddm = []
@@ -975,33 +977,38 @@ class readers(object):
                                    self.emis_product_dir.as_posix(),
                                    YYYYMM,gas,read_inv,num_job=num_job)
 
-            if averaged == True:
-               # constant variables
-               print("Averaging CTM files ...")
-               latitude = ctm_data[0].latitude
-               longitude = ctm_data[0].longitude
-               time = ctm_data[0].time
-               ctm_type = 'CMAQ'
-               # averaging over variable things
-               gas_profile = []
-               pressure_mid = []
-               delta_p = []
-               for ctm in ctm_data:
-                   gas_profile.append(ctm.gas_profile)
-                   pressure_mid.append(ctm.pressure_mid)
-                   delta_p.append(ctm.delta_p)
+        #print('shape of ctm_data:',np.shape(ctm_data)) --> [2, number of days]
 
-               gas_profile = np.nanmean(np.array(gas_profile), axis=0)
-               pressure_mid = np.nanmean(np.array(pressure_mid), axis=0)
-               delta_p = np.nanmean(np.array(delta_p), axis=0)
-               # shape up the ctm class
-               self.ctm_data = []
-               self.ctm_data.append(ctm_model(latitude, longitude, time, gas_profile,
-                                               pressure_mid, [], delta_p, ctm_type, True))
-               ctm_data = []
-            else:
-               self.ctm_data = ctm_data
-               ctm_data = []
+        print(np.shape(ctm_data[0]))
+        if averaged == True:
+            # constant variables
+            print("Averaging CTM files ...")
+            latitude = ctm_data[0][0].latitude
+            longitude = ctm_data[0][0].longitude
+            time = ctm_data[0][0].time
+            ctm_type = 'CMAQ'
+            # averaging over variable things
+            gas_profile = []
+            pressure_mid = []
+            delta_p = []
+            for ctm in ctm_data[0]:
+                gas_profile.append(ctm.gas_profile)
+                pressure_mid.append(ctm.pressure_mid)
+                delta_p.append(ctm.delta_p)
+
+            gas_profile = np.nanmean(np.array(gas_profile), axis=0)
+            pressure_mid = np.nanmean(np.array(pressure_mid), axis=0)
+            delta_p = np.nanmean(np.array(delta_p), axis=0)
+            # shape up the ctm class
+            self.ctm_data = []
+            self.ctm_data.append(ctm_model(latitude, longitude, time, gas_profile,
+                                            pressure_mid, [], delta_p, ctm_type, True))
+            ctm_data = []
+
+
+        else:
+            self.ctm_data = ctm_data[0]
+            ctm_data = []
 
 # testing
 if __name__ == "__main__":

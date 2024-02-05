@@ -60,7 +60,7 @@ class ctm_model:
     averaged: bool
 
 @dataclass
-class ddm_model:
+class ddm_emis_model:
     ddm_out: np.ndarray
     emis_beis: np.ndarray
     emis_fire: np.ndarray
