@@ -4,7 +4,7 @@ import datetime
 import glob
 from joblib import Parallel, delayed
 from netCDF4 import Dataset
-from aida.config import satellite_amf, satellite_opt, ctm_model
+from aida.config import satellite_amf, satellite_opt, ctm_model, ddm_emis_model
 from aida.interpolator import interpolator
 import warnings
 from scipy.io import savemat
@@ -778,16 +778,106 @@ def cmaq_reader_wrapper(dir_mcip:str, dir_cmaq:str, YYYYMM:str, k:int, gasname:s
     cmaq_data = ctm_model(lat,lon,time,gas,prs,[],delp,'CMAQ',False)
     return cmaq_data
 
+def cmaq_reader_ddm_wrapper(dir_ddm:str,dir_emis:str, YYYYMM:str, k:int, gasname:str):
+    date = datetime.datetime.strptime(str(k),'%j').date()
+    if gasname == 'NO2':
+        file_ddm = dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_NOX_" + YYYYMM[:4] + "%03d" % int(k)
+    elif gasname == 'HCHO':
+        file_ddm = dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_VOC_" + YYYYMM[:4] + "%03d" % int(k)
+    elif gasname == 'ISOP':
+        file_ddm = dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_ISOP_" + YYYYMM[:4] + "%03d" % int(k)
 
-def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_saved:str, num_job=1):
+    file_emis_beis = dir_emis + "/CCTM_ACMAP_EMIS_beis_v52_" + YYYYMM[:4] + "%03d" % int(k) + ".nc" 
+    file_emis_fire = dir_emis + "/CCTM_ACMAP_EMIS_fire_v52_" + YYYYMM[:4] + "%03d" % int(k) + ".nc"
+    file_emis_gas  = dir_emis + "/CCTM_ACMAP_EMIS_gc_v52_" + YYYYMM[:4] + "%03d" % int(k) + ".nc"
+
+    print("Currently reading ddm and emis ... " + file_ddm.split('/')[-1])
+    if gasname == 'NO2':
+        ddmname = 'NO2_ENX'
+        emisname = ["NO", "NO2"]
+        emis_mole_w = [30, 46]
+
+    elif gasname == 'HCHO':
+        ddmname = 'FORM_EVM'
+        emisname = ["FORM", "ETH", "ALD2", "ALDX", "ISOP", "ETOH", "PAR", "OLE", "TERP", "XYLMN", \
+                "ACET", "ETHY", "IOLE", "KET", "NAPH"]
+        emis_mole_w = [30, 28, 44, 58.1, 68.1, 46.1, 72.1, 42.1, 136.2, 106.2, 58.1, 26, 56.1, 72.1, 128.2]
+
+    elif gasname == 'ISOP':
+        ddmname = 'ISOP_EIS'
+        emisname = 'ISOP'
+        emis_mole_w = 68.1
+
+    ddm_out = []
+    emis_beis = []
+    emis_fire = []
+    emis_gas = []
+    emis_tot = []
+
+    ddm_out = _read_nc(file_ddm,ddmname).astype('float32') #time: 0 ~ 23 UTC, unit: ppmV
+    time_var_ddm = _read_nc(file_ddm,'TFLAG')
+
+    for i in range(len(emisname)):
+        temp = _read_nc(file_emis_beis,emisname[i]).astype('float32')*emis_mole_w[i]
+        emis_beis.append(temp)
+        temp = _read_nc(file_emis_fire,emisname[i]).astype('float32')*emis_mole_w[i]
+        emis_fire.append(temp)
+        temp = _read_nc(file_emis_gas,emisname[i]).astype('float32')*emis_mole_w[i]
+        emis_gas.append(temp)
+
+    time_var_emis = _read_nc(file_emis_gas,'TFLAG')
+    time_var_emis = time_var_emis[1:,:,:]
+
+
+    emis_beis = np.sum(emis_beis,axis=0) #unit g/s, time: 0~24 UTC but always zero at 0 UTC
+    emis_fire = np.sum(emis_fire,axis=0)
+    emis_gas  = np.sum(emis_gas,axis=0)
+
+    emis_beis = emis_beis[1:,:,:,:] #removed 0 UTC, so 1 ~ 24 UTC
+    emis_fire = emis_fire[1:,:,:,:]
+    emis_gas  = emis_gas[1:,:,:,:]
+
+    emis_tot  = emis_beis + emis_fire + emis_gas #emission for model has lightning and aviation emissions in addition to emis_tot
+  
+    if gasname == 'NO2':
+        err_emis = ((emis_gas/emis_tot)**2)*((0.5*emis_gas)**2) + ((emis_beis/emis_tot)**2)*((2*emis_beis)**2) + \
+                ((emis_fire/emis_tot)**2)*((1*emis_fire)**2)
+    elif gasname == 'HCHO' or gasname == 'ISOP':
+        err_emis = ((emis_gas/emis_tot)**2)*((1.5*emis_gas)**2) + ((emis_beis/emis_tot)**2)*((2*emis_beis)**2) + \
+                ((emis_fire/emis_tot)**2)*((3*emis_fire)**2)
+
+    #time
+    time_ddm = [] 
+    time_emis = []
+    for t in range(np.shape(time_var_ddm)[0]):
+        cmaq_date = datetime.datetime.strptime(str(time_var_ddm[t,0,0]),'%Y%j').date()
+        time_ddm.append(datetime.datetime(int(cmaq_date.strftime('%Y')),int(cmaq_date.strftime('%m')), \
+                int(cmaq_date.strftime('%d')),int(time_var_ddm[t,0,1]/10000.0),0,0) + \
+                datetime.timedelta(minutes=0))
+    
+    for t in range(np.shape(time_var_emis)[0]):
+        cmaq_date = datetime.datetime.strptime(str(time_var_emis[t,0,0]),'%Y%j').date()
+        time_emis.append(datetime.datetime(int(cmaq_date.strftime('%Y')),int(cmaq_date.strftime('%m')), \
+                int(cmaq_date.strftime('%d')),int(time_var_emis[t,0,1]/10000.0),0,0) + \
+                datetime.timedelta(minutes=0))
+
+
+    inv_data = ddm_emis_model(time_ddm,time_emis,ddm_out,emis_tot,err_emis)
+    return inv_data
+    
+
+def CMAQ_reader(product_dir:str, mcip_product_dir:str, ddm_product_dir:str, emis_product_dir:str, YYYYMM:str, gas_to_be_saved:str, read_inv:str, num_job=1):
     '''
        GMI reader
        Inputs:
              product_dir [str]: the folder containing the CMAQ data
              mcip_product_dir [str]: the folder containing the MCIP data
+             ddm_product_dir [str]: the folder containing the CMAQ DDM output
+             emis_product_dir [str]: the folder containing the emission data
              YYYYMM [str]: the target month and year, e.g., 202005 (May 2020)
              gases_to_be_saved [str]: name of gases to be loaded. e.g., ['NO2']
-             num_obj [int]: number of jobs for parallel computation
+             read_inv [str]: whether read ddm output and emissions or not
+             num_job [int]: number of jobs for parallel computation
        Output:
              cmaq_fields [ctm_model]: a dataclass format (see config.py)
     '''
@@ -813,10 +903,15 @@ def CMAQ_reader(product_dir:str, mcip_product_dir:str, YYYYMM:str, gas_to_be_sav
 
     target_jdays = range(jday_mm_st[int(YYYYMM[-2:])-1],jday_mm_ed[int(YYYYMM[-2:])-1]+1)
     #outputs = Parallel(n_jobs=num_job)(delayed(cmaq_reader_wrapper)(mcip_product_dir,product_dir,YYYYMM,k,gas_to_be_saved) for k in target_jdays)
-    outputs = []
+    outputs_ctm = []
+    outputs_ddm = []
+
     for k in target_jdays:
-        outputs.append(cmaq_reader_wrapper(mcip_product_dir,product_dir,YYYYMM,k,gas_to_be_saved))
-    return outputs
+        outputs_ctm.append(cmaq_reader_wrapper(mcip_product_dir,product_dir,YYYYMM,k,gas_to_be_saved))
+        if read_inv == True:
+            outputs_ddm.append(cmaq_reader_ddm_wrapper(ddm_product_dir,emis_product_dir,YYYYMM,k,gas_to_be_saved))
+        
+    return outputs_ctm, outputs_ddm 
 
 
 class readers(object):
@@ -843,7 +938,8 @@ class readers(object):
         self.satellite_product_dir = product_dir
         self.satellite_product_name = product_name
 
-    def add_ctm_data(self, product_name: int, product_dir: Path, mcip_dir: Path):
+    def add_ctm_data(self, product_name: int, product_dir: Path, mcip_dir: Path, \
+            ddm_dir_NOX: Path, ddm_dir_VOC: Path, ddm_dir_ISOP: Path, emis_dir: Path):
         '''
             add CTM data
             Input:
@@ -851,11 +947,19 @@ class readers(object):
                                 "CMAQ"
                 product_dir  [Path]: a path object describing the path of CTM files
                 mcip_dir  [Path]: a path object describing the path of MCIP files
+                ddm_dir_NOX [Path]: a path object describing the path of DDM output for NOx emissions
+                ddm dir VOC [Path]: a path object describing the path of DDM output for VOC emissions
+                emis dir [Path]: a path object describing the path of emission files (beis, fire, gc, tot)
+
         '''
 
         self.ctm_product_dir = product_dir
         self.mcip_product_dir = mcip_dir
         self.ctm_product = product_name
+        self.ddm_product_dir_NOX  = ddm_dir_NOX
+        self.ddm_product_dir_VOC  = ddm_dir_VOC
+        self.ddm_product_dir_ISOP = ddm_dir_ISOP 
+        self.emis_product_dir = emis_dir
 
     def read_satellite_data(self, YYYYMM: str, read_ak=True, trop=False, num_job=1):
         '''
@@ -891,7 +995,7 @@ class readers(object):
 
 
 
-    def read_ctm_data(self, YYYYMM: str, gas: str, averaged=False, num_job=1):
+    def read_ctm_data(self, YYYYMM: str, gas: str, read_inv=False,averaged=False, num_job=1):
         '''
             read ctm data
             Input:
@@ -900,66 +1004,91 @@ class readers(object):
              num_job [int]: the number of jobs for parallel computation
         '''
 
-        if self.ctm_product == 'CMAQ':
+        if self.ctm_product == 'CMAQ' and gas == 'NO2':
             ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
                                    self.mcip_product_dir.as_posix(),
-                                   YYYYMM,gas,num_job=num_job)
-            if averaged == True:
-               # constant variables
-               print("Averaging CTM files ...")
-               latitude = ctm_data[0].latitude
-               longitude = ctm_data[0].longitude
-               time = ctm_data[0].time
-               ctm_type = 'CMAQ'
-               # averaging over variable things
-               gas_profile = []
-               pressure_mid = []
-               delta_p = []
-               for ctm in ctm_data:
-                   gas_profile.append(ctm.gas_profile)
-                   pressure_mid.append(ctm.pressure_mid)
-                   delta_p.append(ctm.delta_p)
+                                   self.ddm_product_dir_NOX.as_posix(),
+                                   self.emis_product_dir.as_posix(),
+                                   YYYYMM,gas,read_inv,num_job=num_job)
+        elif self.ctm_product == 'CMAQ' and gas == 'HCHO':
+            ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
+                                   self.mcip_product_dir.as_posix(),
+                                   self.ddm_product_dir_VOC.as_posix(),
+                                   self.emis_product_dir.as_posix(),
+                                   YYYYMM,gas,read_inv,num_job=num_job)
+        elif self.ctm_product == 'CMAQ' and gas == 'ISOP':
+            ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
+                                   self.mcip_product_dir.as_posix(),
+                                   self.ddm_product_dir_ISOP.as_posix(),
+                                   self.emis_product_dir.as_posix(),
+                                   YYYYMM,gas,read_inv,num_job=num_job)
 
-               gas_profile = np.nanmean(np.array(gas_profile), axis=0)
-               pressure_mid = np.nanmean(np.array(pressure_mid), axis=0)
-               delta_p = np.nanmean(np.array(delta_p), axis=0)
-               # shape up the ctm class
-               self.ctm_data = []
-               self.ctm_data.append(ctm_model(latitude, longitude, time, gas_profile,
-                                               pressure_mid, [], delta_p, ctm_type, True))
-               ctm_data = []
-            else:
-               self.ctm_data = ctm_data
-               ctm_data = []
+
+        #print('shape of ctm_data:',np.shape(ctm_data)) --> [2, number of days]
+
+        print(np.shape(ctm_data[0]))
+        if averaged == True:
+            # constant variables
+            print("Averaging CTM files ...")
+            latitude = ctm_data[0][0].latitude
+            longitude = ctm_data[0][0].longitude
+            time = ctm_data[0][0].time
+            ctm_type = 'CMAQ'
+            # averaging over variable things
+            gas_profile = []
+            pressure_mid = []
+            delta_p = []
+            for ctm in ctm_data[0]:
+                gas_profile.append(ctm.gas_profile)
+                pressure_mid.append(ctm.pressure_mid)
+                delta_p.append(ctm.delta_p)
+
+            gas_profile = np.nanmean(np.array(gas_profile), axis=0)
+            pressure_mid = np.nanmean(np.array(pressure_mid), axis=0)
+            delta_p = np.nanmean(np.array(delta_p), axis=0)
+            # shape up the ctm class
+            self.ctm_data = []
+            self.ctm_data.append(ctm_model(latitude, longitude, time, gas_profile,
+                                            pressure_mid, [], delta_p, ctm_type, True))
+            ctm_data = []
+
+
+        else:
+            self.ctm_data = ctm_data[0]
+            ctm_data = []
 
 # testing
 if __name__ == "__main__":
     reader_obj = readers()
-    reader_obj.add_ctm_data('CMAQ', Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/BC_monthly'),\
-                            Path('/nobackup/jjung13/ACMAP_mcipout/2019'))
+    reader_obj.add_ctm_data('CMAQ', Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/BC_monthly_add_CO'),\
+                            Path('/nobackup/jjung13/ACMAP_mcipout/2019'), \
+                            Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_NOX'), \
+                            Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_VOC'), \
+                            Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_ISOP'), \
+                            Path('/nobackup/jjung13/ACMAP_4D_EMIS/2019/sources'))
 
-    reader_obj.read_ctm_data('201905', 'NO2', average=True)
-    reader_obj.add_satellite_data(
-        'TROPOMI_NO2',Path('/nobackup/jjung13/ACMAP_satellite/TROPOMI_NO2/'))
+    reader_obj.read_ctm_data('201904', 'HCHO', read_inv=True, averaged=True)
+ #   reader_obj.add_satellite_data(
+ #       'TROPOMI_NO2',Path('/nobackup/jjung13/ACMAP_satellite/TROPOMI_NO2/'))
 
-    reader_obj.read_satellite_data(
-        '201905', read_ak=False, num_job=18)
+ #   reader_obj.read_satellite_data(
+ #       '201905', read_ak=False, num_job=18)
 # %%
-    latitude = reader_obj.ctm_data[0].latitude
-    longitude = reader_obj.ctm_data[0].longitude
-    output = np.zeros((np.shape(latitude)[0], np.shape(
-        latitude)[1], len(reader_obj.sat_data)))
-    output2 = np.zeros_like(output)
-    counter = -1
-    for trop in reader_obj.sat_data:
-        counter = counter + 1
-        if trop is None:
-            continue
-        output[:, :, counter] = trop.vcd
-        #output2[:, :, counter] = trop.ctm_xcol
+#    latitude = reader_obj.ctm_data[0].latitude
+#    longitude = reader_obj.ctm_data[0].longitude
+#    output = np.zeros((np.shape(latitude)[0], np.shape(
+#        latitude)[1], len(reader_obj.sat_data)))
+#    output2 = np.zeros_like(output)
+#    counter = -1
+#    for trop in reader_obj.sat_data:
+#        counter = counter + 1
+#        if trop is None:
+#            continue
+#        output[:, :, counter] = trop.vcd
+#        #output2[:, :, counter] = trop.ctm_xcol
 
-    moutput = {}
-    moutput["sat"] = output
-    moutput["lat"] = latitude
-    moutput["lon"] = longitude
-    savemat("vcds_mopitt.mat", moutput)
+#    moutput = {}
+#    moutput["sat"] = output
+#    moutput["lat"] = latitude
+#    moutput["lon"] = longitude
+#    savemat("vcds_mopitt.mat", moutput)
