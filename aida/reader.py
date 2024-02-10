@@ -781,9 +781,11 @@ def cmaq_reader_wrapper(dir_mcip:str, dir_cmaq:str, YYYYMM:str, k:int, gasname:s
 def cmaq_reader_ddm_wrapper(dir_ddm:str,dir_emis:str, YYYYMM:str, k:int, gasname:str):
     date = datetime.datetime.strptime(str(k),'%j').date()
     if gasname == 'NO2':
-        file_ddm = dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_" + YYYYMM[:4] + "%03d" % int(k)
+        file_ddm = dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_NOX_" + YYYYMM[:4] + "%03d" % int(k)
     elif gasname == 'HCHO':
-        file_ddm = dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM2_" + YYYYMM[:4] + "%03d" % int(k)
+        file_ddm = dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_VOC_" + YYYYMM[:4] + "%03d" % int(k)
+    elif gasname == 'ISOP':
+        file_ddm = dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_ISOP_" + YYYYMM[:4] + "%03d" % int(k)
 
     file_emis_beis = dir_emis + "/CCTM_ACMAP_EMIS_beis_v52_" + YYYYMM[:4] + "%03d" % int(k) + ".nc" 
     file_emis_fire = dir_emis + "/CCTM_ACMAP_EMIS_fire_v52_" + YYYYMM[:4] + "%03d" % int(k) + ".nc"
@@ -791,16 +793,20 @@ def cmaq_reader_ddm_wrapper(dir_ddm:str,dir_emis:str, YYYYMM:str, k:int, gasname
 
     print("Currently reading ddm and emis ... " + file_ddm.split('/')[-1])
     if gasname == 'NO2':
-        gasname = 'NO2_ENX'
+        ddmname = 'NO2_ENX'
         emisname = ["NO", "NO2"]
         emis_mole_w = [30, 46]
 
-        
     elif gasname == 'HCHO':
-        gasname = 'FORM_EVM'
+        ddmname = 'FORM_EVM'
         emisname = ["FORM", "ETH", "ALD2", "ALDX", "ISOP", "ETOH", "PAR", "OLE", "TERP", "XYLMN", \
                 "ACET", "ETHY", "IOLE", "KET", "NAPH"]
         emis_mole_w = [30, 28, 44, 58.1, 68.1, 46.1, 72.1, 42.1, 136.2, 106.2, 58.1, 26, 56.1, 72.1, 128.2]
+
+    elif gasname == 'ISOP':
+        ddmname = 'ISOP_EIS'
+        emisname = 'ISOP'
+        emis_mole_w = 68.1
 
     ddm_out = []
     emis_beis = []
@@ -808,7 +814,8 @@ def cmaq_reader_ddm_wrapper(dir_ddm:str,dir_emis:str, YYYYMM:str, k:int, gasname
     emis_gas = []
     emis_tot = []
 
-    ddm_out = _read_nc(file_ddm,gasname).astype('float32') #time: 1 ~ 25 UTC, unit: ppmV
+    ddm_out = _read_nc(file_ddm,ddmname).astype('float32') #time: 0 ~ 23 UTC, unit: ppmV
+    time_var_ddm = _read_nc(file_ddm,'TFLAG')
 
     for i in range(len(emisname)):
         temp = _read_nc(file_emis_beis,emisname[i]).astype('float32')*emis_mole_w[i]
@@ -817,13 +824,45 @@ def cmaq_reader_ddm_wrapper(dir_ddm:str,dir_emis:str, YYYYMM:str, k:int, gasname
         emis_fire.append(temp)
         temp = _read_nc(file_emis_gas,emisname[i]).astype('float32')*emis_mole_w[i]
         emis_gas.append(temp)
-        
-    emis_beis = np.sum(emis_beis,axis=0) #unit g/s, time: 0~25 UTC but always zero at 0 UTC
+
+    time_var_emis = _read_nc(file_emis_gas,'TFLAG')
+    time_var_emis = time_var_emis[1:,:,:]
+
+
+    emis_beis = np.sum(emis_beis,axis=0) #unit g/s, time: 0~24 UTC but always zero at 0 UTC
     emis_fire = np.sum(emis_fire,axis=0)
     emis_gas  = np.sum(emis_gas,axis=0)
+
+    emis_beis = emis_beis[1:,:,:,:] #removed 0 UTC, so 1 ~ 24 UTC
+    emis_fire = emis_fire[1:,:,:,:]
+    emis_gas  = emis_gas[1:,:,:,:]
+
     emis_tot  = emis_beis + emis_fire + emis_gas #emission for model has lightning and aviation emissions in addition to emis_tot
+  
+    if gasname == 'NO2':
+        err_emis = ((emis_gas/emis_tot)**2)*((0.5*emis_gas)**2) + ((emis_beis/emis_tot)**2)*((2*emis_beis)**2) + \
+                ((emis_fire/emis_tot)**2)*((1*emis_fire)**2)
+    elif gasname == 'HCHO' or gasname == 'ISOP':
+        err_emis = ((emis_gas/emis_tot)**2)*((1.5*emis_gas)**2) + ((emis_beis/emis_tot)**2)*((2*emis_beis)**2) + \
+                ((emis_fire/emis_tot)**2)*((3*emis_fire)**2)
+
+    #time
+    time_ddm = [] 
+    time_emis = []
+    for t in range(np.shape(time_var_ddm)[0]):
+        cmaq_date = datetime.datetime.strptime(str(time_var_ddm[t,0,0]),'%Y%j').date()
+        time_ddm.append(datetime.datetime(int(cmaq_date.strftime('%Y')),int(cmaq_date.strftime('%m')), \
+                int(cmaq_date.strftime('%d')),int(time_var_ddm[t,0,1]/10000.0),0,0) + \
+                datetime.timedelta(minutes=0))
     
-    inv_data = ddm_emis_model(ddm_out,emis_beis,emis_fire,emis_gas,emis_tot)
+    for t in range(np.shape(time_var_emis)[0]):
+        cmaq_date = datetime.datetime.strptime(str(time_var_emis[t,0,0]),'%Y%j').date()
+        time_emis.append(datetime.datetime(int(cmaq_date.strftime('%Y')),int(cmaq_date.strftime('%m')), \
+                int(cmaq_date.strftime('%d')),int(time_var_emis[t,0,1]/10000.0),0,0) + \
+                datetime.timedelta(minutes=0))
+
+
+    inv_data = ddm_emis_model(time_ddm,time_emis,ddm_out,emis_tot,err_emis)
     return inv_data
     
 
@@ -900,7 +939,7 @@ class readers(object):
         self.satellite_product_name = product_name
 
     def add_ctm_data(self, product_name: int, product_dir: Path, mcip_dir: Path, \
-            ddm_dir_NOX: Path, ddm_dir_VOC: Path, emis_dir: Path):
+            ddm_dir_NOX: Path, ddm_dir_VOC: Path, ddm_dir_ISOP: Path, emis_dir: Path):
         '''
             add CTM data
             Input:
@@ -917,8 +956,9 @@ class readers(object):
         self.ctm_product_dir = product_dir
         self.mcip_product_dir = mcip_dir
         self.ctm_product = product_name
-        self.ddm_product_dir_NOX = ddm_dir_NOX
-        self.ddm_product_dir_VOC = ddm_dir_VOC
+        self.ddm_product_dir_NOX  = ddm_dir_NOX
+        self.ddm_product_dir_VOC  = ddm_dir_VOC
+        self.ddm_product_dir_ISOP = ddm_dir_ISOP 
         self.emis_product_dir = emis_dir
 
     def read_satellite_data(self, YYYYMM: str, read_ak=True, trop=False, num_job=1):
@@ -976,6 +1016,13 @@ class readers(object):
                                    self.ddm_product_dir_VOC.as_posix(),
                                    self.emis_product_dir.as_posix(),
                                    YYYYMM,gas,read_inv,num_job=num_job)
+        elif self.ctm_product == 'CMAQ' and gas == 'ISOP':
+            ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
+                                   self.mcip_product_dir.as_posix(),
+                                   self.ddm_product_dir_ISOP.as_posix(),
+                                   self.emis_product_dir.as_posix(),
+                                   YYYYMM,gas,read_inv,num_job=num_job)
+
 
         #print('shape of ctm_data:',np.shape(ctm_data)) --> [2, number of days]
 
@@ -1017,9 +1064,10 @@ if __name__ == "__main__":
                             Path('/nobackup/jjung13/ACMAP_mcipout/2019'), \
                             Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_NOX'), \
                             Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_VOC'), \
+                            Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_ISOP'), \
                             Path('/nobackup/jjung13/ACMAP_4D_EMIS/2019/sources'))
 
-    reader_obj.read_ctm_data('201904', 'NO2', read_inv=True, averaged=True)
+    reader_obj.read_ctm_data('201904', 'HCHO', read_inv=True, averaged=True)
  #   reader_obj.add_satellite_data(
  #       'TROPOMI_NO2',Path('/nobackup/jjung13/ACMAP_satellite/TROPOMI_NO2/'))
 

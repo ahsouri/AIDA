@@ -61,8 +61,8 @@ class ctm_model:
 
 @dataclass
 class ddm_emis_model:
+    time_ddm: list
+    time_emis: list
     ddm_out: np.ndarray
-    emis_beis: np.ndarray
-    emis_fire: np.ndarray
-    emis_gas: np.ndarray
     emis_tot: np.ndarray
+    emis_err: np.ndarray
