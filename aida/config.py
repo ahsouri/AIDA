@@ -22,6 +22,9 @@ class satellite_amf:
     ctm_time_at_sat: datetime.datetime
     old_amf: np.ndarray
     new_amf: np.ndarray
+    ddm_vcd: np.ndarray
+    emis_tot: np.ndarray
+    emis_err: np.ndarray
 
 @dataclass
 class satellite_opt:
@@ -66,3 +69,4 @@ class ddm_emis_model:
     ddm_out: np.ndarray
     emis_tot: np.ndarray
     emis_err: np.ndarray
+    averaged: bool

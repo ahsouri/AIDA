@@ -18,10 +18,12 @@ class aida(object):
         pass
 
     def read_data(self, ctm_type: str, ctm_path: Path, mcip_path: Path, ctm_gas_name: str,
-                  sat_type: str, sat_path: Path, YYYYMM: str, averaged=False, read_ak=True, trop=False, num_job=1):
+                  sat_type: str, sat_path: Path, YYYYMM: str, error_fraction: list, read_ddm=False, averaged=False, read_ak=True, trop=False, num_job=1
+                  ):
         reader_obj = readers()
         reader_obj.add_ctm_data(ctm_type, ctm_path, mcip_path)
-        reader_obj.read_ctm_data(YYYYMM, ctm_gas_name, averaged=averaged, num_job=num_job)
+        reader_obj.read_ctm_data(
+            YYYYMM, ctm_gas_name, error_fraction, read_ddm=read_ddm, averaged=averaged)
         reader_obj.add_satellite_data(
             sat_type, sat_path)
         reader_obj.read_satellite_data(
@@ -141,12 +143,14 @@ class aida(object):
 if __name__ == "__main__":
 
     aida_obj = aida()
+    errors = [0.5, 1.0, 3.0]
     aida_obj.read_data('CMAQ', Path('/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/BC_monthly/'),
-                           Path('/nobackup/jjung13/ACMAP_mcipout/2019/'), 'NO2', 'OMI_NO2',
-                           Path('/nobackup/asouri/GITS/AIDA/aida/download_bucket/omi_no2/'), '201905',
-                           averaged=True, read_ak=True, trop=True, num_job=12)
+                       Path('/nobackup/jjung13/ACMAP_mcipout/2019/'), 'NO2', 'OMI_NO2',
+                       Path(
+                           '/nobackup/asouri/GITS/AIDA/aida/download_bucket/omi_no2/'), '201905',
+                        errors, read_ddm=True, averaged=True, read_ak=True, trop=True, num_job=12)
     aida_obj.recal_amf()
-    #aida_obj.conv_ak()
+    # aida_obj.conv_ak()
     aida_obj.average('2019-05-01', '2019-06-01')
     aida_obj.oi(error_ctm=50.0)
     aida_obj.reporting('OMI_NO2_new', 'NO2', folder='report')

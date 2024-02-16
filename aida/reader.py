@@ -132,7 +132,7 @@ def tropomi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) ->
     uncertainty = (uncertainty*6.02214*1e19*1e-15).astype('float16')
 
     tropomi_hcho = satellite_amf(vcd, scd, time, np.empty((1)), latitude_center, longitude_center,
-                                 [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [])
+                                 [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
@@ -233,7 +233,7 @@ def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_
     else:
         tropopause = np.empty((1))
     tropomi_no2 = satellite_amf(vcd, scd, time, tropopause, latitude_center, longitude_center,
-                                [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [])
+                                [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
@@ -337,7 +337,7 @@ def omi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=T
         tropopause = np.empty((1))
     # populate omi class
     omi_no2 = satellite_amf(vcd, scd, time, tropopause, latitude_center,
-                            longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [])
+                            longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
@@ -418,7 +418,7 @@ def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> sat
         tropopause = np.empty((1))
         # populate omi class
         omi_hcho = satellite_amf(vcd, scd, time, tropopause, latitude_center,
-                                 longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [])
+                                 longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
         # interpolation
         if (ctm_models_coordinate is not None):
             print('Currently interpolating ...')
@@ -429,73 +429,6 @@ def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> sat
         return omi_hcho
     except:
         return None
-
-
-def omi_reader_o3(fname: str, ctm_models_coordinate=None, read_ak=True) -> satellite_amf:
-    '''
-       OMI total ozone L2 reader
-       Inputs:
-             fname [str]: the name path of the L2 file
-             ctm_models_coordinate [dict]: a dictionary containing ctm lat and lon
-             read_ak [bool]: true for reading averaging kernels. this must be true for amf_recal 
-       Output:
-             omi_hcho [satellite_amf]: a dataclass format (see config.py)
-    '''
-
-    # say which file is being read
-    print("Currently reading: " + fname.split('/')[-1])
-    # read timeHDFEOS/SWATHS/OMI Column Amount O3/Geolocation Fields/Latitude
-    time = _read_group_nc(fname, ['HDFEOS', 'SWATHS',
-                                  'OMI Column Amount O3', 'Geolocation Fields'], 'Time')
-    time = np.squeeze(np.nanmean(time))
-    time = datetime.datetime(
-        1993, 1, 1) + datetime.timedelta(seconds=int(time))
-    # read lat/lon at centers
-    latitude_center = _read_group_nc(
-        fname, ['HDFEOS', 'SWATHS',
-                'OMI Column Amount O3', 'Geolocation Fields'], 'Latitude').astype('float32')
-    longitude_center = _read_group_nc(
-        fname, ['HDFEOS', 'SWATHS',
-                'OMI Column Amount O3', 'Geolocation Fields'], 'Longitude').astype('float32')
-
-    SZA = _read_group_nc(
-        fname, ['HDFEOS', 'SWATHS',
-                'OMI Column Amount O3', 'Geolocation Fields'], 'SolarZenithAngle').astype('float32')
-    # read hcho
-    vcd = _read_group_nc(
-        fname, ['HDFEOS', 'SWATHS',
-                'OMI Column Amount O3', 'Data Fields'], 'ColumnAmountO3')
-    vcd[np.where((vcd <= 0) | (np.isinf(vcd)) | (SZA > 80.0))] = np.nan
-    vcd = (vcd).astype('float16')
-    # read quality flag
-    quality_flag_temp = _read_group_nc(
-        fname, ['HDFEOS', 'SWATHS',
-                'OMI Column Amount O3', 'Data Fields'], 'QualityFlags').astype('float16')
-    quality_flag = np.zeros_like(quality_flag_temp)*-100.0
-    for i in range(0, np.shape(quality_flag)[0]):
-        for j in range(0, np.shape(quality_flag)[1]):
-            flag = '{0:08b}'.format(int(quality_flag_temp[i, j]))
-            if flag[-1] == '0':
-                quality_flag[i, j] = 1.0
-
-    # 4 percent error based on several studies
-    uncertainty = (vcd*0.04).astype('float16')
-
-    # no need to read tropopause for total O3
-    tropopause = np.empty((1))
-    SWs = np.empty((1))
-    # populate omi class
-    omi_o3 = satellite_amf(vcd, vcd, time, tropopause, latitude_center,
-                           longitude_center, [], [], uncertainty, quality_flag, [],  SWs, [], [], [], [], [])
-    # interpolation
-    if (ctm_models_coordinate is not None):
-        print('Currently interpolating ...')
-        grid_size = 0.25  # degree
-        omi_o3 = interpolator(
-            1, grid_size, omi_o3, ctm_models_coordinate, flag_thresh=0.0)
-    # return
-    return omi_o3
-
 
 def mopitt_reader_co(fname: str, ctm_models_coordinate=None, read_ak=True) -> satellite_opt:
     '''
@@ -583,61 +516,6 @@ def mopitt_reader_co(fname: str, ctm_models_coordinate=None, read_ak=True) -> sa
     return mopitt
 
 
-def gosat_reader_xch4(fname: str, ctm_models_coordinate=None, read_ak=True) -> satellite_opt:
-    '''
-       MOPITT CO L3 reader
-       Inputs:
-             fname [str]: the name path of the L2 file
-             ctm_models_coordinate [dict]: a dictionary containing ctm lat and lon
-             read_ak [bool]: true for reading averaging kernels. this must be true for amf_recal 
-       Output:
-             mopitt_co [satellite_opt]: a dataclass format (see config.py)
-    '''
-    # say which file is being read
-    print("Currently reading: " + fname.split('/')[-1])
-    time = _read_nc(fname, 'time')
-    time = np.squeeze(np.nanmean(time))
-    time = datetime.datetime(
-        1970, 1, 1) + datetime.timedelta(seconds=int(time))
-    # read lat/lon at centers
-    latitude_center = _read_nc(
-        fname, 'latitude').astype('float32')
-    longitude_center = _read_nc(
-        fname, 'longitude').astype('float32')
-    # read xch4
-    xch4 = _read_nc(fname, 'xch4')
-    xch4[np.where((xch4 <= 0) | (np.isinf(xch4)))] = np.nan
-
-    apriori_profile = _read_nc(fname, 'ch4_profile_apriori').transpose()
-    apriori_profile[apriori_profile <= 0] = np.nan
-    # read quality flag
-    quality_flag = _read_nc(fname, 'xch4_quality_flag')
-    uncertainty = _read_nc(fname, 'xch4_uncertainty')
-    # no need to read tropopause for total CO
-    tropopause = np.empty((1))
-    # read pressures for AKs
-    p_mid = _read_nc(fname, 'pressure_levels')
-    if read_ak == True:
-        AKs = _read_nc(fname, 'xch4_averaging_kernel') * \
-            _read_nc(fname, 'pressure_weight')
-
-        AKs = AKs.transpose()
-    else:
-        AKs = np.empty((1))
-
-    # populate mopitt class
-    mopitt = satellite_opt(xch4, time, [], tropopause, latitude_center,
-                           longitude_center, [], [], uncertainty, 1-quality_flag, p_mid, AKs, [], [], [], [], [], apriori_profile, [], [], xch4)
-    # interpolation
-    if (ctm_models_coordinate is not None):
-        print('Currently interpolating ...')
-        grid_size = 0.5  # degree
-        mopitt = interpolator(
-            1, grid_size, mopitt, ctm_models_coordinate, flag_thresh=0.0)
-    # return
-    return mopitt
-
-
 def tropomi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordinate: dict, YYYYMM: str, trop: bool, read_ak=True, num_job=1):
     '''
         reading tropomi data
@@ -672,7 +550,6 @@ def omi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordin
              satellite_product_name [str]: so far we support:
                                          "NO2"
                                          "HCHO"
-                                         "O3"
              ctm_models_coordinate [dict]: the ctm coordinates
              YYYYMM [int]: the target month and year, e.g., 202005 (May 2020)
              trop [bool]: true for considering the tropospheric region only
@@ -682,13 +559,9 @@ def omi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordin
     '''
 
     # find L2 files first
-    if satellite_product_name.split('_')[-1] != 'O3':
-        print(product_dir + "/*" + YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.nc")
-        L2_files = sorted(glob.glob(product_dir + "/*" +
-                                    YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.nc"))
-    else:
-        print(product_dir + "/*" + YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.he5")
-        L2_files = sorted(glob.glob(product_dir + "/*" +
+
+    print(product_dir + "/*" + YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.he5")
+    L2_files = sorted(glob.glob(product_dir + "/*" +
                                     YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.he5"))
     # read the files in parallel
     if satellite_product_name.split('_')[-1] == 'NO2':
@@ -697,15 +570,13 @@ def omi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordin
     elif satellite_product_name.split('_')[-1] == 'HCHO':
         outputs_sat = Parallel(n_jobs=num_job)(delayed(omi_reader_hcho)(
             L2_files[k], ctm_models_coordinate=ctm_models_coordinate, read_ak=read_ak) for k in range(len(L2_files)))
-    elif satellite_product_name.split('_')[-1] == 'O3':
-        outputs_sat = Parallel(n_jobs=num_job)(delayed(omi_reader_o3)(
-            L2_files[k], ctm_models_coordinate=ctm_models_coordinate, read_ak=read_ak) for k in range(len(L2_files)))
+    
     return outputs_sat
 
 
 def mopitt_reader(product_dir: str, ctm_models_coordinate: dict, YYYYMM: str, read_ak=True, num_job=1):
     '''
-        reading mopitt data
+        Reading mopitt data
              product_dir [str]: the folder containing the tropomi data
              ctm_models_coordinate [dict]: the ctm coordinates
              YYYYMM [int]: the target month and year, e.g., 202005 (May 2020)
@@ -717,24 +588,6 @@ def mopitt_reader(product_dir: str, ctm_models_coordinate: dict, YYYYMM: str, re
                                 YYYYMM[0:4] + YYYYMM[4::] + "*.he5"))
     outputs_sat = Parallel(n_jobs=num_job)(delayed(mopitt_reader_co)(
         L3_files[k], ctm_models_coordinate=ctm_models_coordinate, read_ak=read_ak) for k in range(len(L3_files)))
-    return outputs_sat
-
-
-def gosat_reader(product_dir: str, ctm_models_coordinate: dict, YYYYMM: str, read_ak=True, num_job=1):
-    '''
-        reading mopitt data
-             product_dir [str]: the folder containing the tropomi data
-             ctm_models_coordinate [dict]: the ctm coordinates
-             YYYYMM [int]: the target month and year, e.g., 202005 (May 2020)
-             read_ak [bool]: true for reading averaging kernels. this must be true for amf_recal
-             num_job [int]: the number of jobs for parallel computation
-        Output [tropomi]: the mopitt @dataclass
-    '''
-    L2_files = sorted(glob.glob(product_dir + "/" + YYYYMM[0:4] + "/*" +
-                                YYYYMM[0:4] + YYYYMM[4::] + "*.nc"))
-    print(L2_files)
-    outputs_sat = Parallel(n_jobs=num_job)(delayed(gosat_reader_xch4)(
-        L2_files[k], ctm_models_coordinate=ctm_models_coordinate, read_ak=read_ak) for k in range(len(L2_files)))
     return outputs_sat
 
 
@@ -888,7 +741,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
 
     err_emis = ((emis_anthro/emis_tot)**2)*((err_anthro*emis_anthro)**2) + ((emis_bio/emis_tot)**2)*((err_bio*emis_bio)**2) + \
         ((emis_bb/emis_tot)**2)*((err_bb*emis_bb)**2)
-    err_emis = np.sqrt(err_emis)
+    err_emis = np.sqrt(err_emis) #same unit as the emissions
 
     # time for ddm and emiss list files
     time_ddm = []
@@ -907,7 +760,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
                                            int(cmaq_date.strftime('%d')), int(time_var_emis[t, 0, 1]/10000.0), 0, 0) +
                          datetime.timedelta(minutes=0))
 
-    ddm_emis = ddm_emis_model(time_ddm, time_emis, ddm_out, emis_tot, err_emis)
+    ddm_emis = ddm_emis_model(time_ddm, time_emis, ddm_out, emis_tot, err_emis, False)
 
     return ddm_emis
 
@@ -1035,40 +888,38 @@ class readers(object):
             self.sat_data = mopitt_reader(self.satellite_product_dir.as_posix(),
                                           ctm_models_coordinate,
                                           YYYYMM, read_ak=read_ak, num_job=num_job)
-        elif satellite == 'GOSAT':
-            self.sat_data = gosat_reader(self.satellite_product_dir.as_posix(),
-                                         ctm_models_coordinate,
-                                         YYYYMM, read_ak=read_ak, num_job=num_job)
         else:
             raise Exception("the satellite is not supported, come tomorrow!")
 
-    def read_ctm_data(self, YYYYMM: str, gas: str, error_frac: list, read_inv=False, averaged=False):
+    def read_ctm_data(self, YYYYMM: str, gas: str, error_frac: list, read_ddm=False, averaged=False):
         '''
             read ctm data
             Input:
              YYYYMM [str]: the target month and year, e.g., 202005 (May 2020)
-             gases_to_be_saved [str]: name of the gas to be loaded. e.g., 'NO2'
-             num_job [int]: the number of jobs for parallel computation
+             gas [str]: name of the gas to be loaded. e.g., 'NO2'
+             error_frac [list]: fractional errors of anthro, bio, and bb
+             read_ddm [bool]: whether read ddm output and emissions or not
+             averaged [bool]: averaging ctm over a month or use the daily values
         '''
 
-        if self.ctm_product == 'CMAQ' and gas == 'NO2':
+        if gas == 'NO2':
             ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
                                    self.mcip_product_dir.as_posix(),
                                    self.ddm_product_dir_NOX.as_posix(),
                                    self.emis_product_dir.as_posix(),
-                                   YYYYMM, gas, read_inv, error_frac)
-        elif self.ctm_product == 'CMAQ' and gas == 'HCHO':
+                                   YYYYMM, gas, read_ddm, error_frac)
+        elif gas == 'HCHO':
             ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
                                    self.mcip_product_dir.as_posix(),
                                    self.ddm_product_dir_VOC.as_posix(),
                                    self.emis_product_dir.as_posix(),
-                                   YYYYMM, gas, read_inv, error_frac)
-        elif self.ctm_product == 'CMAQ' and gas == 'ISOP':
+                                   YYYYMM, gas, read_ddm, error_frac)
+        elif gas == 'ISOP':
             ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
                                    self.mcip_product_dir.as_posix(),
                                    self.ddm_product_dir_ISOP.as_posix(),
                                    self.emis_product_dir.as_posix(),
-                                   YYYYMM, gas, read_inv, error_frac)
+                                   YYYYMM, gas, read_ddm, error_frac)
 
         if averaged == True:
             # constant variables
@@ -1077,7 +928,7 @@ class readers(object):
             longitude = ctm_data[0][0].longitude
             time = ctm_data[0][0].time
             ctm_type = 'CMAQ'
-            # averaging over variable things
+            # averaging over variables in the ctm
             gas_profile = []
             pressure_mid = []
             delta_p = []
@@ -1093,10 +944,30 @@ class readers(object):
             self.ctm_data = []
             self.ctm_data.append(ctm_model(latitude, longitude, time, gas_profile,
                                            pressure_mid, [], delta_p, ctm_type, True))
-            ctm_data = []
+            
+            if read_ddm== True:
+                time_ddm = ctm_data[1][0].time_ddm
+                time_emis = ctm_data[1][0].time_emis
+                # averaging over variables in the ddm/emis
+                ddm_out = []
+                emis_tot = []
+                emis_err = []
+                for ddm in ctm_data[1]:
+                    ddm_out.append(ddm.ddm_out)
+                    emis_tot.append(ddm.emis_tot)
+                    emis_err.append(ddm.emis_err)
 
-        else:
+                ddm_out = np.nanmean(np.array(ddm_out), axis=0)
+                emis_tot = np.nanmean(np.array(emis_tot), axis=0)
+                emis_err = np.sqrt(np.nanmean(np.array(emis_err**2), axis=0))
+                # shape up the ddm class
+                self.ddm_data = []
+                self.ddm_data.append(ddm_emis_model(time_ddm,time_emis,ddm_out,emis_tot,emis_err, True))
+
+            ctm_data = []
+        else: # no averaging
             self.ctm_data = ctm_data[0]
+            self.ddm_data = ctm_data[1]
             ctm_data = []
 
 
