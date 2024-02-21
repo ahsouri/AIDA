@@ -430,6 +430,7 @@ def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> sat
     except:
         return None
 
+
 def mopitt_reader_co(fname: str, ctm_models_coordinate=None, read_ak=True) -> satellite_opt:
     '''
        MOPITT CO L3 reader
@@ -562,7 +563,7 @@ def omi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordin
 
     print(product_dir + "/*" + YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.he5")
     L2_files = sorted(glob.glob(product_dir + "/*" +
-                                    YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.he5"))
+                                YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.he5"))
     # read the files in parallel
     if satellite_product_name.split('_')[-1] == 'NO2':
         outputs_sat = Parallel(n_jobs=num_job)(delayed(omi_reader_no2)(
@@ -570,7 +571,7 @@ def omi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordin
     elif satellite_product_name.split('_')[-1] == 'HCHO':
         outputs_sat = Parallel(n_jobs=num_job)(delayed(omi_reader_hcho)(
             L2_files[k], ctm_models_coordinate=ctm_models_coordinate, read_ak=read_ak) for k in range(len(L2_files)))
-    
+
     return outputs_sat
 
 
@@ -741,7 +742,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
 
     err_emis = ((emis_anthro/emis_tot)**2)*((err_anthro*emis_anthro)**2) + ((emis_bio/emis_tot)**2)*((err_bio*emis_bio)**2) + \
         ((emis_bb/emis_tot)**2)*((err_bb*emis_bb)**2)
-    err_emis = np.sqrt(err_emis) #same unit as the emissions
+    err_emis = np.sqrt(err_emis)  # same unit as the emissions
 
     # time for ddm and emiss list files
     time_ddm = []
@@ -760,12 +761,13 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
                                            int(cmaq_date.strftime('%d')), int(time_var_emis[t, 0, 1]/10000.0), 0, 0) +
                          datetime.timedelta(minutes=0))
 
-    ddm_emis = ddm_emis_model(time_ddm, time_emis, ddm_out, emis_tot, err_emis, False)
+    ddm_emis = ddm_emis_model(
+        time_ddm, time_emis, ddm_out, emis_tot, err_emis, False)
 
     return ddm_emis
 
 
-def CMAQ_reader(product_dir: str, mcip_product_dir: str, ddm_product_dir: str, emis_product_dir: str, YYYYMM: str, gas_to_be_saved: str, read_inv: bool, error_frac:list):
+def CMAQ_reader(product_dir: str, mcip_product_dir: str, ddm_product_dir: str, emis_product_dir: str, YYYYMM: str, gas_to_be_saved: str, read_inv: bool, error_frac: list):
     '''
        GMI reader
        Inputs:
@@ -802,7 +804,7 @@ def CMAQ_reader(product_dir: str, mcip_product_dir: str, ddm_product_dir: str, e
 
     target_jdays = range(
         jday_mm_st[int(YYYYMM[-2:])-1], jday_mm_ed[int(YYYYMM[-2:])-1]+1)
- 
+
     outputs_ctm = []
     outputs_ddm = []
 
@@ -841,7 +843,7 @@ class readers(object):
         self.satellite_product_name = product_name
 
     def add_ctm_data(self, product_name: int, product_dir: Path, mcip_dir: Path,
-                     ddm_dir_NOX: Path, ddm_dir_VOC: Path, ddm_dir_ISOP: Path, emis_dir: Path):
+                     ddm_dir: Path, emis_dir: Path):
         '''
             add CTM data
             Input:
@@ -849,8 +851,7 @@ class readers(object):
                                 "CMAQ"
                 product_dir  [Path]: a path object describing the path of CTM files
                 mcip_dir  [Path]: a path object describing the path of MCIP files
-                ddm_dir_NOX [Path]: a path object describing the path of DDM output for NOx emissions
-                ddm dir VOC [Path]: a path object describing the path of DDM output for VOC emissions
+                ddm_dir [Path]: a path object describing the path of DDM output
                 emis dir [Path]: a path object describing the path of emission files (beis, fire, gc, tot)
 
         '''
@@ -858,9 +859,7 @@ class readers(object):
         self.ctm_product_dir = product_dir
         self.mcip_product_dir = mcip_dir
         self.ctm_product = product_name
-        self.ddm_product_dir_NOX = ddm_dir_NOX
-        self.ddm_product_dir_VOC = ddm_dir_VOC
-        self.ddm_product_dir_ISOP = ddm_dir_ISOP
+        self.ddm_dir = ddm_dir
         self.emis_product_dir = emis_dir
 
     def read_satellite_data(self, YYYYMM: str, read_ak=True, trop=False, num_job=1):
@@ -901,25 +900,13 @@ class readers(object):
              read_ddm [bool]: whether read ddm output and emissions or not
              averaged [bool]: averaging ctm over a month or use the daily values
         '''
+        self.read_ddm = read_ddm
 
-        if gas == 'NO2':
-            ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
-                                   self.mcip_product_dir.as_posix(),
-                                   self.ddm_product_dir_NOX.as_posix(),
-                                   self.emis_product_dir.as_posix(),
-                                   YYYYMM, gas, read_ddm, error_frac)
-        elif gas == 'HCHO':
-            ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
-                                   self.mcip_product_dir.as_posix(),
-                                   self.ddm_product_dir_VOC.as_posix(),
-                                   self.emis_product_dir.as_posix(),
-                                   YYYYMM, gas, read_ddm, error_frac)
-        elif gas == 'ISOP':
-            ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
-                                   self.mcip_product_dir.as_posix(),
-                                   self.ddm_product_dir_ISOP.as_posix(),
-                                   self.emis_product_dir.as_posix(),
-                                   YYYYMM, gas, read_ddm, error_frac)
+        ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
+                               self.mcip_product_dir.as_posix(),
+                               self.ddm_dir.as_posix(),
+                               self.emis_product_dir.as_posix(),
+                               YYYYMM, gas, read_ddm, error_frac)
 
         if averaged == True:
             # constant variables
@@ -944,8 +931,8 @@ class readers(object):
             self.ctm_data = []
             self.ctm_data.append(ctm_model(latitude, longitude, time, gas_profile,
                                            pressure_mid, [], delta_p, ctm_type, True))
-            
-            if read_ddm== True:
+
+            if read_ddm == True:
                 time_ddm = ctm_data[1][0].time_ddm
                 time_emis = ctm_data[1][0].time_emis
                 # averaging over variables in the ddm/emis
@@ -962,10 +949,11 @@ class readers(object):
                 emis_err = np.sqrt(np.nanmean(np.array(emis_err**2), axis=0))
                 # shape up the ddm class
                 self.ddm_data = []
-                self.ddm_data.append(ddm_emis_model(time_ddm,time_emis,ddm_out,emis_tot,emis_err, True))
+                self.ddm_data.append(ddm_emis_model(
+                    time_ddm, time_emis, ddm_out, emis_tot, emis_err, True))
 
             ctm_data = []
-        else: # no averaging
+        else:  # no averaging
             self.ctm_data = ctm_data[0]
             self.ddm_data = ctm_data[1]
             ctm_data = []

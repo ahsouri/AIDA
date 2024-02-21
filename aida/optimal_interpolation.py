@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.io import savemat
 from kneed import KneeLocator
+from aida.config import OI_fields
 
 
 def OI(Xa: np.array, Y: np.array, Sa: np.array, So: np.array, regularization_on=True):
@@ -48,4 +49,5 @@ def OI(Xa: np.array, Y: np.array, Sa: np.array, So: np.array, regularization_on=
     increment = kalman_gain*(Y-Xa)
     Xb = Xa + increment
 
-    return Xb, averaging_kernel, increment, np.sqrt(Sb)
+    output = OI_fields(Xb, averaging_kernel, increment, np.sqrt(Sb))
+    return output

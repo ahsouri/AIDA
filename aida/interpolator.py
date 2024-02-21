@@ -57,8 +57,10 @@ def _upscaler(X: np.array, Y: np.array, Z: np.array, ctm_models_coordinate: dict
         # upscaling is needed
         size_kernel_x = np.floor(size_grid_model_lon/grid_size)
         size_kernel_y = np.floor(size_grid_model_lat/grid_size)
-        if size_kernel_x == 0 : size_kernel_x = 1
-        if size_kernel_y == 0 : size_kernel_y = 1
+        if size_kernel_x == 0:
+            size_kernel_x = 1
+        if size_kernel_y == 0:
+            size_kernel_y = 1
         kernel = _boxfilter(size_kernel_y, size_kernel_x)
         Z = signal.convolve2d(Z, kernel, boundary='symm', mode='same')
         # define the triangulation
@@ -133,7 +135,8 @@ def interpolator(interpolator_type: int, grid_size: float, sat_data, ctm_models_
 
     lon_grid = np.arange(lon_ctm_min, lon_ctm_max+grid_size, grid_size)
     lat_grid = np.arange(lat_ctm_min, lat_ctm_max+grid_size, grid_size)
-    lons_grid, lats_grid = np.meshgrid(lon_grid.astype('float16'), lat_grid.astype('float16'))
+    lons_grid, lats_grid = np.meshgrid(
+        lon_grid.astype('float16'), lat_grid.astype('float16'))
     # calculate distance to remove too-far estimates
     tree = cKDTree(points)
     grid = np.zeros((2, np.shape(lons_grid)[0], np.shape(lons_grid)[1]))
@@ -208,13 +211,13 @@ def interpolator(interpolator_type: int, grid_size: float, sat_data, ctm_models_
             _, _, surface_pressure, _ = _upscaler(lons_grid, lats_grid, _interpolosis(
                 tri, sat_data.surface_pressure*mask, lons_grid, lats_grid, interpolator_type, dists, grid_size),
                 ctm_models_coordinate, grid_size, threshold_ctm)
-        
+
         if sat_data.apriori_surface.any():
             print('....................... apriori surface')
             _, _, apriori_surface, _ = _upscaler(lons_grid, lats_grid, _interpolosis(
                 tri, sat_data.apriori_surface*mask, lons_grid, lats_grid, interpolator_type, dists, grid_size),
                 ctm_models_coordinate, grid_size, threshold_ctm)
-        
+
         print('....................... Xcol')
         _, _, x_col, _ = _upscaler(lons_grid, lats_grid, _interpolosis(
             tri, sat_data.x_col*mask, lons_grid, lats_grid, interpolator_type, dists, grid_size),
@@ -247,8 +250,8 @@ def interpolator(interpolator_type: int, grid_size: float, sat_data, ctm_models_
                                                                          * mask, lons_grid, lats_grid, interpolator_type, dists, grid_size), ctm_models_coordinate, grid_size, threshold_ctm)
     if isinstance(sat_data, satellite_opt):
         interpolated_sat = satellite_opt(vcd, sat_data.time, [], tropopause, latitude_center, longitude_center, [
-        ], [], uncertainty, [], pressure_mid, averaging_kernels, upscaled_ctm_needed, [], [], [], 
-        aprior_col, apriori_profile, surface_pressure, apriori_surface, x_col)
+        ], [], uncertainty, [], pressure_mid, averaging_kernels, upscaled_ctm_needed, [], [], [],
+            aprior_col, apriori_profile, surface_pressure, apriori_surface, x_col)
     elif isinstance(sat_data, satellite_amf):
         interpolated_sat = satellite_amf(vcd, scd, sat_data.time, tropopause, latitude_center, longitude_center, [
         ], [], uncertainty, [], pressure_mid, scattering_weights, upscaled_ctm_needed, [], [], [], [])

@@ -26,6 +26,7 @@ class satellite_amf:
     emis_tot: np.ndarray
     emis_err: np.ndarray
 
+
 @dataclass
 class satellite_opt:
     vcd: np.ndarray
@@ -50,6 +51,7 @@ class satellite_opt:
     apriori_surface: np.ndarray
     x_col: np.ndarray
 
+
 @dataclass
 class ctm_model:
     latitude: np.ndarray
@@ -62,6 +64,7 @@ class ctm_model:
     ctmtype: str
     averaged: bool
 
+
 @dataclass
 class ddm_emis_model:
     time_ddm: list
@@ -70,3 +73,27 @@ class ddm_emis_model:
     emis_tot: np.ndarray
     emis_err: np.ndarray
     averaged: bool
+
+@dataclass
+class averaged_field:
+    sat_vcd: np.ndarray
+    sat_err: np.ndarray
+    ctm_vcd: np.ndarray
+    amf_old: np.ndarray
+    amf_new: np.ndarray
+    aux1: np.ndarray
+    aux2: np.ndarray
+    ddm_vcd: np.ndarray
+    emis_total: np.ndarray
+    emis_error: np.ndarray
+
+@dataclass
+class OI:
+    ctm_corrected: np.ndarray
+    ak: np.ndarray
+    increment: np.ndarray
+    error_analysis: np.ndarray
+
+@dataclass 
+class inversion:
+    temp: np.ndarray
