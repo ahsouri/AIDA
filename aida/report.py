@@ -54,7 +54,7 @@ def plotter(X, Y, Z, fname: str, title: str, unit: int, vmin, vmax):
     elif unit == 5:
         cbar.set_label(r'$[ppmv] $', fontsize=18)
     elif unit == 6:
-        cbar.set_label(r'$[g/s] $', fontsize=18)
+        cbar.set_label(r'$[g/s/km2] $', fontsize=18)
     plt.title(title, loc='left', fontweight='bold', fontsize=20)
     plt.tight_layout()
     fig.savefig(fname, format='png', dpi=300)
@@ -154,12 +154,13 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
         unit = 4
         aux = 'xcol'
         # scaling to match 1x10^18
-        ctm_vcd_before = ctm_vcd_before*1e-3
-        ctm_vcd_after = ctm_vcd_after*1e-3
-        sat_vcd = sat_vcd*1e-3
-        sat_err = sat_err*1e-3
-        increment = increment*1e-3
-        error_OI = error_OI*1e-3
+        averaged_generic_fields.ctm_vcd = averaged_generic_fields.ctm_vcd*1e-3
+        averaged_generic_fields.sat_vcd = averaged_generic_fields.sat_vcd*1e-3
+        averaged_generic_fields.sat_err = averaged_generic_fields.sat_err*1e-3
+        if oi_fields:
+           oi_fields.increment = oi_fields.increment*1e-3
+           oi_fields.error_analysis = oi_fields.error_analysis*1e-3
+           oi_fields.ctm_corrected = oi_fields.ctm_corrected*1e-3
         unit_aux = 5
         vmin_aux = 0
         vmax_aux = 0.15
@@ -181,14 +182,14 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
                 fname + '.png', 'XCO (Sat)', unit_aux, vmin_aux, vmax_aux)
         plotter(lon, lat, averaged_generic_fields.aux2, 'temp/aux2_' +
                 fname + '.png', 'XCO (CTM-Prior)', unit_aux, vmin_aux, vmax_aux)
-    
-    plotter(lon, lat, averaged_generic_fields.ddm_averaged, 'temp/ddm_' +
+    if hasattr(averaged_generic_fields,'ddm_vcd'):
+       plotter(lon, lat, averaged_generic_fields.ddm_vcd, 'temp/ddm_' +
             fname + '.png', 'DDM (col)', 1, vmin_vcd, vmax_vcd)
-    plotter(lon, lat, averaged_generic_fields.emis_averaged, 'temp/emis_tot_' +
-            fname + '.png', 'Emission (total)', 6, vmin_vcd, vmax_vcd)   
-    plotter(lon, lat, averaged_generic_fields.emis_err_averaged, 'temp/emis_tot_' +
-            fname + '.png', 'Emission error (total)', 6, vmin_vcd, vmax_vcd)    
-        
+       plotter(lon, lat, averaged_generic_fields.emis_total, 'temp/emis_tot_' +
+            fname + '.png', 'Emission (total)', 6, vmin_vcd, vmax_vcd/10.0)
+       plotter(lon, lat, averaged_generic_fields.emis_error, 'temp/emis_err_' +
+            fname + '.png', 'Emission error (total)', 6, vmin_vcd, vmax_vcd/10.0)
+
     # OI fields
     if oi_fields:
         plotter(lon, lat, oi_fields.ctm_corrected, 'temp/ctm_vcd_after_' +

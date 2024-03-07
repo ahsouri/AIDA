@@ -79,8 +79,6 @@ class averaged_field:
     sat_vcd: np.ndarray
     sat_err: np.ndarray
     ctm_vcd: np.ndarray
-    amf_old: np.ndarray
-    amf_new: np.ndarray
     aux1: np.ndarray
     aux2: np.ndarray
     ddm_vcd: np.ndarray
@@ -88,7 +86,7 @@ class averaged_field:
     emis_error: np.ndarray
 
 @dataclass
-class OI:
+class OI_result:
     ctm_corrected: np.ndarray
     ak: np.ndarray
     increment: np.ndarray

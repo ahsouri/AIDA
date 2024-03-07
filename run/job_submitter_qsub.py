@@ -53,17 +53,17 @@ for year in range(np.min(list_years), np.max(list_years)+1):
         file = open('./jobs/' + 'job_' + str(year) +
                     '_' + str(month) + '.j', 'w')
         slurm_cmd = '#!/bin/bash \n'
-        slurm_cmd += '#PBS -l select=3:ncpus=4:mpiprocs=4:model=ivy  \n'
-        slurm_cmd += '#PBS -l walltime=3:00:00  \n'
-        slurm_cmd += '#PBS -N oi_gmi  \n'
+        slurm_cmd += '#PBS -l select=3:ncpus=6:mpiprocs=6:model=has  \n'
+        slurm_cmd += '#PBS -l walltime=7:00:00  \n'
+        slurm_cmd += '#PBS -N aida  \n'
         slurm_cmd += '#PBS -j oe  \n'
         #slurm_cmd += '#PBS -m abe  \n'
-        slurm_cmd += '#PBS -o oi_gmi_' + str(year) + str(month) + '.out  \n'
-        slurm_cmd += '#PBS -e oi_gmi_' + str(year) + str(month) + '.err  \n'
+        slurm_cmd += '#PBS -o aida_' + str(year) + str(month) + '.out  \n'
+        slurm_cmd += '#PBS -e aida_' + str(year) + str(month) + '.err  \n'
         slurm_cmd += '#PBS -W group_list=s1395 \n'
-        slurm_cmd += 'cd $PBS_O_WORKDIR  \n'
         if debug_on:
             slurm_cmd += '#PBS -q devel  \n'
+        slurm_cmd += 'cd $PBS_O_WORKDIR  \n'
         slurm_cmd += python_bin + ' ./job.py ' + str(year) + ' ' + str(month)
         file.writelines(slurm_cmd)
         file.close()

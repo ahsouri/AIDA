@@ -69,19 +69,17 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
             closest_index_ctm_hour = int(closest_index_ctm % 24)
             if ddm_data:
                 closest_index_ddm = np.argmin(np.abs(time_sat - time_ddm))
-                # find the closest hour (this only works for 3-hourly frequency)
                 closest_index_ddm_day = int(np.floor(closest_index_ddm/24.0))
                 closest_index_ddm_hour = int(closest_index_ddm % 24)
                 closest_index_emis = np.argmin(np.abs(time_sat - time_emis))
-                # find the closest hour (this only works for 3-hourly frequency)
                 closest_index_emis_day = int(np.floor(closest_index_emis/24.0))
                 closest_index_emis_hour = int(closest_index_emis % 24)
         else:
             closest_index_ctm = np.argmin(
                 np.abs(time_sat_hour_only - time_ctm_hour_only))
             # find the closest hour
-            closest_index_hour = int(closest_index_ctm)
-            closest_index_day = int(0)
+            closest_index_ctm_hour = int(closest_index_ctm)
+            closest_index_ctm_day = int(0)
             if ddm_data:
                 closest_index_ddm = np.argmin(
                     np.abs(time_sat_hour_only - time_ddm_hour_only))
@@ -90,7 +88,6 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
                 closest_index_ddm_day = int(0)
                 closest_index_emis = np.argmin(
                     np.abs(time_sat_hour_only - time_emis_hour_only))
-                # find the closest hour
                 closest_index_emis_hour = int(closest_index_emis)
                 closest_index_emis_day = int(0)
 
@@ -107,21 +104,21 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
         g = 9.80665
         N_A = 6.02214076e23
 
-        ctm_mid_pressure = ctm_data[closest_index_day].pressure_mid[closest_index_hour, :, :, :].squeeze(
+        ctm_mid_pressure = ctm_data[closest_index_ctm_day].pressure_mid[closest_index_ctm_hour, :, :, :].squeeze(
         )
-        ctm_profile = ctm_data[closest_index_day].gas_profile[closest_index_hour, :, :, :].squeeze(
+        ctm_profile = ctm_data[closest_index_ctm_day].gas_profile[closest_index_ctm_hour, :, :, :].squeeze(
         )
-        ctm_deltap = ctm_data[closest_index_day].delta_p[closest_index_hour, :, :, :].squeeze(
+        ctm_deltap = ctm_data[closest_index_ctm_day].delta_p[closest_index_ctm_hour, :, :, :].squeeze(
         )
         ctm_partial_column = ctm_deltap*ctm_profile/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
 
         # take emissions and DDM for the right ddm data
         if ddm_data:
-            ddm_out = ddm_data[closest_index_day].ddm_out[closest_index_hour, :, :, :].squeeze(
+            ddm_out = ddm_data[closest_index_ddm_day].ddm_out[closest_index_ddm_hour, :, :, :].squeeze(
             )
-            emis_tot = ddm_data[closest_index_day].emis_tot[closest_index_hour, :, :].squeeze(
+            emis_tot = ddm_data[closest_index_ddm_day].emis_tot[closest_index_emis_hour, :, :].squeeze(
             )
-            emis_err = ddm_data[closest_index_day].emis_err[closest_index_hour, :, :].squeeze(
+            emis_err = ddm_data[closest_index_ddm_day].emis_err[closest_index_emis_hour, :, :].squeeze(
             )
             # convert the DDM to represent the partial column
             ddm_partial = ctm_deltap*ddm_out/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
@@ -165,29 +162,12 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
                                             np.shape(L2_granule.longitude_center)[0], np.shape(
                     L2_granule.longitude_center)[1],
                 ))*np.nan
-                sat_coordinate = {}
-                sat_coordinate["Longitude"] = L2_granule.longitude_center
-                sat_coordinate["Latitude"] = L2_granule.latitude_center
-                size_grid_sat_lon = np.abs(
-                    sat_coordinate["Longitude"][0, 0]-sat_coordinate["Longitude"][0, 1])
-                size_grid_sat_lat = np.abs(
-                    sat_coordinate["Latitude"][0, 0] - sat_coordinate["Latitude"][1, 0])
-                threshold_sat = np.sqrt(
-                    size_grid_sat_lon**2 + size_grid_sat_lat**2)
-                ctm_longitude = ctm_data[0].longitude
-                ctm_latitude = ctm_data[0].latitude
-                size_grid_model_lon = np.abs(
-                    ctm_longitude[0, 0]-ctm_longitude[0, 1])
-                size_grid_model_lat = np.abs(
-                    ctm_latitude[0, 0] - ctm_latitude[1, 0])
-                gridsize_ctm = np.sqrt(size_grid_model_lon **
-                                       2 + size_grid_model_lat**2)
                 for z in range(0, np.shape(ctm_mid_pressure)[0]):
                     _, _, ddm_partial_new[z, :, :], _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
                                                                   ddm_partial[z, :, :], sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
-                emis_tot = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                _, _, emis_tot, _  = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
                                      emis_tot, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
-                emis_err = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                _, _, emis_err, _  = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
                                      emis_err**2, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
                 emis_err = np.sqrt(emis_err)
 
@@ -265,6 +245,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
         sat_data[counter].ctm_time_at_sat = time_ctm[closest_index_ctm]
         # populate ddm stuff if requested
         if ddm_data:
+            ddm_partial = np.nansum(ddm_partial,axis=0).squeeze()
             ddm_partial[np.isnan(L2_granule.vcd)] = np.nan
             ddm_partial[np.isinf(L2_granule.vcd)] = np.nan
             emis_tot[np.isinf(L2_granule.vcd)] = np.nan
@@ -272,8 +253,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
             emis_err[np.isinf(L2_granule.vcd)] = np.nan
             emis_err[np.isnan(L2_granule.vcd)] = np.nan
 
-            sat_data[counter].ddm_vcd = np.nansum(
-                ddm_partial, axis=0).squeeze()
+            sat_data[counter].ddm_vcd  = ddm_partial
             sat_data[counter].emis_tot = emis_tot
             sat_data[counter].emis_err = emis_err
 

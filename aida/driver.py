@@ -26,10 +26,7 @@ class aida(object):
                   ddm_path=[], emis_path=[], read_ddm=False, averaged=False, read_ak=True, trop=False, num_job=1
                   ):
         reader_obj = readers()
-        if read_ddm == False:
-            reader_obj.add_ctm_data(ctm_type, ctm_path, mcip_path, [], [])
-        else:
-            reader_obj.add_ctm_data(
+        reader_obj.add_ctm_data(
                 ctm_type, ctm_path, mcip_path, ddm_path, emis_path)
         reader_obj.read_ctm_data(
             YYYYMM, ctm_gas_name, error_fraction, read_ddm=read_ddm, averaged=averaged)
@@ -42,7 +39,7 @@ class aida(object):
         reader_obj = []
 
     def recal_amf(self):
-        if self.reader_obj.read_ddm == 'False':
+        if self.reader_obj.read_ddm == False:
             self.reader_obj.sat_data = amf_recal(
                 self.reader_obj.ctm_data, self.reader_obj.sat_data, [])
         else:
@@ -67,8 +64,8 @@ class aida(object):
     def oi(self, error_ctm=50.0):
 
         self.do_run_OI = True
-        self.oi_result = OI(self.averaged_fields.ctm_vcd, self.averaged_fields.sat_vcd
-                            (self.averaged_fields.ctm_vcd*error_ctm/100.0)**2, self.averaged_fields.sat_err**2, regularization_on=True)
+        self.oi_result = OI(self.averaged_fields.ctm_vcd, self.averaged_fields.sat_vcd,
+                              (self.averaged_fields.ctm_vcd*error_ctm/100.0)**2, self.averaged_fields.sat_err**2, regularization_on=True)
 
     def inversion(self):
 
@@ -103,8 +100,8 @@ class aida(object):
         ncfile = Dataset(output_folder + '/' + output_file + '.nc', 'w')
 
         # create the x and y dimensions.
-        ncfile.createDimension('x', np.shape(self.sat_averaged_vcd)[0])
-        ncfile.createDimension('y', np.shape(self.sat_averaged_vcd)[1])
+        ncfile.createDimension('x', np.shape(self.averaged_fields.sat_vcd)[0])
+        ncfile.createDimension('y', np.shape(self.averaged_fields.sat_vcd)[1])
 
         # generic fields
         data1 = ncfile.createVariable(
@@ -144,17 +141,19 @@ class aida(object):
             'aux2', dtype('float32').char, ('x', 'y'))
         data11[:, :] = self.averaged_fields.aux2
 
-        data12 = ncfile.createVariable(
-            'ddm_vcd', dtype('float32').char, ('x', 'y'))
-        data12[:, :] = self.averaged_fields.ddm_vcd
+        # DDM
+        if self.averaged_fields.ddm_vcd:
+           data12 = ncfile.createVariable(
+               'ddm_vcd', dtype('float32').char, ('x', 'y'))
+           data12[:, :] = self.averaged_fields.ddm_vcd
 
-        data13 = ncfile.createVariable(
-            'emis_tot', dtype('float32').char, ('x', 'y'))
-        data13[:, :] = self.averaged_fields.emis_total
+           data13 = ncfile.createVariable(
+               'emis_tot', dtype('float32').char, ('x', 'y'))
+           data13[:, :] = self.averaged_fields.emis_total
 
-        data14 = ncfile.createVariable(
-            'emis_err', dtype('float32').char, ('x', 'y'))
-        data14[:, :] = self.averaged_fields.emis_error
+           data14 = ncfile.createVariable(
+               'emis_err', dtype('float32').char, ('x', 'y'))
+           data14[:, :] = self.averaged_fields.emis_error
 
         if self.oi_result:
            # OI results

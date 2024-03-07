@@ -5,7 +5,7 @@ python_bin: '/nobackup/asouri/TOOLS/miniconda3/bin/python3'
 debug: False
 
 # validation only (if True, inversion and assimilation will be set to False)
-validation: True
+validation: False
 
 # number of jobs
 num_job: 12
@@ -14,23 +14,23 @@ num_job: 12
 ctm_name: 'CMAQ'
 
 # set the path of CTM netcdf files (either relative or absolute)
-ctm_conc_dir: 'download_bucket/gmi/'
+ctm_conc_dir: '/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/BC_monthly_add_CO/'
 
 # set the path of MCIP netcdf files (either relative or absolute)
-ctm_mcip_dir: 'download_bucket/gmi/'
+ctm_mcip_dir: '/nobackup/jjung13/ACMAP_mcipout/2019/'
 
 # set the path of CTM DDM netcdf files (either relative or absolute)
-ctm_ddm_dir: 'download_bucket/gmi/'
+ctm_ddm_dir: '/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_NOX/'
 
 # set the path of CTM EMISS netcdf files (either relative or absolute)
-ctm_emis_dir: 'download_bucket/gmi/'
+ctm_emis_dir: '/nobackup/jjung13/ACMAP_4D_EMIS/2019/sources/'
 
 # should we average CTM outputs to create monthly data? (reduce memory overhead by a lot)
 ctm_avg: True
 
 # state vectors
 state_vectors: 
-   - 'NO2'
+   - 'NOx'
    - 'HCHO'
    - 'CO'
    - 'NOx'
@@ -43,29 +43,28 @@ sensor:
    - 'TROPOMI'
    - 'TROPOMI'
 
-
 # set the path of L2 files
 sat_path:
-   - '/c/trop'
-   - '/c/trop'
-   - '/c/trop'
-   - '/c/trop'
-   - '/c/trop'
+   - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_NO2/'
+   - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_HCHO/'
+   - '/nobackup/jjung13/ACMAP_MOPITT/'
+   - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_NO2/'
+   - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_HCHO/'
 
 state_vector_conc_errors: # errors for NO2, HCHO, and CO columns in [%]
-   - 30
-   - 50
-   - 50
+   - 30.0
+   - 50.0
+   - 50.0
 
 state_vector_nox_errors: # errors for NOx source (anthro, bio, bb)
-   - 30
-   - 50
-   - 50
+   - 50.0
+   - 200.0
+   - 300.0
 
-state_vector_voc_errors: # errors for NOx source (anthro, bio, bb)
-   - 30
-   - 50
-   - 50
+state_vector_voc_errors: # errors for VOC source (anthro, bio, bb)
+   - 30.0
+   - 50.0
+   - 50.0
 
 inflate_errors: #inflate the state vector errors (same order as state vectors)
    - 1.0
@@ -78,8 +77,8 @@ inflate_errors: #inflate the state vector errors (same order as state vectors)
 troposphere_no2_only: True
 
 # starting date (YYYY-MM) and ending date (YYYY-MM) (the end point will be considered)
-start_date: '2022-06'
-end_date:   '2022-06'
+start_date: '2019-04'
+end_date:   '2019-04'
 
 # output folder for PDF reports
 output_pdf_dir: './report'

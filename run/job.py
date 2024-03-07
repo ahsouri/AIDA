@@ -40,12 +40,14 @@ for statev in state_vectors:
     # doing nox inversion
     if statev == 'NOx':
         do_inversion = True
+        do_oi = False
         read_ddm = True
         gasname = 'NO2'
         state_err = state_vector_nox_errors
     # doing voc inversion
     elif statev == 'VOC':
         do_inversion = True
+        do_oi = False
         read_ddm = True
         gasname = 'HCHO'
         state_err = state_vector_voc_errors
@@ -68,13 +70,12 @@ for statev in state_vectors:
         do_inversion = False
         do_oi = False
         read_ddm = False
-
     # calling AIDA
     aida_obj = aida()
-    aida_obj.read_data(ctm_name, ctm_conc_dir, ctm_mcip_dir, gasname, sensor[cnt], sat_path[cnt], str(year) + f"{month:02}",
-                       state_err, ctm_ddm_dir, ctm_emis_dir, read_ddm=read_ddm, averaged=ctm_avg, read_ak=True, trop=troposphere_no2_only, num_job=num_job)
+    aida_obj.read_data(ctm_name, Path(ctm_conc_dir), Path(ctm_mcip_dir), gasname, sensor[cnt]+ '_' + gasname, Path(sat_path[cnt]), str(year) + f"{month:02}",
+                       (state_err), Path(ctm_ddm_dir), Path(ctm_emis_dir), read_ddm=read_ddm, averaged=ctm_avg, read_ak=True, trop=troposphere_no2_only, num_job=num_job)
 
-    if sat_path[cnt] == "MOPITT":
+    if sensor[cnt] == "MOPITT":
         aida_obj.conv_ak()
     else:
         aida_obj.recal_amf()

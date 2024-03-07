@@ -42,6 +42,9 @@ def ak_conv(ctm_data: list, sat_data: list):
         time_sat = time_sat_datetime.year*10000 + time_sat_datetime.month*100 +\
             time_sat_datetime.day + time_sat_datetime.hour/24.0 + time_sat_datetime.minute / \
             60.0/24.0 + time_sat_datetime.second/3600.0/24.0
+        time_sat_hour_only = time_sat_datetime.hour/24.0 + time_sat_datetime.minute / \
+            60.0/24.0 + time_sat_datetime.second/3600.0/24.0
+
         # find the closest day
         if ctm_data[0].averaged == False:
             closest_index = np.argmin(np.abs(time_sat - time_ctm))

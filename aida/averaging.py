@@ -94,6 +94,9 @@ def averaging(startdate: str, enddate: str, reader_obj):
             ctm_averaged_vcd[:, :, month - min(list_months), year - min(
                 list_years)] = np.squeeze(np.nanmean(ctm_chosen_vcd, axis=0))
             if reader_obj.read_ddm == True:
+                emis_chosen = np.array(emis_chosen)
+                emis_err_chosen = np.array(emis_err_chosen)
+                ddm_chosen = np.array(ddm_chosen)
                 emis_averaged[:, :, month - min(list_months), year - min(
                     list_years)] = np.squeeze(np.nanmean(emis_chosen, axis=0))
                 emis_err_averaged[:, :, month - min(list_months), year - min(
