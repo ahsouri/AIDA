@@ -136,7 +136,7 @@ def tropomi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) ->
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
-        grid_size = 0.50  # degree
+        grid_size = 0.10  # degree
         tropomi_hcho = interpolator(
             1, grid_size, tropomi_hcho, ctm_models_coordinate, flag_thresh=0.5)
     # return
@@ -237,7 +237,7 @@ def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
-        grid_size = 0.50  # degree
+        grid_size = 0.10  # degree
         tropomi_no2 = interpolator(
             1, grid_size, tropomi_no2, ctm_models_coordinate, flag_thresh=0.75)
     # return
