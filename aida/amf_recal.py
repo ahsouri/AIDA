@@ -165,10 +165,10 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
                 for z in range(0, np.shape(ctm_mid_pressure)[0]):
                     _, _, ddm_partial_new[z, :, :], _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
                                                                   ddm_partial[z, :, :], sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
-                _, _, emis_tot, _  = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
-                                     emis_tot, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
-                _, _, emis_err, _  = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
-                                     emis_err**2, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+                _, _, emis_tot, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                                              emis_tot, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+                _, _, emis_err, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                                              emis_err**2, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
                 emis_err = np.sqrt(emis_err)
 
                 ddm_partial = ddm_partial_new
@@ -205,6 +205,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
 
         new_amf = np.zeros_like(L2_granule.vcd)*np.nan
         model_VCD = np.zeros_like(L2_granule.vcd)*np.nan
+        ddm_vcd = np.zeros_like(L2_granule.vcd)*np.nan
         # amf recal
         for i in range(0, np.shape(L2_granule.vcd)[0]):
             for j in range(0, np.shape(L2_granule.vcd)[1]):
@@ -212,6 +213,8 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
                     continue
                 ctm_partial_column_tmp = ctm_partial_column[:, i, j].squeeze()
                 ctm_mid_pressure_tmp = ctm_mid_pressure[:, i, j].squeeze()
+                if ddm_data:
+                    ctm_partial_column_ddm_tmp = ddm_partial[:, i, j].squeeze()
                 # interpolate
                 f = interpolate.interp1d(
                     np.log(L2_granule.pressure_mid[:, i, j].squeeze()),
@@ -225,8 +228,14 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
                                     L2_granule.tropopause[i, j]] = np.nan
                     ctm_partial_column_tmp[ctm_mid_pressure_tmp <
                                            L2_granule.tropopause[i, j]] = np.nan
+                    if ddm_data:
+                        ctm_partial_column_ddm_tmp[ctm_mid_pressure_tmp <
+                                                   L2_granule.tropopause[i, j]] = np.nan
                 # calculate model SCD
                 model_SCD = np.nansum(interpolated_SW*ctm_partial_column_tmp)
+                # ddm vcd
+                if ddm_data:
+                    ddm_vcd[i, j] = np.nansum(ctm_partial_column_ddm_tmp)
                 # calculate model VCD
                 model_VCD[i, j] = np.nansum(ctm_partial_column_tmp)
                 # calculate model AMF
@@ -245,15 +254,14 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
         sat_data[counter].ctm_time_at_sat = time_ctm[closest_index_ctm]
         # populate ddm stuff if requested
         if ddm_data:
-            ddm_partial = np.nansum(ddm_partial,axis=0).squeeze()
-            ddm_partial[np.isnan(L2_granule.vcd)] = np.nan
-            ddm_partial[np.isinf(L2_granule.vcd)] = np.nan
+            ddm_vcd[np.isnan(L2_granule.vcd)] = np.nan
+            ddm_vcd[np.isinf(L2_granule.vcd)] = np.nan
             emis_tot[np.isinf(L2_granule.vcd)] = np.nan
             emis_tot[np.isnan(L2_granule.vcd)] = np.nan
             emis_err[np.isinf(L2_granule.vcd)] = np.nan
             emis_err[np.isnan(L2_granule.vcd)] = np.nan
 
-            sat_data[counter].ddm_vcd  = ddm_partial
+            sat_data[counter].ddm_vcd = ddm_vcd
             sat_data[counter].emis_tot = emis_tot
             sat_data[counter].emis_err = emis_err
 

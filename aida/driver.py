@@ -23,7 +23,7 @@ class aida(object):
 
     def read_data(self, ctm_type: str, ctm_path: Path, mcip_path: Path, ctm_gas_name: str,
                   sat_type: str, sat_path: Path, YYYYMM: str, error_fraction: list,
-                  ddm_path=[], emis_path=[], read_ddm=False, averaged=False, read_ak=True, trop=False, num_job=1
+                  ddm_path=[], emis_path=[], read_ddm=False, averaged=False, read_ak=True, trop=True, num_job=1
                   ):
         reader_obj = readers()
         reader_obj.add_ctm_data(
@@ -142,7 +142,7 @@ class aida(object):
         data11[:, :] = self.averaged_fields.aux2
 
         # DDM
-        if hasattr(self.averaged_fields,'ddm_vcd'):
+        if self.reader_obj.read_ddm == False:
            data12 = ncfile.createVariable(
                'ddm_vcd', dtype('float32').char, ('x', 'y'))
            data12[:, :] = self.averaged_fields.ddm_vcd
