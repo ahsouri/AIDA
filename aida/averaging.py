@@ -116,7 +116,7 @@ def averaging(startdate: str, enddate: str, reader_obj):
     sat_aux2 = sat_aux2.squeeze()
     if reader_obj.read_ddm == True:
         emis_averaged = emis_averaged.squeeze()
-        emis_err_averaged = emis_averaged.squeeze()
+        emis_err_averaged = emis_err_averaged.squeeze()
         ddm_averaged = ddm_averaged.squeeze()
     # average over all data
     if sat_averaged_vcd.ndim == 4:

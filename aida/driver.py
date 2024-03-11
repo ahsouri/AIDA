@@ -142,7 +142,7 @@ class aida(object):
         data11[:, :] = self.averaged_fields.aux2
 
         # DDM
-        if self.averaged_fields.ddm_vcd:
+        if hasattr(self.averaged_fields,'ddm_vcd'):
            data12 = ncfile.createVariable(
                'ddm_vcd', dtype('float32').char, ('x', 'y'))
            data12[:, :] = self.averaged_fields.ddm_vcd
