@@ -241,7 +241,8 @@ def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_
         tropomi_no2 = interpolator(
             1, grid_size, tropomi_no2, ctm_models_coordinate, flag_thresh=0.75)
     # return
-    return tropomi_no2
+    if tropomi_no2 != 0:
+       return tropomi_no2
 
 
 def omi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=True) -> satellite_amf:
@@ -541,7 +542,7 @@ def tropomi_reader(product_dir: str, satellite_product_name: str, ctm_models_coo
     elif satellite_product_name.split('_')[-1] == 'HCHO':
         outputs_sat = Parallel(n_jobs=num_job)(delayed(tropomi_reader_hcho)(
             L2_files[k], ctm_models_coordinate=ctm_models_coordinate, read_ak=read_ak) for k in range(len(L2_files)))
-    return outputs_sat
+    return list(filter(lambda item: item is not None, outputs_sat))
 
 
 def omi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordinate: dict, YYYYMM: str, trop: bool, read_ak=True, num_job=1):
@@ -572,7 +573,7 @@ def omi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordin
         outputs_sat = Parallel(n_jobs=num_job)(delayed(omi_reader_hcho)(
             L2_files[k], ctm_models_coordinate=ctm_models_coordinate, read_ak=read_ak) for k in range(len(L2_files)))
 
-    return outputs_sat
+    return list(filter(lambda item: item is not None, outputs_sat))
 
 
 def mopitt_reader(product_dir: str, ctm_models_coordinate: dict, YYYYMM: str, read_ak=True, num_job=1):
@@ -589,7 +590,7 @@ def mopitt_reader(product_dir: str, ctm_models_coordinate: dict, YYYYMM: str, re
                                 YYYYMM[0:4] + YYYYMM[4::] + "*.he5"))
     outputs_sat = Parallel(n_jobs=num_job)(delayed(mopitt_reader_co)(
         L3_files[k], ctm_models_coordinate=ctm_models_coordinate, read_ak=read_ak) for k in range(len(L3_files)))
-    return outputs_sat
+    return list(filter(lambda item: item is not None, outputs_sat))
 
 
 def cmaq_reader_wrapper(dir_mcip: str, dir_cmaq: str, YYYYMM: str, k: int, gasname: str):

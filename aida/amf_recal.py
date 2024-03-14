@@ -112,17 +112,16 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
         )
         ctm_partial_column = ctm_deltap*ctm_profile/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
 
-        # take emissions and DDM for the right ddm data
+        # take emissions and DDM for the right L2 data
         if ddm_data:
             ddm_out = ddm_data[closest_index_ddm_day].ddm_out[closest_index_ddm_hour, :, :, :].squeeze(
             )
-            emis_tot = ddm_data[closest_index_ddm_day].emis_tot[closest_index_emis_hour, :, :].squeeze(
+            emis_tot = ddm_data[closest_index_emis_day].emis_tot[closest_index_emis_hour, :, :].squeeze(
             )
-            emis_err = ddm_data[closest_index_ddm_day].emis_err[closest_index_emis_hour, :, :].squeeze(
+            emis_err = ddm_data[closest_index_emis_day].emis_err[closest_index_emis_hour, :, :].squeeze(
             )
             # convert the DDM to represent the partial column
             ddm_partial = ctm_deltap*ddm_out/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
-
         # see if we need to upscale the ctm fields
         if L2_granule.ctm_upscaled_needed == True:
             ctm_mid_pressure_new = np.zeros((np.shape(ctm_mid_pressure)[0],
@@ -260,7 +259,6 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
             emis_tot[np.isnan(L2_granule.vcd)] = np.nan
             emis_err[np.isinf(L2_granule.vcd)] = np.nan
             emis_err[np.isnan(L2_granule.vcd)] = np.nan
-
             sat_data[counter].ddm_vcd = ddm_vcd
             sat_data[counter].emis_tot = emis_tot
             sat_data[counter].emis_err = emis_err
