@@ -59,9 +59,11 @@ def averaging(startdate: str, enddate: str, reader_obj):
                 emis_chosen = []
                 ddm_chosen = []
                 emis_err_chosen = []
+            counter = 0
             for sat_data in reader_obj.sat_data:
                 if (sat_data is None):
                     continue
+                counter = counter + 1
                 time_sat = sat_data.time
                 # see if it falls
                 if ((time_sat.year == year) and (time_sat.month == month)):
@@ -72,7 +74,9 @@ def averaging(startdate: str, enddate: str, reader_obj):
                         emis_chosen.append(sat_data.emis_tot)
                         ddm_chosen.append(sat_data.ddm_vcd)
                         emis_err_chosen.append(sat_data.emis_err)
-
+                        moutput = {}
+                        moutput["emis"] = sat_data.emis_tot
+                        savemat("emis_first_loop_" + str(counter) + ".mat", moutput)
                     if isinstance(sat_data, satellite_amf):
                         sat_chosen_aux1.append(sat_data.new_amf)
                         sat_chosen_aux2.append(sat_data.old_amf)
@@ -103,6 +107,9 @@ def averaging(startdate: str, enddate: str, reader_obj):
                     list_years)] = np.sqrt(np.squeeze(np.nanmean(emis_err_chosen**2, axis=0)))
                 ddm_averaged[:, :, month - min(list_months), year - min(
                     list_years)] = np.squeeze(np.nanmean(ddm_chosen, axis=0))
+                moutput = {}
+                moutput["emis"] = emis_averaged
+                savemat("emis_second_loop.mat", moutput)
         if np.size(sat_chosen_aux1) != 0:
             sat_aux1[:, :, month - min(list_months), year - min(
                 list_years)] = np.squeeze(np.nanmean(sat_chosen_aux1, axis=0))
@@ -116,6 +123,9 @@ def averaging(startdate: str, enddate: str, reader_obj):
     sat_aux2 = sat_aux2.squeeze()
     if reader_obj.read_ddm == True:
         emis_averaged = emis_averaged.squeeze()
+        moutput = {}
+        moutput["emis"] = emis_averaged
+        savemat("emis_third_loop.mat", moutput)
         emis_err_averaged = emis_err_averaged.squeeze()
         ddm_averaged = ddm_averaged.squeeze()
     # average over all data
@@ -154,6 +164,9 @@ def averaging(startdate: str, enddate: str, reader_obj):
         emis_averaged = []
         emis_err_averaged = []
 
+    moutput = {}
+    moutput["emis"] = emis_averaged
+    savemat("emis_fourth_loop.mat", moutput)
     output = averaged_field(sat_averaged_vcd, sat_averaged_error, ctm_averaged_vcd,
                             sat_aux1, sat_aux2, ddm_averaged, emis_averaged, emis_err_averaged)
     return output

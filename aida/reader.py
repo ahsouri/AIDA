@@ -140,8 +140,8 @@ def tropomi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) ->
         tropomi_hcho = interpolator(
             1, grid_size, tropomi_hcho, ctm_models_coordinate, flag_thresh=0.5)
     # return
-    return tropomi_hcho
-
+    if tropomi_hcho != 0:
+       return tropomi_hcho
 
 def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=True) -> satellite_amf:
     '''
@@ -346,8 +346,8 @@ def omi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=T
         omi_no2 = interpolator(
             1, grid_size, omi_no2, ctm_models_coordinate, flag_thresh=0.0)
     # return
-    return omi_no2
-
+    if omi_no2 != 0:
+       return omi_no2
 
 def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> satellite_amf:
     '''
@@ -427,7 +427,8 @@ def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> sat
             omi_hcho = interpolator(
                 1, grid_size, omi_hcho, ctm_models_coordinate, flag_thresh=0.0)
         # return
-        return omi_hcho
+        if omi_hcho != 0:
+           return omi_hcho
     except:
         return None
 
@@ -514,8 +515,10 @@ def mopitt_reader_co(fname: str, ctm_models_coordinate=None, read_ak=True) -> sa
         grid_size = 0.5 # degree
         mopitt = interpolator(
             1, grid_size, mopitt, ctm_models_coordinate, flag_thresh=0.0)
+
     # return
-    return mopitt
+    if mopitt != 0:
+       return mopitt
 
 
 def tropomi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordinate: dict, YYYYMM: str, trop: bool, read_ak=True, num_job=1):
