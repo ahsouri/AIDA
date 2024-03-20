@@ -39,6 +39,7 @@ class aida(object):
         reader_obj = []
 
     def recal_amf(self):
+
         if self.reader_obj.read_ddm == False:
             self.reader_obj.sat_data = amf_recal(
                 self.reader_obj.ctm_data, self.reader_obj.sat_data, [])

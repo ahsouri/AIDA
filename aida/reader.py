@@ -243,7 +243,8 @@ def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_
     # return
     if tropomi_no2 != 0:
        return tropomi_no2
-
+    else:
+       return None
 
 def omi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=True) -> satellite_amf:
     '''
@@ -732,9 +733,9 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     # sum over the species
     # unit g/s, time: 0~24 UTC but always zero at 0 UTC
     # divide by 12x12 km to ease the interpolation
-    emis_bio = np.sum(emis_bio, axis=0).squeeze()/12.0/12.0
-    emis_bb = np.sum(emis_bb, axis=0).squeeze()/12.0/12.0
-    emis_anthro = np.sum(emis_anthro, axis=0).squeeze()/12.0/12.0
+    emis_bio = 1000.0*np.sum(emis_bio, axis=0).squeeze()/12.0/12.0
+    emis_bb = 1000.0*np.sum(emis_bb, axis=0).squeeze()/12.0/12.0
+    emis_anthro = 1000.0*np.sum(emis_anthro, axis=0).squeeze()/12.0/12.0
 
     # sum over vertical distribution
     # unit g/s, time: 0~24 UTC but always zero at 0 UTC
@@ -751,6 +752,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
 
     err_emis = ((emis_anthro/emis_tot)**2)*((err_anthro/100.0*emis_anthro)**2) + ((emis_bio/emis_tot)**2)*((err_bio/100.0*emis_bio)**2) + \
         ((emis_bb/emis_tot)**2)*((err_bb/100.0*emis_bb)**2)
+    err_emis[isinf(err_emis)]= 0.0
     err_emis = np.sqrt(err_emis)  # same unit as the emissions
 
     # time for ddm and emiss list files
@@ -960,6 +962,7 @@ class readers(object):
                 self.ddm_data = []
                 self.ddm_data.append(ddm_emis_model(
                     time_ddm, time_emis, ddm_out, emis_tot, emis_err, True))
+
             ctm_data = []
         else:  # no averaging
             self.ctm_data = ctm_data[0]

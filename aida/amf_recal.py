@@ -104,22 +104,22 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
         g = 9.80665
         N_A = 6.02214076e23
 
-        ctm_mid_pressure = ctm_data[closest_index_ctm_day].pressure_mid[closest_index_ctm_hour, :, :, :].squeeze(
-        )
-        ctm_profile = ctm_data[closest_index_ctm_day].gas_profile[closest_index_ctm_hour, :, :, :].squeeze(
-        )
-        ctm_deltap = ctm_data[closest_index_ctm_day].delta_p[closest_index_ctm_hour, :, :, :].squeeze(
-        )
+        ctm_mid_pressure = np.squeeze(ctm_data[closest_index_ctm_day].pressure_mid[closest_index_ctm_hour, :, :, :])
+        ctm_profile = np.squeeze(ctm_data[closest_index_ctm_day].gas_profile[closest_index_ctm_hour, :, :, :])
+        ctm_deltap = np.squeeze(ctm_data[closest_index_ctm_day].delta_p[closest_index_ctm_hour, :, :, :])
         ctm_partial_column = ctm_deltap*ctm_profile/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
 
         # take emissions and DDM for the right L2 data
         if ddm_data:
-            ddm_out = ddm_data[closest_index_ddm_day].ddm_out[closest_index_ddm_hour, :, :, :].squeeze(
-            )
-            emis_tot = ddm_data[closest_index_emis_day].emis_tot[closest_index_emis_hour, :, :].squeeze(
-            )
-            emis_err = ddm_data[closest_index_emis_day].emis_err[closest_index_emis_hour, :, :].squeeze(
-            )
+            ddm_out = np.squeeze(ddm_data[closest_index_ddm_day].ddm_out[closest_index_ddm_hour, :, :, :])
+            emis_total = np.squeeze(ddm_data[closest_index_emis_day].emis_tot[closest_index_emis_hour, :, :])
+            emis_error = np.squeeze(ddm_data[closest_index_emis_day].emis_err[closest_index_emis_hour, :, :])
+            moutput = {}
+            moutput["full"] = ddm_data[0].emis_tot
+            moutput["part"] = emis_total
+            moutput["index"] = closest_index_emis_hour
+            moutput["ddm"] = ddm_out
+            savemat("emis_amf_first_loop_"+ str(counter) + ".mat", moutput)
             # convert the DDM to represent the partial column
             ddm_partial = ctm_deltap*ddm_out/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
         # see if we need to upscale the ctm fields
@@ -164,11 +164,11 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
                 for z in range(0, np.shape(ctm_mid_pressure)[0]):
                     _, _, ddm_partial_new[z, :, :], _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
                                                                   ddm_partial[z, :, :], sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
-                _, _, emis_tot, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
-                                              emis_tot, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
-                _, _, emis_err, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
-                                              emis_err**2, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
-                emis_err = np.sqrt(emis_err)
+                _, _, emis_total, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                                              emis_total, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+                _, _, emis_error, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                                              emis_error**2, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+                emis_error = np.sqrt(emis_error)
 
                 ddm_partial = ddm_partial_new
                 ddm_partial_new = []
@@ -255,14 +255,13 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
         if ddm_data:
             ddm_vcd[np.isnan(L2_granule.vcd)] = np.nan
             ddm_vcd[np.isinf(L2_granule.vcd)] = np.nan
-            emis_tot[np.isinf(L2_granule.vcd)] = np.nan
-            emis_tot[np.isnan(L2_granule.vcd)] = np.nan
-            emis_err[np.isinf(L2_granule.vcd)] = np.nan
-            emis_err[np.isnan(L2_granule.vcd)] = np.nan
+            emis_total[np.isnan(L2_granule.vcd)] = np.nan
+            emis_total[np.isinf(L2_granule.vcd)] = np.nan
+            emis_error[np.isnan(L2_granule.vcd)] = np.nan
+            emis_error[np.isinf(L2_granule.vcd)] = np.nan
             sat_data[counter].ddm_vcd = ddm_vcd
-            sat_data[counter].emis_tot = emis_tot
-            sat_data[counter].emis_err = emis_err
-
+            sat_data[counter].emis_tot = emis_total
+            sat_data[counter].emis_err = emis_error
         counter += 1
 
     return sat_data
