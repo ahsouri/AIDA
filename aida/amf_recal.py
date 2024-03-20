@@ -29,11 +29,11 @@ def _time_lister(data: list, tagname='time'):
     return time_data, time_data_hour_only, time_data_datetype
 
 
-def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
+def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
     print('AMF Recal begins...')
     # list the time in ctm_data
     time_ctm, time_ctm_hour_only, time_ctm_datetype = _time_lister(ctm_data)
-    if ddm_data:
+    if ddm_read == True:
         print('Synching DDM and SAT...')
         # list the time in DDM
         time_ddm, time_ddm_hour_only, time_ddm_datetype = _time_lister(
@@ -67,7 +67,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
             # find the closest hour (this only works for 3-hourly frequency)
             closest_index_ctm_day = int(np.floor(closest_index_ctm/24.0))
             closest_index_ctm_hour = int(closest_index_ctm % 24)
-            if ddm_data:
+            if ddm_read == True:
                 closest_index_ddm = np.argmin(np.abs(time_sat - time_ddm))
                 closest_index_ddm_day = int(np.floor(closest_index_ddm/24.0))
                 closest_index_ddm_hour = int(closest_index_ddm % 24)
@@ -80,7 +80,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
             # find the closest hour
             closest_index_ctm_hour = int(closest_index_ctm)
             closest_index_ctm_day = int(0)
-            if ddm_data:
+            if ddm_read == True:
                 closest_index_ddm = np.argmin(
                     np.abs(time_sat_hour_only - time_ddm_hour_only))
                 # find the closest hour
@@ -93,7 +93,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
 
         print("The closest CMAQ file used for the L2 at " + str(L2_granule.time) +
               " is at " + str(time_ctm_datetype[closest_index_ctm_day][closest_index_ctm_hour]))
-        if ddm_data:
+        if ddm_read == True:
             print("The closest DDM file used for the L2 at " + str(L2_granule.time) +
                   " is at " + str(time_ddm_datetype[closest_index_ddm_day][closest_index_ddm_hour]))
             print("The closest EMIS file used for the L2 at " + str(L2_granule.time) +
@@ -104,22 +104,28 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
         g = 9.80665
         N_A = 6.02214076e23
 
-        ctm_mid_pressure = np.squeeze(ctm_data[closest_index_ctm_day].pressure_mid[closest_index_ctm_hour, :, :, :])
-        ctm_profile = np.squeeze(ctm_data[closest_index_ctm_day].gas_profile[closest_index_ctm_hour, :, :, :])
-        ctm_deltap = np.squeeze(ctm_data[closest_index_ctm_day].delta_p[closest_index_ctm_hour, :, :, :])
+        ctm_mid_pressure = np.squeeze(
+            ctm_data[closest_index_ctm_day].pressure_mid[closest_index_ctm_hour, :, :, :])
+        ctm_profile = np.squeeze(
+            ctm_data[closest_index_ctm_day].gas_profile[closest_index_ctm_hour, :, :, :])
+        ctm_deltap = np.squeeze(
+            ctm_data[closest_index_ctm_day].delta_p[closest_index_ctm_hour, :, :, :])
         ctm_partial_column = ctm_deltap*ctm_profile/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
 
         # take emissions and DDM for the right L2 data
-        if ddm_data:
-            ddm_out = np.squeeze(ddm_data[closest_index_ddm_day].ddm_out[closest_index_ddm_hour, :, :, :])
-            emis_total = np.squeeze(ddm_data[closest_index_emis_day].emis_tot[closest_index_emis_hour, :, :])
-            emis_error = np.squeeze(ddm_data[closest_index_emis_day].emis_err[closest_index_emis_hour, :, :])
+        if ddm_read == True:
+            ddm_out = np.squeeze(
+                ddm_data[closest_index_ddm_day].ddm_out[closest_index_ddm_hour, :, :, :])
+            emis_total = np.squeeze(
+                ddm_data[closest_index_emis_day].emis_tot[closest_index_emis_hour, :, :])
+            emis_error = np.squeeze(
+                ddm_data[closest_index_emis_day].emis_err[closest_index_emis_hour, :, :])
             moutput = {}
             moutput["full"] = ddm_data[0].emis_tot
             moutput["part"] = emis_total
             moutput["index"] = closest_index_emis_hour
             moutput["ddm"] = ddm_out
-            savemat("emis_amf_first_loop_"+ str(counter) + ".mat", moutput)
+            savemat("emis_amf_first_loop_" + str(counter) + ".mat", moutput)
             # convert the DDM to represent the partial column
             ddm_partial = ctm_deltap*ddm_out/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
         # see if we need to upscale the ctm fields
@@ -156,7 +162,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
             ctm_partial_new = []
             ctm_mid_pressure_new = []
 
-            if ddm_data:
+            if ddm_read == True:
                 ddm_partial_new = np.zeros((np.shape(ctm_mid_pressure)[0],
                                             np.shape(L2_granule.longitude_center)[0], np.shape(
                     L2_granule.longitude_center)[1],
@@ -165,9 +171,9 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
                     _, _, ddm_partial_new[z, :, :], _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
                                                                   ddm_partial[z, :, :], sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
                 _, _, emis_total, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
-                                              emis_total, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+                                                emis_total, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
                 _, _, emis_error, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
-                                              emis_error**2, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+                                                emis_error**2, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
                 emis_error = np.sqrt(emis_error)
 
                 ddm_partial = ddm_partial_new
@@ -176,7 +182,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
         # interpolate vertical grid
         # check if AMF recal is even possible
         if (np.size(L2_granule.scattering_weights) == 1):
-            if ddm_data:
+            if ddm_read == True:
                 raise Exception(
                     "We can't do inversion without using SWs-- Exiting!")
 
@@ -212,7 +218,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
                     continue
                 ctm_partial_column_tmp = ctm_partial_column[:, i, j].squeeze()
                 ctm_mid_pressure_tmp = ctm_mid_pressure[:, i, j].squeeze()
-                if ddm_data:
+                if ddm_read == True:
                     ctm_partial_column_ddm_tmp = ddm_partial[:, i, j].squeeze()
                 # interpolate
                 f = interpolate.interp1d(
@@ -227,13 +233,13 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
                                     L2_granule.tropopause[i, j]] = np.nan
                     ctm_partial_column_tmp[ctm_mid_pressure_tmp <
                                            L2_granule.tropopause[i, j]] = np.nan
-                    if ddm_data:
+                    if ddm_read == True:
                         ctm_partial_column_ddm_tmp[ctm_mid_pressure_tmp <
                                                    L2_granule.tropopause[i, j]] = np.nan
                 # calculate model SCD
                 model_SCD = np.nansum(interpolated_SW*ctm_partial_column_tmp)
                 # ddm vcd
-                if ddm_data:
+                if ddm_read == True:
                     ddm_vcd[i, j] = np.nansum(ctm_partial_column_ddm_tmp)
                 # calculate model VCD
                 model_VCD[i, j] = np.nansum(ctm_partial_column_tmp)
@@ -252,7 +258,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list):
         sat_data[counter].ctm_vcd = model_VCD
         sat_data[counter].ctm_time_at_sat = time_ctm[closest_index_ctm]
         # populate ddm stuff if requested
-        if ddm_data:
+        if ddm_read == True:
             ddm_vcd[np.isnan(L2_granule.vcd)] = np.nan
             ddm_vcd[np.isinf(L2_granule.vcd)] = np.nan
             emis_total[np.isnan(L2_granule.vcd)] = np.nan

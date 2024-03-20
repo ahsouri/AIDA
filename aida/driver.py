@@ -42,10 +42,10 @@ class aida(object):
 
         if self.reader_obj.read_ddm == False:
             self.reader_obj.sat_data = amf_recal(
-                self.reader_obj.ctm_data, self.reader_obj.sat_data, [])
+                self.reader_obj.ctm_data, self.reader_obj.sat_data, [], ddm_read=self.reader_obj.ddm_data)
         else:
             self.reader_obj.sat_data = amf_recal(
-                self.reader_obj.ctm_data, self.reader_obj.sat_data, self.reader_obj.ddm_data)
+                self.reader_obj.ctm_data, self.reader_obj.sat_data, self.reader_obj.ddm_data, ddm_read=self.reader_obj.ddm_data)
 
     def conv_ak(self):
 
@@ -86,9 +86,9 @@ class aida(object):
             lon = self.reader_obj.ctm_data[0].longitude
 
         report(lon, lat, self.averaged_fields, self.oi_result,
-               self.inversion_result, fname, folder, gasname)
+               self.inversion_result, fname, folder, gasname, read_ddm = self.reader_obj.read_ddm)
 
-    def write_to_nc(self, output_file, output_folder='diag'):
+    def write_to_nc(self, output_file, output_folder='diag', read_ddm = False):
         ''' 
         Write the final results to a netcdf
         ARGS:
@@ -143,7 +143,7 @@ class aida(object):
         data11[:, :] = self.averaged_fields.aux2
 
         # DDM
-        if self.reader_obj.read_ddm == True:
+        if read_ddm == True:
            data12 = ncfile.createVariable(
                'ddm_vcd', dtype('float32').char, ('x', 'y'))
            data12[:, :] = self.averaged_fields.ddm_vcd

@@ -142,6 +142,8 @@ def tropomi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) ->
     # return
     if tropomi_hcho != 0:
        return tropomi_hcho
+    else:
+        return None
 
 def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=True) -> satellite_amf:
     '''
@@ -349,6 +351,8 @@ def omi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=T
     # return
     if omi_no2 != 0:
        return omi_no2
+    else:
+        return None
 
 def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> satellite_amf:
     '''
@@ -430,6 +434,8 @@ def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> sat
         # return
         if omi_hcho != 0:
            return omi_hcho
+        else:
+           return None
     except:
         return None
 
@@ -520,7 +526,8 @@ def mopitt_reader_co(fname: str, ctm_models_coordinate=None, read_ak=True) -> sa
     # return
     if mopitt != 0:
        return mopitt
-
+    else:
+        return None
 
 def tropomi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordinate: dict, YYYYMM: str, trop: bool, read_ak=True, num_job=1):
     '''
@@ -733,9 +740,9 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     # sum over the species
     # unit g/s, time: 0~24 UTC but always zero at 0 UTC
     # divide by 12x12 km to ease the interpolation
-    emis_bio = 1000.0*np.sum(emis_bio, axis=0).squeeze()/12.0/12.0
-    emis_bb = 1000.0*np.sum(emis_bb, axis=0).squeeze()/12.0/12.0
-    emis_anthro = 1000.0*np.sum(emis_anthro, axis=0).squeeze()/12.0/12.0
+    emis_bio = np.sum(emis_bio, axis=0).squeeze()/12.0/12.0
+    emis_bb = np.sum(emis_bb, axis=0).squeeze()/12.0/12.0
+    emis_anthro = np.sum(emis_anthro, axis=0).squeeze()/12.0/12.0
 
     # sum over vertical distribution
     # unit g/s, time: 0~24 UTC but always zero at 0 UTC

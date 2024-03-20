@@ -8,7 +8,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import numpy as np
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.basemap import Basemap
 
 
@@ -116,7 +115,7 @@ def topdf(fname: str, folder: str, pdf_output: str):
     pdf.output(folder + '/' + pdf_output, 'F')
 
 
-def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields, inversion_fields, fname: str, ffolder: str, gasname: str):
+def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields, inversion_fields, fname: str, ffolder: str, gasname: str, read_ddm = False):
     '''
     '''
     if not os.path.exists('temp'):
@@ -182,7 +181,7 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
                 fname + '.png', 'XCO (Sat)', unit_aux, vmin_aux, vmax_aux)
         plotter(lon, lat, averaged_generic_fields.aux2, 'temp/aux2_' +
                 fname + '.png', 'XCO (CTM-Prior)', unit_aux, vmin_aux, vmax_aux)
-    if hasattr(averaged_generic_fields,'ddm_vcd'):
+    if read_ddm == True:
        plotter(lon, lat, averaged_generic_fields.ddm_vcd, 'temp/ddm_' +
             fname + '.png', 'DDM (col)', 1, vmin_vcd, vmax_vcd)
        plotter(lon, lat, averaged_generic_fields.emis_total, 'temp/emis_tot_' +

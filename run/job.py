@@ -72,7 +72,7 @@ for statev in state_vectors:
         read_ddm = False
     # calling AIDA
     aida_obj = aida()
-    aida_obj.read_data(ctm_name, Path(ctm_conc_dir), Path(ctm_mcip_dir), gasname, sensor[cnt]+ '_' + gasname, Path(sat_path[cnt]), str(year) + f"{month:02}",
+    aida_obj.read_data(ctm_name, Path(ctm_conc_dir), Path(ctm_mcip_dir), gasname, sensor[cnt] + '_' + gasname, Path(sat_path[cnt]), str(year) + f"{month:02}",
                        (state_err), Path(ctm_ddm_dir), Path(ctm_emis_dir), read_ddm=read_ddm, averaged=ctm_avg, read_ak=True, trop=troposphere_no2_only, num_job=num_job)
 
     if sensor[cnt] == "MOPITT":
@@ -89,6 +89,6 @@ for statev in state_vectors:
         aida_obj.oi(error_ctm=state_err)
 
     aida_obj.reporting(gasname + '_' + str(year) +
-                       f"{month:02}", gasname, output_pdf_dir)
+                       f"{month:02}", gasname, output_pdf_dir, read_ddm=read_ddm)
     aida_obj.write_to_nc(gasname + '_' + str(year) +
-                         f"{month:02}", output_nc_dir)
+                         f"{month:02}", output_nc_dir, read_ddm=read_ddm)
