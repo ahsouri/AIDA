@@ -759,7 +759,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
 
     err_emis = ((emis_anthro/emis_tot)**2)*((err_anthro/100.0*emis_anthro)**2) + ((emis_bio/emis_tot)**2)*((err_bio/100.0*emis_bio)**2) + \
         ((emis_bb/emis_tot)**2)*((err_bb/100.0*emis_bb)**2)
-    err_emis[isinf(err_emis)]= 0.0
+    err_emis[np.isinf(err_emis)]= 0.0
     err_emis = np.sqrt(err_emis)  # same unit as the emissions
 
     # time for ddm and emiss list files
