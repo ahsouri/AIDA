@@ -42,10 +42,10 @@ class aida(object):
 
         if self.reader_obj.read_ddm == False:
             self.reader_obj.sat_data = amf_recal(
-                self.reader_obj.ctm_data, self.reader_obj.sat_data, [], ddm_read=self.reader_obj.ddm_data)
+                self.reader_obj.ctm_data, self.reader_obj.sat_data, [], ddm_read=False)
         else:
             self.reader_obj.sat_data = amf_recal(
-                self.reader_obj.ctm_data, self.reader_obj.sat_data, self.reader_obj.ddm_data, ddm_read=self.reader_obj.ddm_data)
+                self.reader_obj.ctm_data, self.reader_obj.sat_data, self.reader_obj.ddm_data, ddm_read=True)
 
     def conv_ak(self):
 
