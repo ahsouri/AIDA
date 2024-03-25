@@ -33,8 +33,6 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
     print('AMF Recal begins...')
     # list the time in ctm_data
     time_ctm, time_ctm_hour_only, time_ctm_datetype = _time_lister(ctm_data)
-    print("time_ctm")
-    print(time_ctm)
     if ddm_read == True:
         print('Synching DDM and SAT...')
         # list the time in DDM
