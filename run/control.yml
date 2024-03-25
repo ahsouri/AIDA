@@ -25,9 +25,6 @@ ctm_ddm_dir: '/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_NOX/'
 # set the path of CTM EMISS netcdf files (either relative or absolute)
 ctm_emis_dir: '/nobackup/jjung13/ACMAP_4D_EMIS/2019/sources/'
 
-# should we average CTM outputs to create monthly data? (reduce memory overhead by a lot)
-ctm_avg: True
-
 # state vectors
 state_vectors: 
    - 'NOx'
@@ -56,9 +53,10 @@ state_vector_conc_errors: # errors for NO2, HCHO, and CO columns in [%]
    - 50.0
    - 50.0
 
-state_vector_nox_errors: # errors for NOx source (anthro, bio, bb)
+state_vector_nox_errors: # errors for NOx source (anthro, bio, bb, light)
    - 50.0
    - 200.0
+   - 300.0
    - 300.0
 
 state_vector_voc_errors: # errors for VOC source (anthro, bio, bb)

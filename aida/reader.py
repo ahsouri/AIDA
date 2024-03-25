@@ -141,9 +141,10 @@ def tropomi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) ->
             1, grid_size, tropomi_hcho, ctm_models_coordinate, flag_thresh=0.5)
     # return
     if tropomi_hcho != 0:
-       return tropomi_hcho
+        return tropomi_hcho
     else:
         return None
+
 
 def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=True) -> satellite_amf:
     '''
@@ -244,9 +245,10 @@ def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_
             1, grid_size, tropomi_no2, ctm_models_coordinate, flag_thresh=0.75)
     # return
     if tropomi_no2 != 0:
-       return tropomi_no2
+        return tropomi_no2
     else:
-       return None
+        return None
+
 
 def omi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=True) -> satellite_amf:
     '''
@@ -350,9 +352,10 @@ def omi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=T
             1, grid_size, omi_no2, ctm_models_coordinate, flag_thresh=0.0)
     # return
     if omi_no2 != 0:
-       return omi_no2
+        return omi_no2
     else:
         return None
+
 
 def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> satellite_amf:
     '''
@@ -433,9 +436,9 @@ def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> sat
                 1, grid_size, omi_hcho, ctm_models_coordinate, flag_thresh=0.0)
         # return
         if omi_hcho != 0:
-           return omi_hcho
+            return omi_hcho
         else:
-           return None
+            return None
     except:
         return None
 
@@ -519,15 +522,16 @@ def mopitt_reader_co(fname: str, ctm_models_coordinate=None, read_ak=True) -> sa
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
-        grid_size = 0.5 # degree
+        grid_size = 0.5  # degree
         mopitt = interpolator(
             1, grid_size, mopitt, ctm_models_coordinate, flag_thresh=0.0)
 
     # return
     if mopitt != 0:
-       return mopitt
+        return mopitt
     else:
         return None
+
 
 def tropomi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordinate: dict, YYYYMM: str, trop: bool, read_ak=True, num_job=1):
     '''
@@ -661,7 +665,7 @@ def cmaq_reader_wrapper(dir_mcip: str, dir_cmaq: str, YYYYMM: str, k: int, gasna
 
 
 def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: int, gasname: str, err_anthro: float,
-                                 err_bio: float, err_bb: float):
+                                 err_bio: float, err_bb: float, err_light: float):
     '''
         cmaq reader DDM wrapper
              dir_ddm [str]: the folder containing the ddm outputs
@@ -669,7 +673,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
              YYYYMM [str]: the target month and year, e.g., 202005 (May 2020)
              k [int]: the index of the file
              gasname [str]: the name of the gas to read
-             err_[x][float]: fractional errors of [anthro/bio/bb] emission sectors
+             err_[x][float]: fractional errors of [anthro/bio/bb/light] emission sectors
         Output [ddm_emis_model]: the ddm_emiss structure @dataclass
     '''
     # locate different files for different compounds
@@ -688,6 +692,8 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     file_emis_bb = dir_emis + "/CCTM_ACMAP_EMIS_fire_v52_" + \
         YYYYMM[:4] + "%03d" % int(k) + ".nc"
     file_emis_anthro = dir_emis + "/CCTM_ACMAP_EMIS_gc_v52_" + \
+        YYYYMM[:4] + "%03d" % int(k) + ".nc"
+    file_emis_light = dir_emis + "/CCTM_ACMAP_LNT_gc_v52_" + \
         YYYYMM[:4] + "%03d" % int(k) + ".nc"
 
     print("Currently reading ddm and emis ... ")
@@ -716,6 +722,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     emis_bio = []
     emis_bb = []
     emis_anthro = []
+    emis_light = []
     emis_tot = []
 
     ddm_out = _read_nc(file_ddm, ddmname).astype(
@@ -733,6 +740,9 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
         temp = _read_nc(file_emis_anthro, emisname[i]).astype(
             'float32')*emis_mole_w[i]
         emis_anthro.append(temp)
+        temp = _read_nc(file_emis_light, emisname[i]).astype(
+            'float32')*emis_mole_w[i]
+        emis_light.append(temp)
 
     time_var_emis = _read_nc(file_emis_anthro, 'TFLAG')
     time_var_emis = time_var_emis[1:, :, :]
@@ -743,23 +753,26 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     emis_bio = np.sum(emis_bio, axis=0).squeeze()/12.0/12.0
     emis_bb = np.sum(emis_bb, axis=0).squeeze()/12.0/12.0
     emis_anthro = np.sum(emis_anthro, axis=0).squeeze()/12.0/12.0
-
+    emis_light = np.sum(emis_light, axis=0).squeeze()/12.0/12.0
     # sum over vertical distribution
     # unit g/s, time: 0~24 UTC but always zero at 0 UTC
     emis_bio = np.sum(emis_bio, axis=1).squeeze()
     emis_bb = np.sum(emis_bb, axis=1).squeeze()
     emis_anthro = np.sum(emis_anthro, axis=1).squeeze()
+    emis_light = np.sum(emis_light, axis=0).squeeze()
 
     emis_bio = emis_bio[1:, :, :]  # removed 0 UTC, so 1 ~ 24 UTC
     emis_bb = emis_bb[1:, :, :]
     emis_anthro = emis_anthro[1:, :, :]
+    emis_light = emis_light[1:, :, :]
 
     # emission for model has lightning and aviation emissions in addition to emis_tot
-    emis_tot = emis_bio + emis_bb + emis_anthro
+    emis_tot = emis_bio + emis_bb + emis_anthro + emis_light
 
     err_emis = ((emis_anthro/emis_tot)**2)*((err_anthro/100.0*emis_anthro)**2) + ((emis_bio/emis_tot)**2)*((err_bio/100.0*emis_bio)**2) + \
-        ((emis_bb/emis_tot)**2)*((err_bb/100.0*emis_bb)**2)
-    err_emis[np.isinf(err_emis)]= 0.0
+        ((emis_bb/emis_tot)**2)*((err_bb/100.0*emis_bb)**2) + \
+        ((emis_light/emis_tot)**2)*((err_light/100.0*emis_light)**2)
+    err_emis[np.isinf(err_emis)] = 0.0
     err_emis = np.sqrt(err_emis)  # same unit as the emissions
 
     # time for ddm and emiss list files
@@ -796,7 +809,7 @@ def CMAQ_reader(product_dir: str, mcip_product_dir: str, ddm_product_dir: str, e
              YYYYMM [str]: the target month and year, e.g., 202005 (May 2020)
              gases_to_be_saved [str]: name of gases to be loaded. e.g., ['NO2']
              read_inv [str]: whether read ddm output and emissions or not
-             error_frac [list]: fractional errors of anthro, bio, and bb
+             error_frac [list]: fractional errors of anthro, bio, bb, and lightning
        Output:
              cmaq_fields [ctm_model]: a dataclass format (see config.py)
     '''
@@ -831,7 +844,7 @@ def CMAQ_reader(product_dir: str, mcip_product_dir: str, ddm_product_dir: str, e
             mcip_product_dir, product_dir, YYYYMM, k, gas_to_be_saved))
         if read_inv == True:
             outputs_ddm.append(cmaq_reader_ddm_emis_wrapper(
-                ddm_product_dir, emis_product_dir, YYYYMM, k, gas_to_be_saved, error_frac[0], error_frac[1], error_frac[2]))
+                ddm_product_dir, emis_product_dir, YYYYMM, k, gas_to_be_saved, error_frac[0], error_frac[1], error_frac[2], error_frac[3]))
 
     return outputs_ctm, outputs_ddm
 
@@ -925,57 +938,10 @@ class readers(object):
                                self.ddm_dir.as_posix(),
                                self.emis_product_dir.as_posix(),
                                YYYYMM, gas, read_ddm, error_frac)
-
-        if averaged == True:
-            # constant variables
-            print("Averaging CTM files ...")
-            latitude = ctm_data[0][0].latitude
-            longitude = ctm_data[0][0].longitude
-            time = ctm_data[0][0].time
-            ctm_type = 'CMAQ'
-            # averaging over variables in the ctm
-            gas_profile = []
-            pressure_mid = []
-            delta_p = []
-            for ctm in ctm_data[0]:
-                gas_profile.append(ctm.gas_profile)
-                pressure_mid.append(ctm.pressure_mid)
-                delta_p.append(ctm.delta_p)
-
-            gas_profile = np.nanmean(np.array(gas_profile), axis=0)
-            pressure_mid = np.nanmean(np.array(pressure_mid), axis=0)
-            delta_p = np.nanmean(np.array(delta_p), axis=0)
-            # shape up the ctm class
-            self.ctm_data = []
-            self.ctm_data.append(ctm_model(latitude, longitude, time, gas_profile,
-                                           pressure_mid, [], delta_p, ctm_type, True))
-
-            if read_ddm == True:
-                time_ddm = ctm_data[1][0].time_ddm
-                time_emis = ctm_data[1][0].time_emis
-                # averaging over variables in the ddm/emis
-                ddm_out = []
-                emis_tot = []
-                emis_err = []
-                for ddm in ctm_data[1]:
-                    ddm_out.append(ddm.ddm_out)
-                    emis_tot.append(ddm.emis_tot)
-                    emis_err.append(ddm.emis_err)
-
-                ddm_out = np.nanmean(np.array(ddm_out), axis=0)
-                emis_tot = np.nanmean(np.array(emis_tot), axis=0)
-                emis_err = np.sqrt(np.nanmean((np.array(emis_err))**2, axis=0))
-                # shape up the ddm class
-                self.ddm_data = []
-                self.ddm_data.append(ddm_emis_model(
-                    time_ddm, time_emis, ddm_out, emis_tot, emis_err, True))
-
-            ctm_data = []
-        else:  # no averaging
-            self.ctm_data = ctm_data[0]
-            self.ddm_data = ctm_data[1]
-            ctm_data = []
-
+        
+        self.ctm_data = ctm_data[0]
+        self.ddm_data = ctm_data[1]
+        ctm_data = []
 
 # testing
 if __name__ == "__main__":
