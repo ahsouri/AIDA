@@ -154,6 +154,7 @@ def interpolator(interpolator_type: int, grid_size: float, sat_data, ctm_models_
         ctm_models_coordinate, grid_size, threshold_ctm)
     # decide if it's even worth continuing:
     if np.isnan(np.nanmean(vcd.flatten())):
+       print("the satellite granule doesn't fall into the region - skipping!")
        return 0
     if isinstance(sat_data, satellite_amf):
         print('....................... scd')

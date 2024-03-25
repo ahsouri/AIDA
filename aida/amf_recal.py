@@ -33,6 +33,8 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
     print('AMF Recal begins...')
     # list the time in ctm_data
     time_ctm, time_ctm_hour_only, time_ctm_datetype = _time_lister(ctm_data)
+    print("time_ctm")
+    print(time_ctm)
     if ddm_read == True:
         print('Synching DDM and SAT...')
         # list the time in DDM
@@ -65,8 +67,8 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
         if ctm_data[0].averaged == False:
             closest_index_ctm = np.argmin(np.abs(time_sat - time_ctm))
             # find the closest hour (this only works for 3-hourly frequency)
-            closest_index_ctm_day = int(np.floor(closest_index_ctm/24.0))
-            closest_index_ctm_hour = int(closest_index_ctm % 24)
+            closest_index_ctm_day = int(np.floor(closest_index_ctm/25.0))
+            closest_index_ctm_hour = int(closest_index_ctm % 25)
             if ddm_read == True:
                 closest_index_ddm = np.argmin(np.abs(time_sat - time_ddm))
                 closest_index_ddm_day = int(np.floor(closest_index_ddm/24.0))
