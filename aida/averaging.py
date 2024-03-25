@@ -164,9 +164,6 @@ def averaging(startdate: str, enddate: str, reader_obj):
         emis_averaged = []
         emis_err_averaged = []
 
-    moutput = {}
-    moutput["emis"] = emis_averaged
-    savemat("emis_fourth_loop.mat", moutput)
     output = averaged_field(sat_averaged_vcd, sat_averaged_error, ctm_averaged_vcd,
                             sat_aux1, sat_aux2, ddm_averaged, emis_averaged, emis_err_averaged)
     return output
