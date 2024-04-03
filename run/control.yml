@@ -14,7 +14,7 @@ num_job: 12
 ctm_name: 'CMAQ'
 
 # set the path of CTM netcdf files (either relative or absolute)
-ctm_conc_dir: '/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/BC_monthly_add_CO/'
+ctm_conc_dir: '/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/2019_const_4D_avis/'
 
 # set the path of MCIP netcdf files (either relative or absolute)
 ctm_mcip_dir: '/nobackup/jjung13/ACMAP_mcipout/2019/'
@@ -63,6 +63,7 @@ state_vector_voc_errors: # errors for VOC source (anthro, bio, bb)
    - 30.0
    - 50.0
    - 50.0
+   - 0.0
 
 inflate_errors: #inflate the state vector errors (same order as state vectors)
    - 1.0
