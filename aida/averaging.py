@@ -39,6 +39,7 @@ def averaging(startdate: str, enddate: str, reader_obj):
         len(range(np.min(list_months),
                   np.max(list_months)+1)),
         len(range(np.min(list_years), np.max(list_years)+1))))
+
     #sat_samples = np.zeros_like(sat_averaged_vcd)*np.nan
     sat_averaged_error = np.zeros_like(sat_averaged_vcd)*np.nan
     ctm_averaged_vcd = np.zeros_like(sat_averaged_vcd)*np.nan
@@ -55,6 +56,8 @@ def averaging(startdate: str, enddate: str, reader_obj):
             sat_chosen_aux2 = []
             sat_chosen_error = []
             ctm_chosen_vcd = []
+            time_chosen = []
+            gap_chosen = []
             if reader_obj.read_ddm == True:
                 emis_chosen = []
                 ddm_chosen = []
@@ -65,8 +68,10 @@ def averaging(startdate: str, enddate: str, reader_obj):
                     continue
                 counter = counter + 1
                 time_sat = sat_data.time
+                time_chosen.append(time_sat)
                 # see if it falls
                 if ((time_sat.year == year) and (time_sat.month == month)):
+                    gap_chosen.append(~np.isnan(sat_data.vcd))
                     sat_chosen_vcd.append(sat_data.vcd)
                     sat_chosen_error.append(sat_data.uncertainty)
                     ctm_chosen_vcd.append(sat_data.ctm_vcd)
@@ -90,6 +95,7 @@ def averaging(startdate: str, enddate: str, reader_obj):
             ctm_chosen_vcd = np.array(ctm_chosen_vcd)
             sat_chosen_aux1 = np.array(sat_chosen_aux1)
             sat_chosen_aux2 = np.array(sat_chosen_aux2)
+            gap_chosen = np.array(gap_chosen)
         if np.size(sat_chosen_vcd) != 0:
             sat_averaged_vcd[:, :, month - min(list_months), year - min(
                 list_years)] = np.squeeze(np.nanmean(sat_chosen_vcd, axis=0))
@@ -97,6 +103,7 @@ def averaging(startdate: str, enddate: str, reader_obj):
                 list_years)] = np.sqrt(np.squeeze(np.nanmean(sat_chosen_error**2, axis=0)))
             ctm_averaged_vcd[:, :, month - min(list_months), year - min(
                 list_years)] = np.squeeze(np.nanmean(ctm_chosen_vcd, axis=0))
+
             if reader_obj.read_ddm == True:
                 emis_chosen = np.array(emis_chosen)
                 emis_err_chosen = np.array(emis_err_chosen)
@@ -107,9 +114,6 @@ def averaging(startdate: str, enddate: str, reader_obj):
                     list_years)] = np.sqrt(np.squeeze(np.nanmean(emis_err_chosen**2, axis=0)))
                 ddm_averaged[:, :, month - min(list_months), year - min(
                     list_years)] = np.squeeze(np.nanmean(ddm_chosen, axis=0))
-                moutput = {}
-                moutput["emis"] = emis_averaged
-                savemat("emis_second_loop.mat", moutput)
         if np.size(sat_chosen_aux1) != 0:
             sat_aux1[:, :, month - min(list_months), year - min(
                 list_years)] = np.squeeze(np.nanmean(sat_chosen_aux1, axis=0))
@@ -123,9 +127,6 @@ def averaging(startdate: str, enddate: str, reader_obj):
     sat_aux2 = sat_aux2.squeeze()
     if reader_obj.read_ddm == True:
         emis_averaged = emis_averaged.squeeze()
-        moutput = {}
-        moutput["emis"] = emis_averaged
-        savemat("emis_third_loop.mat", moutput)
         emis_err_averaged = emis_err_averaged.squeeze()
         ddm_averaged = ddm_averaged.squeeze()
     # average over all data
@@ -165,5 +166,5 @@ def averaging(startdate: str, enddate: str, reader_obj):
         emis_err_averaged = []
 
     output = averaged_field(sat_averaged_vcd, sat_averaged_error, ctm_averaged_vcd,
-                            sat_aux1, sat_aux2, ddm_averaged, emis_averaged, emis_err_averaged)
+                            sat_aux1, sat_aux2, ddm_averaged, emis_averaged, emis_err_averaged, gap_chosen, time_sat)
     return output

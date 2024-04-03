@@ -103,7 +103,8 @@ class aida(object):
         # create the x and y dimensions.
         ncfile.createDimension('x', np.shape(self.averaged_fields.sat_vcd)[0])
         ncfile.createDimension('y', np.shape(self.averaged_fields.sat_vcd)[1])
-
+        ncfile.createDimension('t', None) #unlimited
+        ncfile.createDimension('u', None) #unlimited
         # generic fields
         data1 = ncfile.createVariable(
             'sat_averaged_vcd', dtype('float32').char, ('x', 'y'))
@@ -177,6 +178,13 @@ class aida(object):
                 'scaling_factor_OI', dtype('float32').char, ('x', 'y'))
             data7[:, :] = scaling_factor
 
+        data15 = ncfile.createVariable(
+               'gap', dtype('float16').char, ('t', 'x', 'y'))
+        data15[:, :, :] = self.averaged_fields.gap_field
+        
+        data16 = ncfile.createVariable(
+               'time', 'S1', ('u'))
+        data16[:] = self.averaged_fields.time_sat
         # inversion TO DO
         ncfile.close()
 
