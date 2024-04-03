@@ -120,12 +120,6 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
                 ddm_data[closest_index_emis_day].emis_tot[closest_index_emis_hour, :, :])
             emis_error = np.squeeze(
                 ddm_data[closest_index_emis_day].emis_err[closest_index_emis_hour, :, :])
-            moutput = {}
-            moutput["full"] = ddm_data[0].emis_tot
-            moutput["part"] = emis_total
-            moutput["index"] = closest_index_emis_hour
-            moutput["ddm"] = ddm_out
-            savemat("emis_amf_first_loop_" + str(counter) + ".mat", moutput)
             # convert the DDM to represent the partial column
             ddm_partial = ctm_deltap*ddm_out/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
         # see if we need to upscale the ctm fields
