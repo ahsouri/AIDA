@@ -179,11 +179,11 @@ class aida(object):
             data7[:, :] = scaling_factor
 
         data15 = ncfile.createVariable(
-               'gap', dtype('float16').char, ('t', 'x', 'y'))
+               'gap', dtype('float32').char, ('t', 'x', 'y'))
         data15[:, :, :] = self.averaged_fields.gap_field
-        
+
         data16 = ncfile.createVariable(
-               'time', 'S1', ('u'))
+               'time', dtype('float64').char, ('u'))
         data16[:] = self.averaged_fields.time_sat
         # inversion TO DO
         ncfile.close()

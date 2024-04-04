@@ -68,7 +68,7 @@ def averaging(startdate: str, enddate: str, reader_obj):
                     continue
                 counter = counter + 1
                 time_sat = sat_data.time
-                time_chosen.append(time_sat)
+                time_chosen.append(10000.0*sat_data.time.year + 100.0*sat_data.time.month + sat_data.time.day + sat_data.time.hour/24.0)
                 # see if it falls
                 if ((time_sat.year == year) and (time_sat.month == month)):
                     gap_chosen.append(~np.isnan(sat_data.vcd))
@@ -96,6 +96,7 @@ def averaging(startdate: str, enddate: str, reader_obj):
             sat_chosen_aux1 = np.array(sat_chosen_aux1)
             sat_chosen_aux2 = np.array(sat_chosen_aux2)
             gap_chosen = np.array(gap_chosen)
+            time_chosen = np.array(time_chosen, dtype = np.float64)
         if np.size(sat_chosen_vcd) != 0:
             sat_averaged_vcd[:, :, month - min(list_months), year - min(
                 list_years)] = np.squeeze(np.nanmean(sat_chosen_vcd, axis=0))
@@ -166,5 +167,5 @@ def averaging(startdate: str, enddate: str, reader_obj):
         emis_err_averaged = []
 
     output = averaged_field(sat_averaged_vcd, sat_averaged_error, ctm_averaged_vcd,
-                            sat_aux1, sat_aux2, ddm_averaged, emis_averaged, emis_err_averaged, gap_chosen, time_sat)
+                            sat_aux1, sat_aux2, ddm_averaged, emis_averaged, emis_err_averaged, gap_chosen, time_chosen)
     return output

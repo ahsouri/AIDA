@@ -85,7 +85,7 @@ class averaged_field:
     emis_total: np.ndarray
     emis_error: np.ndarray
     gap_field: np.ndarray
-    time_sat: list
+    time_sat: np.ndarray
 
 @dataclass
 class OI_result:
