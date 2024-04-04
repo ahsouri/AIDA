@@ -620,7 +620,7 @@ def cmaq_reader_wrapper(dir_mcip: str, dir_cmaq: str, YYYYMM: str, k: int, gasna
     '''
     # finding the right files
     date = datetime.datetime.strptime(str(k), '%j').date()
-    cmaq_target_file = dir_cmaq + "/CCTM_CONC_v52_" + \
+    cmaq_target_file = dir_cmaq + "/CCTM_CONC_v52_4D_" + \
         YYYYMM[:4] + "%03d" % int(k) + ".nc"
     grd_file_2d = dir_mcip + "/GRIDCRO2D_" + \
         YYYYMM[2:4] + date.strftime('%m%d')
