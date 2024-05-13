@@ -29,6 +29,7 @@ output_nc_dir = ctrl_opts['output_nc_dir']
 num_job = ctrl_opts['num_job']
 sensor = ctrl_opts['sensor']
 validation_only = ctrl_opts['validation']
+save_daily = ctrl_opts['save_daily']
 
 year = int(sys.argv[1])
 month = int(sys.argv[2])
@@ -80,11 +81,17 @@ for statev in state_vectors:
     else:
         aida_obj.recal_amf()
     if month != 12:
-        aida_obj.average(str(
-            year) + '-' + f"{month:02}" + '-01', str(year) + '-' + f"{month+1:02}" + '-01')
+        if ~save_daily:
+            aida_obj.average(str(
+               year) + '-' + f"{month:02}" + '-01', str(year) + '-' + f"{month+1:02}" + '-01')
     else:
-        aida_obj.average(
-            str(year) + '-' + f"{month:02}" + '-01', str(year+1) + '-' + "01" + '-01')
+        if ~save_daily:
+            aida_obj.average(
+               str(year) + '-' + f"{month:02}" + '-01', str(year+1) + '-' + "01" + '-01')
+
+    if save_daily:
+        aida_obj.savedaily()
+        exit()
     if do_oi == True:
         aida_obj.oi(error_ctm=state_err)
 

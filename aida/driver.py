@@ -188,7 +188,10 @@ class aida(object):
         # inversion TO DO
         ncfile.close()
 
-
+    def savedaily(self):
+        # extract sat data
+        sat = self.reader_obj.sat_data
+        savemat("sat_data.mat", sat)
 # testing
 if __name__ == "__main__":
 
