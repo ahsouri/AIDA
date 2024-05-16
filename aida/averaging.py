@@ -79,9 +79,6 @@ def averaging(startdate: str, enddate: str, reader_obj):
                         emis_chosen.append(sat_data.emis_tot)
                         ddm_chosen.append(sat_data.ddm_vcd)
                         emis_err_chosen.append(sat_data.emis_err)
-                        moutput = {}
-                        moutput["emis"] = sat_data.emis_tot
-                        savemat("emis_first_loop_" + str(counter) + ".mat", moutput)
                     if isinstance(sat_data, satellite_amf):
                         sat_chosen_aux1.append(sat_data.new_amf)
                         sat_chosen_aux2.append(sat_data.old_amf)

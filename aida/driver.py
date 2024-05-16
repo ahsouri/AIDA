@@ -27,7 +27,7 @@ class aida(object):
                   ):
         reader_obj = readers()
         reader_obj.add_ctm_data(
-                ctm_type, ctm_path, mcip_path, ddm_path, emis_path)
+            ctm_type, ctm_path, mcip_path, ddm_path, emis_path)
         reader_obj.read_ctm_data(
             YYYYMM, ctm_gas_name, error_fraction, read_ddm=read_ddm, averaged=averaged)
         reader_obj.add_satellite_data(
@@ -66,7 +66,7 @@ class aida(object):
 
         self.do_run_OI = True
         self.oi_result = OI(self.averaged_fields.ctm_vcd, self.averaged_fields.sat_vcd,
-                              (self.averaged_fields.ctm_vcd*error_ctm/100.0)**2, self.averaged_fields.sat_err**2, regularization_on=True)
+                            (self.averaged_fields.ctm_vcd*error_ctm/100.0)**2, self.averaged_fields.sat_err**2, regularization_on=True)
 
     def inversion(self):
 
@@ -86,9 +86,9 @@ class aida(object):
             lon = self.reader_obj.ctm_data[0].longitude
 
         report(lon, lat, self.averaged_fields, self.oi_result,
-               self.inversion_result, fname, folder, gasname, read_ddm = self.reader_obj.read_ddm)
+               self.inversion_result, fname, folder, gasname, read_ddm=self.reader_obj.read_ddm)
 
-    def write_to_nc(self, output_file, output_folder='diag', read_ddm = False):
+    def write_to_nc(self, output_file, output_folder='diag', read_ddm=False):
         ''' 
         Write the final results to a netcdf
         ARGS:
@@ -103,8 +103,8 @@ class aida(object):
         # create the x and y dimensions.
         ncfile.createDimension('x', np.shape(self.averaged_fields.sat_vcd)[0])
         ncfile.createDimension('y', np.shape(self.averaged_fields.sat_vcd)[1])
-        ncfile.createDimension('t', None) #unlimited
-        ncfile.createDimension('u', None) #unlimited
+        ncfile.createDimension('t', None)  # unlimited
+        ncfile.createDimension('u', None)  # unlimited
         # generic fields
         data1 = ncfile.createVariable(
             'sat_averaged_vcd', dtype('float32').char, ('x', 'y'))
@@ -145,20 +145,20 @@ class aida(object):
 
         # DDM
         if read_ddm == True:
-           data12 = ncfile.createVariable(
-               'ddm_vcd', dtype('float32').char, ('x', 'y'))
-           data12[:, :] = self.averaged_fields.ddm_vcd
+            data12 = ncfile.createVariable(
+                'ddm_vcd', dtype('float32').char, ('x', 'y'))
+            data12[:, :] = self.averaged_fields.ddm_vcd
 
-           data13 = ncfile.createVariable(
-               'emis_tot', dtype('float32').char, ('x', 'y'))
-           data13[:, :] = self.averaged_fields.emis_total
+            data13 = ncfile.createVariable(
+                'emis_tot', dtype('float32').char, ('x', 'y'))
+            data13[:, :] = self.averaged_fields.emis_total
 
-           data14 = ncfile.createVariable(
-               'emis_err', dtype('float32').char, ('x', 'y'))
-           data14[:, :] = self.averaged_fields.emis_error
+            data14 = ncfile.createVariable(
+                'emis_err', dtype('float32').char, ('x', 'y'))
+            data14[:, :] = self.averaged_fields.emis_error
 
         if self.oi_result:
-           # OI results
+            # OI results
             data3 = ncfile.createVariable(
                 'ctm_averaged_vcd_posterior', dtype('float32').char, ('x', 'y'))
             data3[:, :] = self.oi_result.ctm_corrected
@@ -179,19 +179,40 @@ class aida(object):
             data7[:, :] = scaling_factor
 
         data15 = ncfile.createVariable(
-               'gap', dtype('float32').char, ('t', 'x', 'y'))
+            'gap', dtype('float32').char, ('t', 'x', 'y'))
         data15[:, :, :] = self.averaged_fields.gap_field
 
         data16 = ncfile.createVariable(
-               'time', dtype('float64').char, ('u'))
+            'time', dtype('float64').char, ('u'))
         data16[:] = self.averaged_fields.time_sat
         # inversion TO DO
         ncfile.close()
 
     def savedaily(self):
         # extract sat data
-        sat = self.reader_obj.sat_data
-        savemat("sat_data.mat", sat)
+        latitude = self.reader_obj.ctm_data[0].latitude
+        longitude = self.reader_obj.ctm_data[0].longitude
+        vcd_sat = np.zeros((np.shape(latitude)[0], np.shape(
+            latitude)[1], len(self.reader_obj.sat_data)))
+        vcd_err = np.zeros_like(vcd_sat)
+        vcd_ctm = np.zeros_like(vcd_sat)
+        time_sat = np.zeros_like(vcd_sat)
+        counter = -1
+        for sat in self.reader_obj.sat_data:
+            counter = counter + 1
+            if sat is None:
+                continue
+            vcd_sat[:, :, counter] = sat.vcd
+            vcd_ctm[:, :, counter] = sat.ctm_vcd
+            vcd_err[:, :, counter] = sat.uncertainty
+            time_sat[:, :, counter] = 10000.0*sat.time.year + 100.0 * \
+                sat.time.month + sat.time.day + sat.time.hour/24.0
+
+        sat = {"vcd_sat": vcd_sat, "vcd_ctm": vcd_ctm,
+               "vcd_err": vcd_err, "time_sat": time_sat, "lat": latitude, "lon": longitude}
+        savemat("./sat_data.mat", sat)
+
+
 # testing
 if __name__ == "__main__":
 
