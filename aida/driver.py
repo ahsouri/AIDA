@@ -196,7 +196,7 @@ class aida(object):
             latitude)[1], len(self.reader_obj.sat_data)))
         vcd_err = np.zeros_like(vcd_sat)
         vcd_ctm = np.zeros_like(vcd_sat)
-        time_sat = np.zeros_like(vcd_sat)
+        time_sat = np.zeros_like((len(self.reader_obj.sat_data)))
         counter = -1
         for sat in self.reader_obj.sat_data:
             counter = counter + 1
@@ -205,7 +205,7 @@ class aida(object):
             vcd_sat[:, :, counter] = sat.vcd
             vcd_ctm[:, :, counter] = sat.ctm_vcd
             vcd_err[:, :, counter] = sat.uncertainty
-            time_sat[:, :, counter] = 10000.0*sat.time.year + 100.0 * \
+            time_sat[counter] = 10000.0*sat.time.year + 100.0 * \
                 sat.time.month + sat.time.day + sat.time.hour/24.0
 
         sat = {"vcd_sat": vcd_sat, "vcd_ctm": vcd_ctm,
