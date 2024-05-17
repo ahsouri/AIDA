@@ -5,7 +5,10 @@ python_bin: '/nobackup/asouri/TOOLS/miniconda3/bin/python3'
 debug: False
 
 # validation only (if True, inversion and assimilation will be set to False)
-validation: False
+validation: True
+
+# a hack to save outputs in daily for validation purposes 
+save_daily: False
 
 # number of jobs
 num_job: 12
@@ -14,7 +17,7 @@ num_job: 12
 ctm_name: 'CMAQ'
 
 # set the path of CTM netcdf files (either relative or absolute)
-ctm_conc_dir: '/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/2019_const_4D_avis/'
+ctm_conc_dir: '/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/2019_const_4D_crt_avis_rdc_lgt_BC/'
 
 # set the path of MCIP netcdf files (either relative or absolute)
 ctm_mcip_dir: '/nobackup/jjung13/ACMAP_mcipout/2019/'
@@ -27,7 +30,7 @@ ctm_emis_dir: '/nobackup/jjung13/ACMAP_4D_EMIS/2019/sources/'
 
 # state vectors
 state_vectors: 
-   - 'NOx'
+   - 'NO2'
    - 'HCHO'
    - 'CO'
    - 'NOx'
@@ -42,7 +45,7 @@ sensor:
 
 # set the path of L2 files
 sat_path:
-   - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_NO2/'
+   - '/nobackup/asouri/GITS/AIDA/run/temp_no2/'
    - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_HCHO/'
    - '/nobackup/jjung13/ACMAP_MOPITT/'
    - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_NO2/'
@@ -80,10 +83,10 @@ start_date: '2019-04'
 end_date:   '2019-04'
 
 # output folder for PDF reports
-output_pdf_dir: './report'
+output_pdf_dir: './report_oi'
 
 # output folder for NC diags
-output_nc_dir: './diag'
+output_nc_dir: './diag_oi'
 
 
 
