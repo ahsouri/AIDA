@@ -90,7 +90,7 @@ for statev in state_vectors:
                str(year) + '-' + f"{month:02}" + '-01', str(year+1) + '-' + "01" + '-01')
 
     if save_daily:
-        aida_obj.savedaily()
+        aida_obj.savedaily(output_nc_dir, gasname, str(year) + '_' + f"{month:02}" )
         exit()
     if do_oi == True:
         aida_obj.oi(error_ctm=state_err)

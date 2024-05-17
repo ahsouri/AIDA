@@ -188,8 +188,10 @@ class aida(object):
         # inversion TO DO
         ncfile.close()
 
-    def savedaily(self):
+    def savedaily(self, folder, gasname, date):
         # extract sat data
+        if not os.path.exists(folder):
+            os.makedirs(folder)
         latitude = self.reader_obj.ctm_data[0].latitude
         longitude = self.reader_obj.ctm_data[0].longitude
         vcd_sat = np.zeros((np.shape(latitude)[0], np.shape(
@@ -210,7 +212,7 @@ class aida(object):
 
         sat = {"vcd_sat": vcd_sat, "vcd_ctm": vcd_ctm,
                "vcd_err": vcd_err, "time_sat": time_sat, "lat": latitude, "lon": longitude}
-        savemat("./sat_data.mat", sat)
+        savemat(folder + "/" + "sat_data_" + gasname + date +".mat", sat)
 
 
 # testing
