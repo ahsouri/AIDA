@@ -80,18 +80,17 @@ for statev in state_vectors:
         aida_obj.conv_ak()
     else:
         aida_obj.recal_amf()
-    if month != 12:
-        if ~save_daily:
-            aida_obj.average(str(
-               year) + '-' + f"{month:02}" + '-01', str(year) + '-' + f"{month+1:02}" + '-01')
-    else:
-        if ~save_daily:
-            aida_obj.average(
-               str(year) + '-' + f"{month:02}" + '-01', str(year+1) + '-' + "01" + '-01')
 
     if save_daily:
         aida_obj.savedaily(output_nc_dir, gasname, str(year) + '_' + f"{month:02}" )
-        exit()
+
+    if month != 12:
+        aida_obj.average(str(
+               year) + '-' + f"{month:02}" + '-01', str(year) + '-' + f"{month+1:02}" + '-01')
+    else:
+        aida_obj.average(
+               str(year) + '-' + f"{month:02}" + '-01', str(year+1) + '-' + "01" + '-01')
+
     if do_oi == True:
         aida_obj.oi(error_ctm=state_err)
 

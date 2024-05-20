@@ -212,7 +212,7 @@ class aida(object):
 
         sat = {"vcd_sat": vcd_sat, "vcd_ctm": vcd_ctm,
                "vcd_err": vcd_err, "time_sat": time_sat, "lat": latitude, "lon": longitude}
-        savemat(folder + "/" + "sat_data_" + gasname + date +".mat", sat)
+        savemat(folder + "/" + "sat_data_" + gasname + "_" + date +".mat", sat)
 
 
 # testing
