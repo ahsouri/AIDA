@@ -518,7 +518,7 @@ def mopitt_reader_co(fname: str, ctm_models_coordinate=None, read_ak=True) -> sa
     mopitt = satellite_opt(vcd, time, [], tropopause, latitude_center,
                            longitude_center, [], [], uncertainty, np.ones_like(
                                vcd), p_mid, AKs, [], [], [], [],
-                           apriori_col, apriori_profile, surface_pressure, apriori_surface, x_col)
+                           apriori_col, apriori_profile, surface_pressure, apriori_surface, x_col,[],[])
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
@@ -577,9 +577,9 @@ def omi_reader(product_dir: str, satellite_product_name: str, ctm_models_coordin
 
     # find L2 files first
 
-    print(product_dir + "/*" + YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.he5")
+    print(product_dir + "/*" + YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.nc")
     L2_files = sorted(glob.glob(product_dir + "/*" +
-                                YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.he5"))
+                                YYYYMM[0:4] + 'm' + YYYYMM[4::] + "*.nc"))
     # read the files in parallel
     if satellite_product_name.split('_')[-1] == 'NO2':
         outputs_sat = Parallel(n_jobs=num_job)(delayed(omi_reader_no2)(

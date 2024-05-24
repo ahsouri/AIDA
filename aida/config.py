@@ -50,6 +50,8 @@ class satellite_opt:
     surface_pressure: np.ndarray
     apriori_surface: np.ndarray
     x_col: np.ndarray
+    ctm_lat: np.ndarray
+    ctm_lon: np.ndarray
 
 
 @dataclass
@@ -63,6 +65,7 @@ class ctm_model:
     delta_p: np.ndarray
     ctmtype: str
     averaged: bool
+
 
 
 @dataclass

@@ -192,8 +192,8 @@ class aida(object):
         # extract sat data
         if not os.path.exists(folder):
             os.makedirs(folder)
-        latitude = self.reader_obj.ctm_data[0].latitude
-        longitude = self.reader_obj.ctm_data[0].longitude
+        latitude = self.reader_obj.sat_data[0].ctm_lat #self.reader_obj.ctm_data[0].latitude
+        longitude = self.reader_obj.sat_data[0].ctm_lon#self.reader_obj.ctm_data[0].longitude
         vcd_sat = np.zeros((np.shape(latitude)[0], np.shape(
             latitude)[1], len(self.reader_obj.sat_data)))
         vcd_err = np.zeros_like(vcd_sat)

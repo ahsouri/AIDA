@@ -156,6 +156,14 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
             ctm_partial_new = []
             ctm_mid_pressure_new = []
 
+            _, _, ctm_longitude_new, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                                                                   ctm_data[0].longitude, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+            _, _, ctm_latitude_new, _  = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                                                                   ctm_data[0].latitude, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+ 
+
+
+
             if ddm_read == True:
                 ddm_partial_new = np.zeros((np.shape(ctm_mid_pressure)[0],
                                             np.shape(L2_granule.longitude_center)[0], np.shape(
@@ -251,6 +259,13 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
         model_VCD[np.isinf(L2_granule.vcd)] = np.nan
         sat_data[counter].ctm_vcd = model_VCD
         sat_data[counter].ctm_time_at_sat = time_ctm[closest_index_ctm]
+        if L2_granule.ctm_upscaled_needed == True:
+            sat_data[counter].ctm_lat = ctm_latitude_new
+            sat_data[counter].ctm_lon = ctm_longitude_new
+        else:
+            sat_data[counter].ctm_lat = ctm_latitude
+            sat_data[counter].ctm_lon = ctm_longitude
+
         # populate ddm stuff if requested
         if ddm_read == True:
             ddm_vcd[np.isnan(L2_granule.vcd)] = np.nan
