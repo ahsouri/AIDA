@@ -111,6 +111,8 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
         ctm_deltap = np.squeeze(
             ctm_data[closest_index_ctm_day].delta_p[closest_index_ctm_hour, :, :, :])
         ctm_partial_column = ctm_deltap*ctm_profile/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
+        ctm_longitude = ctm_data[0].longitude
+        ctm_latitude = ctm_data[0].latitude
 
         # take emissions and DDM for the right L2 data
         if ddm_read == True:
@@ -138,8 +140,8 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
                 sat_coordinate["Latitude"][0, 0] - sat_coordinate["Latitude"][1, 0])
             threshold_sat = np.sqrt(
                 size_grid_sat_lon**2 + size_grid_sat_lat**2)
-            ctm_longitude = ctm_data[0].longitude
-            ctm_latitude = ctm_data[0].latitude
+#            ctm_longitude = ctm_data[0].longitude
+#            ctm_latitude = ctm_data[0].latitude
             size_grid_model_lon = np.abs(
                 ctm_longitude[0, 0]-ctm_longitude[0, 1])
             size_grid_model_lat = np.abs(
