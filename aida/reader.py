@@ -694,7 +694,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
         YYYYMM[:4] + "%03d" % int(k) + ".nc"
     file_emis_anthro = dir_emis + "/CCTM_ACMAP_EMIS_gc_v52_" + \
         YYYYMM[:4] + "%03d" % int(k) + ".nc"
-    file_emis_light = dir_emis + "/CCTM_ACMAP_LNT_gc_v52_" + \
+    file_emis_light = dir_emis + "/CCTM_ACMAP_EMIS_LNT_v52_" + \
         YYYYMM[:4] + "%03d" % int(k) + ".nc"
 
     print("Currently reading ddm and emis ... ")
@@ -760,7 +760,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     emis_bio = np.sum(emis_bio, axis=1).squeeze()
     emis_bb = np.sum(emis_bb, axis=1).squeeze()
     emis_anthro = np.sum(emis_anthro, axis=1).squeeze()
-    emis_light = np.sum(emis_light, axis=0).squeeze()
+    emis_light = np.sum(emis_light, axis=1).squeeze()
 
     emis_bio = emis_bio[1:, :, :]  # removed 0 UTC, so 1 ~ 24 UTC
     emis_bb = emis_bb[1:, :, :]

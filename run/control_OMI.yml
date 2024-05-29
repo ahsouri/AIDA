@@ -2,16 +2,16 @@
 python_bin: '/nobackup/jjung13/miniconda3/bin/python3'
 
 # to run the job on debug queue
-debug: True
+debug: False
 
 # validation only (if True, inversion and assimilation will be set to False)
-validation: False
+validation: True
 
 # a hack to save outputs in daily for validation purposes 
-save_daily: False
+save_daily: True
 
 # number of jobs
-num_job: 40
+num_job: 12
 
 # set the name of CTM model (always CMAQ for AIDA)
 ctm_name: 'CMAQ'
@@ -30,14 +30,24 @@ ctm_emis_dir: '/nobackup/jjung13/ACMAP_4D_EMIS/2019/sources/'
 
 # state vectors
 state_vectors: 
+   - 'NO2'
+   - 'HCHO'
+   - 'CO'
    - 'NOx'
+   - 'VOC'
 
 sensor:
+   - 'OMI'
+   - 'OMI'
+   - 'MOPITT'
    - 'TROPOMI'
    - 'TROPOMI'
 
 # set the path of L2 files
 sat_path:
+   - '/nobackup/jjung13/ACMAP_satellite/OMI_NO2_MINDS/'
+   - '/nobackup/jjung13/ACMAP_satellite/OMI_HCHO_SAO/'
+   - '/nobackup/jjung13/ACMAP_MOPITT/'
    - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_NO2/'
    - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_HCHO/'
 
@@ -67,10 +77,6 @@ inflate_errors: #inflate the state vector errors (same order as state vectors)
 
 # total column or tropospheric column (only applicable for NO2)
 troposphere_no2_only: True
-
-index_iteration: # index of iteration
-   - 0
-        
 
 # starting date (YYYY-MM) and ending date (YYYY-MM) (the end point will be considered)
 start_date: '2019-05'

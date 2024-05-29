@@ -30,6 +30,7 @@ num_job = ctrl_opts['num_job']
 sensor = ctrl_opts['sensor']
 validation_only = ctrl_opts['validation']
 save_daily = ctrl_opts['save_daily']
+index_iteration = ctrl_opts['index_iteration']
 
 year = int(sys.argv[1])
 month = int(sys.argv[2])
@@ -93,6 +94,9 @@ for statev in state_vectors:
 
     if do_oi == True:
         aida_obj.oi(error_ctm=state_err)
+
+    if do_inversion == True:
+        aida_obj.inversion(index_iteration=index_iteration)
 
     aida_obj.reporting(gasname + '_' + str(year) +
                        f"{month:02}", gasname, output_pdf_dir)

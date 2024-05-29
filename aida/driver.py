@@ -3,6 +3,7 @@ from pathlib import Path
 from aida.amf_recal import amf_recal
 from aida.averaging import averaging
 from aida.optimal_interpolation import OI
+from aida.inversion import IV
 from aida.report import report
 from aida.ak_conv import ak_conv
 import numpy as np
@@ -68,9 +69,15 @@ class aida(object):
         self.oi_result = OI(self.averaged_fields.ctm_vcd, self.averaged_fields.sat_vcd,
                             (self.averaged_fields.ctm_vcd*error_ctm/100.0)**2, self.averaged_fields.sat_err**2, regularization_on=True)
 
-    def inversion(self):
-
+    def inversion(self,index_iteration):
         self.do_run_inversion = True
+        self.inversion_result = IV(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err,
+                self.averaged_fields.ctm_vcd, self.averaged_fields.ddm_vcd, self.averaged_fields.emis_total, 
+                self.averaged_fields.emis_error, index_iteration, regularization_on=True)
+#        IV(self.averaged_fields.ctm_vcd, self.averaged_fields.sat_vcd,
+#                            (self.averaged_fields.ctm_vcd*error_ctm/100.0)**2,
+#                            self.averaged_fields.sat_err**2, index_iteration, regularization_on=True)
+
 
     def reporting(self, fname: str, gasname, folder='report'):
 

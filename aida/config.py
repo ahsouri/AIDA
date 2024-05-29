@@ -98,5 +98,5 @@ class OI_result:
     error_analysis: np.ndarray
 
 @dataclass 
-class inversion:
+class inversion_result:
     temp: np.ndarray
