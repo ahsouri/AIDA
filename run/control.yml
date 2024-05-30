@@ -10,6 +10,9 @@ validation: False
 # a hack to save outputs in daily for validation purposes 
 save_daily: False
 
+# to adjust bias of satellite VCD 
+bias_sat: True
+
 # number of jobs
 num_job: 40
 

@@ -9,12 +9,14 @@ def _daterange(start_date, end_date):
         yield start_date + datetime.timedelta(n)
 
 
-def averaging(startdate: str, enddate: str, reader_obj):
+def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, sat_type: str):
     '''
           average the data
           Input:
               startdate [str]: starting date in YYYY-mm-dd format string
               enddate [str]: ending date in YYYY-mm-dd format string
+              gasname [str], bias_sat (True or False), and sat_type (TROPOMI, OMI..) 
+                are for applying bias correction for satellite VCD
     '''
     # convert dates to datetime
     start_date = datetime.date(int(startdate[0:4]), int(
@@ -163,6 +165,32 @@ def averaging(startdate: str, enddate: str, reader_obj):
         emis_averaged = []
         emis_err_averaged = []
 
+    if bias_sat == True:
+        sat_averaged_vcd = sat_averaged_vcd*10**15
+        if sat_type == "TROPOMI" and gasname == "NO2":
+            print("applying bias correction for TROPOMI NO2")
+            sat_averaged_vcd = (sat_averaged_vcd - 1.0*10**15)/0.53
+
+        elif sat_type == "TROPOMI" and gasname == "HCHO":
+            print("applying bias correction for TROPOMI HCHO")
+            sat_averaged_vcd = (sat_averaged_vcd - 1.17*10**15)/0.63
+        
+        elif sat_type == "OMI" and gasname == "NO2":
+            print("applying bias correction for OMI NO2")
+        elif sat_type == "OMI" and gasname == "HCHO":
+            print("applying bias correction for OMI HCHO")
+
+        sat_averaged_vcd = sat_averaged_vcd/10**15
+
+    else:
+        print("NOT applying bias correction for satellite VCD")
+
+        
+            
     output = averaged_field(sat_averaged_vcd, sat_averaged_error, ctm_averaged_vcd,
                             sat_aux1, sat_aux2, ddm_averaged, emis_averaged, emis_err_averaged, gap_chosen, time_chosen)
+    averaging = {"sat_averaged_vcd": sat_averaged_vcd, "sat_averaged_error": sat_averaged_error, "ctm_averaged_vcd": ctm_averaged_vcd,
+            "sat_aux1": sat_aux1, "sat_aux2": sat_aux2, "ddm_averaged": ddm_averaged, "emis_averaged": emis_averaged, 
+            "emis_err_averaged": emis_err_averaged, "gap_chosen": gap_chosen, "time_chosen": time_chosen}
+    savemat("/nobackup/jjung13/github_ACMAP/AIDA/run/averaging_data_" + gasname + "_" + startdate[0:4] + "_" + startdate[5:7] + ".mat", averaging)  
     return output

@@ -31,6 +31,7 @@ sensor = ctrl_opts['sensor']
 validation_only = ctrl_opts['validation']
 save_daily = ctrl_opts['save_daily']
 index_iteration = ctrl_opts['index_iteration']
+bias_sat = ctrl_opts['bias_sat']
 
 year = int(sys.argv[1])
 month = int(sys.argv[2])
@@ -87,10 +88,10 @@ for statev in state_vectors:
 
     if month != 12:
         aida_obj.average(str(
-               year) + '-' + f"{month:02}" + '-01', str(year) + '-' + f"{month+1:02}" + '-01')
+               year) + '-' + f"{month:02}" + '-01', str(year) + '-' + f"{month+1:02}" + '-01', gasname, bias_sat, sensor[cnt])
     else:
         aida_obj.average(
-               str(year) + '-' + f"{month:02}" + '-01', str(year+1) + '-' + "01" + '-01')
+               str(year) + '-' + f"{month:02}" + '-01', str(year+1) + '-' + "01" + '-01', gasname, bias_sat, sensor[cnt])
 
     if do_oi == True:
         aida_obj.oi(error_ctm=state_err)

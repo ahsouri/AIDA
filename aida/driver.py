@@ -53,7 +53,7 @@ class aida(object):
         self.reader_obj.sat_data = ak_conv(
             self.reader_obj.ctm_data, self.reader_obj.sat_data)
 
-    def average(self, startdate: str, enddate: str):
+    def average(self, startdate: str, enddate: str, gasname, bias_sat, sat_type: str):
         '''
             average the data
             Input:
@@ -61,7 +61,7 @@ class aida(object):
                 enddate [str]: ending date in YYYY-mm-dd format string  
         '''
         self.averaged_fields = averaging(
-            startdate, enddate, self.reader_obj)
+            startdate, enddate, self.reader_obj, gasname, bias_sat, sat_type)
 
     def oi(self, error_ctm=50.0):
 
