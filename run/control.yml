@@ -13,6 +13,9 @@ save_daily: False
 # to adjust bias of satellite VCD 
 bias_sat: True
 
+index_iteration: # index of iteration
+   - 0
+
 # number of jobs
 num_job: 40
 
@@ -26,7 +29,9 @@ ctm_conc_dir: '/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/2019_const_4D_crt_avis_rdc_
 ctm_mcip_dir: '/nobackup/jjung13/ACMAP_mcipout/2019/'
 
 # set the path of CTM DDM netcdf files (either relative or absolute)
-ctm_ddm_dir: '/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_NOX/'
+ctm_ddm_dir: 
+   - '/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_NOX/'
+   - '/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_VOC/'
 
 # set the path of CTM EMISS netcdf files (either relative or absolute)
 ctm_emis_dir: '/nobackup/jjung13/ACMAP_4D_EMIS/2019/sources/'
@@ -34,6 +39,7 @@ ctm_emis_dir: '/nobackup/jjung13/ACMAP_4D_EMIS/2019/sources/'
 # state vectors
 state_vectors: 
    - 'NOx'
+   - 'VOC'
 
 sensor:
    - 'TROPOMI'
@@ -71,19 +77,16 @@ inflate_errors: #inflate the state vector errors (same order as state vectors)
 # total column or tropospheric column (only applicable for NO2)
 troposphere_no2_only: True
 
-index_iteration: # index of iteration
-   - 0
-        
 
 # starting date (YYYY-MM) and ending date (YYYY-MM) (the end point will be considered)
 start_date: '2019-05'
 end_date:   '2019-05'
 
 # output folder for PDF reports
-output_pdf_dir: './report_oi'
+output_pdf_dir: './report_iv'
 
 # output folder for NC diags
-output_nc_dir: './diag_oi'
+output_nc_dir: './diag_iv'
 
 
 

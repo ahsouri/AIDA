@@ -76,7 +76,7 @@ for statev in state_vectors:
     # calling AIDA
     aida_obj = aida()
     aida_obj.read_data(ctm_name, Path(ctm_conc_dir), Path(ctm_mcip_dir), gasname, sensor[cnt] + '_' + gasname, Path(sat_path[cnt]), str(year) + f"{month:02}",
-                       (state_err), Path(ctm_ddm_dir), Path(ctm_emis_dir), read_ddm=read_ddm, averaged=ctm_avg, read_ak=True, trop=troposphere_no2_only, num_job=num_job)
+                       (state_err), Path(ctm_ddm_dir[cnt]), Path(ctm_emis_dir), read_ddm=read_ddm, averaged=ctm_avg, read_ak=True, trop=troposphere_no2_only, num_job=num_job)
 
     if sensor[cnt] == "MOPITT":
         aida_obj.conv_ak()
