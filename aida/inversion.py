@@ -4,7 +4,8 @@ from kneed import KneeLocator
 from aida.config import inversion_result
 
 
-def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X: np.array, Sa: np.array, index_iteration: int, regularization_on=True):
+def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Xi: np.array,  Sa: np.array, index_iteration: int, regularization_on=True):
+    
     ''' 
     Inversion with CMAQ and satellite..
     G = SaK^T(KSaK^T + So)^-1
@@ -26,16 +27,58 @@ def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X: np.array, Sa: np.
         index_iteration [int]: indicating it's the first iteration or not 
     '''
     print('Inversion is working...!, index_iteration :', index_iteration)
-    print(np.shape(Y))
-    print(np.shape(So))
-    print(np.shape(F))
-    print(np.shape(K))
-    print(np.shape(X))
-    print(np.shape(Sa))
+    
+    Y[Y < 0] = 0.0
+    if regularization_on == True:
+        scaling_factors = np.arange(0.1, 10, 0.1)
+        scaling_factors = list(scaling_factors)
+    else:
+        scaling_factors = []
+        scaling_factors.append(1.0)
 
+    averaging_kernel_mean = []
+    kalman_gain = []
+    Sb = []
+    averaging_kernel = []
+    Sa_new = []
+    for reg in scaling_factors:
+        Sa_new = Sa*float(reg)
+        kalman_gain_tmp = (Sa_new*K*(K*Sa_new*K+So)**(-1))
+        kalman_gain.append(kalman_gain_tmp)
+        Sb_tmp = (np.ones_like(kalman_gain_tmp)-kalman_gain_tmp*K)*Sa_new
+        Sb.append(Sb_tmp)
+        AK = np.ones_like(Sb_tmp)-(Sb_tmp)/(Sa_new)
+        averaging_kernel.append(AK)
+        averaging_kernel_mean.append(np.nanmean(AK.flatten()))
 
+    if regularization_on == True:
+        averaging_kernel_mean = np.array(averaging_kernel_mean)
+        kneedle = KneeLocator(np.array(scaling_factors),
+                              averaging_kernel_mean, direction='increasing')
+        knee_index = np.argwhere(np.array(scaling_factors) == kneedle.knee)
+        if np.size(knee_index) == 0:
+            knee_index = [0]
+    else:
+        knee_index = [0]
 
+    kalman_gain = kalman_gain[int(knee_index[0])]
+    averaging_kernel = averaging_kernel[int(knee_index[0])]
+    Sb = Sb[int(knee_index[0])]
 
+    if index_iteration == 0:
+        increment = kalman_gain*(Y-F)
+    else:
+        #need to be done this part 
+        increment = kalman_gain*(Y-F + K*(X1-X0))
+
+    Xb = Xa + increment
+
+    ratio = np.ones_like(X0)
+    ratio = Xb/X0
+    ratio[np.isnan(ratio) | np.isinf(ratio) | ratio == 0] = 1.0
+
+    output = inversion_result(Xb, averaging_kernel, increment, np.sqrt(Sb), ratio)
+    return output
 
 
 

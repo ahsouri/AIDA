@@ -99,4 +99,9 @@ class OI_result:
 
 @dataclass 
 class inversion_result:
-    temp: np.ndarray
+    post_emis: np.array
+    ak: np.array
+    increment: np.array
+    error_analysis: np.array
+    ratio: np.array
+   

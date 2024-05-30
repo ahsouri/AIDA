@@ -189,8 +189,8 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
             
     output = averaged_field(sat_averaged_vcd, sat_averaged_error, ctm_averaged_vcd,
                             sat_aux1, sat_aux2, ddm_averaged, emis_averaged, emis_err_averaged, gap_chosen, time_chosen)
-    averaging = {"sat_averaged_vcd": sat_averaged_vcd, "sat_averaged_error": sat_averaged_error, "ctm_averaged_vcd": ctm_averaged_vcd,
-            "sat_aux1": sat_aux1, "sat_aux2": sat_aux2, "ddm_averaged": ddm_averaged, "emis_averaged": emis_averaged, 
-            "emis_err_averaged": emis_err_averaged, "gap_chosen": gap_chosen, "time_chosen": time_chosen}
-    savemat("/nobackup/jjung13/github_ACMAP/AIDA/run/averaging_data_" + gasname + "_" + startdate[0:4] + "_" + startdate[5:7] + ".mat", averaging)  
+    #averaging = {"sat_averaged_vcd": sat_averaged_vcd, "sat_averaged_error": sat_averaged_error, "ctm_averaged_vcd": ctm_averaged_vcd,
+    #        "sat_aux1": sat_aux1, "sat_aux2": sat_aux2, "ddm_averaged": ddm_averaged, "emis_averaged": emis_averaged, 
+    #        "emis_err_averaged": emis_err_averaged, "gap_chosen": gap_chosen, "time_chosen": time_chosen}
+    #savemat("/nobackup/jjung13/github_ACMAP/AIDA/run/averaging_data_" + gasname + "_" + startdate[0:4] + "_" + startdate[5:7] + ".mat", averaging)  
     return output

@@ -124,6 +124,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
     if gasname == 'HCHO':
         vmin_vcd = 0.0
         vmax_vcd = 20.0
+        vmin_ratio = -1.5
+        vmax_ratio = 1.5
         vmax_error = 15.0
         vmin_incre = -5.0
         vmax_incre = 5.0
@@ -132,6 +134,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
     if gasname == 'NO2':
         vmin_vcd = 0.0
         vmax_vcd = 10.0
+        vmin_ratio = -1.5
+        vmax_ratio = 1.5
         vmax_error = 5.0
         vmin_incre = -5.0
         vmax_incre = 5.0
@@ -140,6 +144,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
     if gasname == 'O3':
         vmin_vcd = 200.0
         vmax_vcd = 500.0
+        vmin_ratio = -1.5
+        vmax_ratio = 1.5
         vmax_error = 30.0
         vmin_incre = -20.0
         vmax_incre = 20.0
@@ -147,6 +153,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
     if gasname == 'CO':
         vmin_vcd = 0.0
         vmax_vcd = 3.0
+        vmin_ratio = -1.5
+        vmax_ratio = 1.5
         vmax_error = 0.2
         vmin_incre = -2.0
         vmax_incre = 2.0
@@ -199,5 +207,16 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
             fname + '.png', 'Averaging Kernels', 2, 0.0, 1.0)
         plotter(lon, lat, oi_fields.error_analysis, 'temp/error_' +
             fname + '.png', 'OI estimate error', unit, 0.0, vmax_error)             
+
+    # Inversion fields
+    if inversion_fields:
+        plotter(lon, lat, inversion_fields.ratio, 'temp/iv_ratio_' +
+            fname + '.png', 'Ratio (posterior/priori)', unit, vmin_ratio, vmax_ratio)
+        plotter(lon, lat, inverseion_fields.increment, 'temp/iv_increment_' +
+            fname + '.png', 'Increment (VCD)', unit, vmin_incre, vmax_incre)
+        plotter(lon, lat, inversion_fields.ak, 'temp/iv_ak_' +
+            fname + '.png', 'Averaging Kernels', 2, 0.0, 1.0)
+        plotter(lon, lat, inversion_fields.error_analysis, 'temp/iv_error_' +
+            fname + '.png', 'IV estimate error', unit, 0.0, vmax_error)
 
     topdf(fname, ffolder, 'AIDA_report_' + fname + '.pdf')
