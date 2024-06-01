@@ -4,7 +4,7 @@ from kneed import KneeLocator
 from aida.config import inversion_result
 
 
-def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np.array, index_iteration: int, regularization_on=True):
+def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np.array, index_iteration:int, regularization_on=True):
     
     ''' 
     Inversion with CMAQ and satellite..
@@ -71,11 +71,14 @@ def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np
         #need to be done this part 
         increment = kalman_gain*(Y-F + K*(X1-X0))
 
-    Xb = Xa + increment
+    Xb = X0 + increment
 
     ratio = np.ones_like(X0)
     ratio = Xb/X0
-    ratio[np.isnan(ratio) | np.isinf(ratio) | ratio == 0] = 1.0
+    ratio[np.isnan(ratio)] = 1.0
+    ratio[np.isinf(ratio)] = 1.0
+    ratio[ratio<=0] = 1.0
+    
 
     output = inversion_result(Xb, averaging_kernel, increment, np.sqrt(Sb), ratio)
     return output

@@ -17,7 +17,7 @@ index_iteration: # index of iteration
    - 0
 
 # number of jobs
-num_job: 40
+num_job: 12
 
 # set the name of CTM model (always CMAQ for AIDA)
 ctm_name: 'CMAQ'

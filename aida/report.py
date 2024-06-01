@@ -211,12 +211,12 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
     # Inversion fields
     if inversion_fields:
         plotter(lon, lat, inversion_fields.ratio, 'temp/iv_ratio_' +
-            fname + '.png', 'Ratio (posterior/priori)', unit, vmin_ratio, vmax_ratio)
-        plotter(lon, lat, inverseion_fields.increment, 'temp/iv_increment_' +
-            fname + '.png', 'Increment (VCD)', unit, vmin_incre, vmax_incre)
+            fname + '.png', 'IV Ratio (posterior/priori)', 2, 0, vmax_ratio)
+        plotter(lon, lat, inversion_fields.increment, 'temp/iv_increment_' +
+            fname + '.png', 'IV Increment (emission)', 6, vmin_vcd, vmax_vcd/10.0)
         plotter(lon, lat, inversion_fields.ak, 'temp/iv_ak_' +
-            fname + '.png', 'Averaging Kernels', 2, 0.0, 1.0)
+            fname + '.png', 'IV Averaging Kernels', 2, 0.0, 1.0)
         plotter(lon, lat, inversion_fields.error_analysis, 'temp/iv_error_' +
-            fname + '.png', 'IV estimate error', unit, 0.0, vmax_error)
+            fname + '.png', 'IV estimate error', 6, vmin_vcd, vmax_vcd/10.0)
 
     topdf(fname, ffolder, 'AIDA_report_' + fname + '.pdf')

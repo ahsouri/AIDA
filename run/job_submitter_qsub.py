@@ -53,7 +53,7 @@ for year in range(np.min(list_years), np.max(list_years)+1):
         file = open('./jobs/' + 'job_' + str(year) +
                     '_' + str(month) + '.j', 'w')
         slurm_cmd = '#!/bin/bash \n'
-        slurm_cmd += '#PBS -l select=2:ncpus=24:mpiprocs=24:model=has  \n'
+        slurm_cmd += '#PBS -l select=3:ncpus=6:mpiprocs=6:model=has  \n'
         slurm_cmd += '#PBS -l walltime=2:00:00  \n'
         slurm_cmd += '#PBS -N aida  \n'
         slurm_cmd += '#PBS -j oe  \n'

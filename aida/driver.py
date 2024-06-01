@@ -73,7 +73,7 @@ class aida(object):
         self.do_run_inversion = True
         if index_iteration == 0:
             self.inversion_result = IV(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err**2,
-                self.averaged_fields.ctm_vcd, self.averaged_fields.ddm_vcd/self.averaged_fields.emis_total, self.averaged_fields.emis_total, [], 
+                self.averaged_fields.ctm_vcd, self.averaged_fields.ddm_vcd/self.averaged_fields.emis_total, self.averaged_fields.emis_total, 
                 self.averaged_fields.emis_error**2, index_iteration, regularization_on=True)
 
     def reporting(self, fname: str, gasname, folder='report'):
@@ -184,23 +184,23 @@ class aida(object):
         if self.inversion_result:
             data17 = ncfile.createVariable(
                 'IV_posterior_emissions', dtype('float32').char, ('x', 'y'))
-            data17[:,:] = self.inversion_results.post_emis
+            data17[:,:] = self.inversion_result.post_emis
             
             data18 = ncfile.createVariable(
                 'IV_ak', dtype('float32').char, ('x', 'y'))
-            data18[:,:] = self.invesion_results.ak
+            data18[:,:] = self.inversion_result.ak
 
             data19 = ncfile.createVariable(
                 'IV_increment', dtype('float32').char, ('x', 'y'))
-            data19[:,:] = self.inversion_results.increments
+            data19[:,:] = self.inversion_result.increment
 
             data20 = ncfile.createVariable(
                 'IV_error', dtype('float32').char, ('x', 'y'))
-            data20[:,:] = self.inversion_results.error_analysis
+            data20[:,:] = self.inversion_result.error_analysis
 
             data21 = ncfile.createVariable(
                 'IV_ratio', dtype('float32').char, ('x', 'y'))
-            data21[:,:] = self.inverseion_results.ratio
+            data21[:,:] = self.inversion_result.ratio
 
         data15 = ncfile.createVariable(
             'gap', dtype('float32').char, ('t', 'x', 'y'))

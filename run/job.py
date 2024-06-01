@@ -33,6 +33,7 @@ save_daily = ctrl_opts['save_daily']
 index_iteration = ctrl_opts['index_iteration']
 bias_sat = ctrl_opts['bias_sat']
 
+
 year = int(sys.argv[1])
 month = int(sys.argv[2])
 
@@ -97,9 +98,9 @@ for statev in state_vectors:
         aida_obj.oi(error_ctm=state_err)
 
     if do_inversion == True:
-        aida_obj.inversion(index_iteration=index_iteration)
+        aida_obj.inversion(index_iteration=index_iteration[0])
 
     aida_obj.reporting(gasname + '_' + str(year) +
-            f"{month:02}" + '_' + f"{index_iteration:02}", gasname, output_pdf_dir)
+            f"{month:02}" + '_' + str(index_iteration[0]), gasname, output_pdf_dir)
     aida_obj.write_to_nc(gasname + '_' + str(year) +
-            f"{month:02}" + '_' +  f"{index_iteration:02}", output_nc_dir, read_ddm=read_ddm)
+            f"{month:02}" + '_' + str(index_iteration[0]), output_nc_dir, read_ddm=read_ddm)
