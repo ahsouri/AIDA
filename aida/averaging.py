@@ -166,22 +166,30 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
         emis_err_averaged = []
 
     if bias_sat == True:
-        sat_averaged_vcd = sat_averaged_vcd*10**15
+        sat_averaged_vcd = sat_averaged_vcd*10**15        
         if sat_type == "TROPOMI" and gasname == "NO2":
             print("applying bias correction for TROPOMI NO2")
             sat_averaged_vcd = (sat_averaged_vcd - 1.0*10**15)/0.53
-
+            '''
+            reference:Geffen et al., 2022, Sentinel-5P TROPOMI NO2 retrieval: impact of version v2.2 improvements and comparisons with OMI 
+            and ground-based data
+            '''
         elif sat_type == "TROPOMI" and gasname == "HCHO":
             print("applying bias correction for TROPOMI HCHO")
             sat_averaged_vcd = (sat_averaged_vcd - 1.17*10**15)/0.63
-        
+            '''
+            reference: Vigouroux et al., 2020, TROPOMI-Sentinel-5 Precursor formaldehyde validation using an extensive network of ground-based
+            Fourier-transform infrared stations
+            '''
         elif sat_type == "OMI" and gasname == "NO2":
             print("applying bias correction for OMI NO2")
         elif sat_type == "OMI" and gasname == "HCHO":
             print("applying bias correction for OMI HCHO")
-
+            sat_averaged_vcd = (sat_averaged_vcd*10 - 1.06*10**15)/(0.66*10)
+            '''
+            reference: Ayazpour et al., Submitted, Auto Ozone Monitoring Instrument (OMI) Collection 4 Formaldehyde Product
+            '''
         sat_averaged_vcd = sat_averaged_vcd/10**15
-
     else:
         print("NOT applying bias correction for satellite VCD")
 
