@@ -98,7 +98,7 @@ for statev in state_vectors:
         aida_obj.oi(error_ctm=state_err)
 
     if do_inversion == True:
-        aida_obj.inversion(index_iteration=index_iteration[0])
+        aida_obj.inversion(gasname, sensor[cnt], index_iteration=index_iteration[0])
 
     aida_obj.reporting(gasname + '_' + str(year) +
             f"{month:02}" + '_' + str(index_iteration[0]), gasname, output_pdf_dir)
