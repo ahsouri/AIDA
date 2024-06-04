@@ -44,6 +44,7 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
 
     #sat_samples = np.zeros_like(sat_averaged_vcd)*np.nan
     sat_averaged_error = np.zeros_like(sat_averaged_vcd)*np.nan
+    sys_averaged_error = np.zeros_like(sat_averaged_vcd)*np.nan
     ctm_averaged_vcd = np.zeros_like(sat_averaged_vcd)*np.nan
     sat_aux1 = np.zeros_like(sat_averaged_vcd)*np.nan
     sat_aux2 = np.zeros_like(sat_averaged_vcd)*np.nan
@@ -57,6 +58,7 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
             sat_chosen_aux1 = []
             sat_chosen_aux2 = []
             sat_chosen_error = []
+            sys_chosen_error = []
             ctm_chosen_vcd = []
             time_chosen = []
             gap_chosen = []
@@ -76,6 +78,7 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
                     gap_chosen.append(~np.isnan(sat_data.vcd))
                     sat_chosen_vcd.append(sat_data.vcd)
                     sat_chosen_error.append(sat_data.uncertainty)
+                    sys_chosen_error.append(sat_data.sys_error)
                     ctm_chosen_vcd.append(sat_data.ctm_vcd)
                     if reader_obj.read_ddm == True:
                         emis_chosen.append(sat_data.emis_tot)
@@ -91,6 +94,7 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
             sat_chosen_vcd = np.array(sat_chosen_vcd)
             sat_chosen_vcd[np.isinf(sat_chosen_vcd)] = np.nan
             sat_chosen_error = np.array(sat_chosen_error)
+            sys_chosen_error = np.array(sys_chosen_error)
             ctm_chosen_vcd = np.array(ctm_chosen_vcd)
             sat_chosen_aux1 = np.array(sat_chosen_aux1)
             sat_chosen_aux2 = np.array(sat_chosen_aux2)
@@ -101,6 +105,8 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
                 list_years)] = np.squeeze(np.nanmean(sat_chosen_vcd, axis=0))
             sat_averaged_error[:, :, month - min(list_months), year - min(
                 list_years)] = np.sqrt(np.squeeze(np.nanmean(sat_chosen_error**2, axis=0)))
+            sys_averaged_error[:, :, month - min(list_months), year - min(
+                list_years)] = np.sqrt(np.squeeze(np.nanmean(sys_chosen_error**2, axis=0)))
             ctm_averaged_vcd[:, :, month - min(list_months), year - min(
                 list_years)] = np.squeeze(np.nanmean(ctm_chosen_vcd, axis=0))
 
@@ -122,6 +128,7 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
     # squeeze it
     sat_averaged_vcd = sat_averaged_vcd.squeeze()
     sat_averaged_error = sat_averaged_error.squeeze()
+    sys_averaged_error = sys_averaged_error.squeeze()
     ctm_averaged_vcd = ctm_averaged_vcd.squeeze()
     sat_aux1 = sat_aux1.squeeze()
     sat_aux2 = sat_aux2.squeeze()
@@ -137,6 +144,8 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
             ctm_averaged_vcd, axis=3).squeeze(), axis=2).squeeze()
         sat_averaged_error = np.sqrt(np.nanmean(np.nanmean(
             sat_averaged_error**2, axis=3).squeeze(), axis=2).squeeze())
+        sys_averaged_error = np.sqrt(np.nanmean(np.nanmean(
+            sys_averaged_error**2, axis=3).squeeze(), axis=2).squeeze())
         sat_aux1 = np.nanmean(np.nanmean(
             sat_aux1, axis=3).squeeze(), axis=2).squeeze()
         sat_aux2 = np.nanmean(np.nanmean(
@@ -153,6 +162,8 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
         ctm_averaged_vcd = np.nanmean(ctm_averaged_vcd, axis=2).squeeze()
         sat_averaged_error = np.sqrt(np.nanmean(
             sat_averaged_error**2, axis=2).squeeze())
+        sys_averaged_error = np.sqrt(np.nanmean(
+            sys_averaged_error**2, axis=2).squeeze())
         sat_aux1 = np.nanmean(sat_aux1, axis=2).squeeze()
         sat_aux2 = np.nanmean(sat_aux2, axis=2).squeeze()
         if reader_obj.read_ddm == True:
@@ -195,7 +206,7 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
 
         
             
-    output = averaged_field(sat_averaged_vcd, sat_averaged_error, ctm_averaged_vcd,
+    output = averaged_field(sat_averaged_vcd, sat_averaged_error, sys_averaged_error,ctm_averaged_vcd,
                             sat_aux1, sat_aux2, ddm_averaged, emis_averaged, emis_err_averaged, gap_chosen, time_chosen)
     #averaging = {"sat_averaged_vcd": sat_averaged_vcd, "sat_averaged_error": sat_averaged_error, "ctm_averaged_vcd": ctm_averaged_vcd,
     #        "sat_aux1": sat_aux1, "sat_aux2": sat_aux2, "ddm_averaged": ddm_averaged, "emis_averaged": emis_averaged, 

@@ -171,7 +171,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
         unit_aux = 5
         vmin_aux = 0
         vmax_aux = 0.15
-
+    
+    
     # generic fields
     plotter(lon, lat, averaged_generic_fields.ctm_vcd, 'temp/ctm_vcd_before_' +
             fname + '.png', 'CTM VCD (prior)', unit, vmin_vcd, vmax_vcd)
@@ -179,6 +180,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
             '.png', 'Satellite Observation (VCD)', unit, vmin_vcd, vmax_vcd)
     plotter(lon, lat, averaged_generic_fields.sat_err, 'temp/ctm_vcd_sat_zerr_' + fname +
             '.png', 'Satellite Error (VCD)', unit, 0.0, vmax_error)
+    plotter(lon, lat, averaged_generic_fields.sys_err, 'temp/ctm_vcd_sys_err_' + fname +
+            '.png', 'Satellite systematic Error (VCD)', unit, 0.0, vmax_error)
     if aux == "AMF":
         plotter(lon, lat, averaged_generic_fields.aux1, 'temp/aux1_' +
                 fname + '.png', 'New AMF', 2, 0.0, 4)
@@ -210,10 +213,13 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
 
     # Inversion fields
     if inversion_fields:
+        vcd_ratio = averaged_generic_fields.sat_vcd/averaged_generic_fields.ctm_vcd
+        plotter(lon, lat, vcd_ratio , 'temp/iv_ratio_vcd_' +
+            fname + '.png', 'IV Ratio (sat_vcd/ctm_vcd)', 2, 0, vmax_ratio)
         plotter(lon, lat, inversion_fields.ratio, 'temp/iv_ratio_' +
             fname + '.png', 'IV Ratio (posterior/priori)', 2, 0, vmax_ratio)
         plotter(lon, lat, inversion_fields.increment, 'temp/iv_increment_' +
-            fname + '.png', 'IV Increment (emission)', 6, vmin_vcd, vmax_vcd/10.0)
+            fname + '.png', 'IV Increment (emission)', 6, vmin_vcd, vmax_vcd/20.0)
         plotter(lon, lat, inversion_fields.ak, 'temp/iv_ak_' +
             fname + '.png', 'IV Averaging Kernels', 2, 0.0, 1.0)
         plotter(lon, lat, inversion_fields.error_analysis, 'temp/iv_error_' +

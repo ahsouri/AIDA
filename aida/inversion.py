@@ -4,7 +4,7 @@ from kneed import KneeLocator
 from aida.config import inversion_result
 
 
-def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np.array, index_iteration:int, regularization_on=True):
+def IV(Y: np.array, So: np.array, So_sys: np.array, F: np.array, K: np.array, X0: np.array, Sa: np.array, index_iteration:int, gasname: str, sat_type: str, regularization_on=True):
     
     ''' 
     Inversion with CMAQ and satellite..
@@ -21,13 +21,32 @@ def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np
     F: modeled VCD
     K: jacobian
 
-
-        XXb = Xa + SaK^T(KSaK^T + So)^-1 * (Y-K*Xa)
     Input:
         index_iteration [int]: indicating it's the first iteration or not 
     '''
-    print('Inversion is working...!, index_iteration :', index_iteration)
-    
+    print('Inversion is working...!, index_iteration :', index_iteration, 'gasname :',gasname, ', sat_type: ',sat_type)
+
+    # adding fixed error into So##
+    if sat_type == "TROPOMI" and gasname == "NO2":
+        print("finding So for TROPOMI NO2")
+        So_new = So + 2.4**2
+        '''
+        reference: Geffen et al., 2022, Sentinel-5P TROPOMI NO2 retrieval: impact of version v2.2 improvements and comparisons with OMI and
+        ground-based data
+        '''
+    elif sat_type == "TROPOMI" and gasname == "HCHO":
+        print("finding So for TROPOMI HCHO")
+        So_new = So + So_sys
+    elif sat_type == "OMI" and gasname == "NO2":
+        print("finding So for OMI NO2")
+        So_new = So 
+    elif sat_type == "OMI" and gasname == "HCHO":
+        print("finding So for OMI HCHO")
+        So_new = So + 3.59**2
+        '''
+        reference: Ayazpour et al., submitted, Aura Ozone Monitoring Instrument (OMI) Collection 4 Formaldehyde Product
+        '''
+    ##############################
     Y[Y < 0] = 0.0
     if regularization_on == True:
         scaling_factors = np.arange(0.1, 10, 0.1)
@@ -43,7 +62,7 @@ def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np
     Sa_new = []
     for reg in scaling_factors:
         Sa_new = Sa*float(reg)
-        kalman_gain_tmp = (Sa_new*K*(K*Sa_new*K+So)**(-1))
+        kalman_gain_tmp = (Sa_new*K*(K*Sa_new*K+So_new)**(-1))
         kalman_gain.append(kalman_gain_tmp)
         Sb_tmp = (np.ones_like(kalman_gain_tmp)-kalman_gain_tmp*K)*Sa_new
         Sb.append(Sb_tmp)

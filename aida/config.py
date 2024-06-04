@@ -14,6 +14,7 @@ class satellite_amf:
     latitude_corner: np.ndarray
     longitude_corner: np.ndarray
     uncertainty: np.ndarray
+    sys_error: np.ndarray
     quality_flag: np.ndarray
     pressure_mid: np.ndarray
     scattering_weights: np.ndarray
@@ -38,6 +39,7 @@ class satellite_opt:
     latitude_corner: np.ndarray
     longitude_corner: np.ndarray
     uncertainty: np.ndarray
+    sys_error: np.ndarray
     quality_flag: np.ndarray
     pressure_mid: np.ndarray
     averaging_kernels: np.ndarray
@@ -81,6 +83,7 @@ class ddm_emis_model:
 class averaged_field:
     sat_vcd: np.ndarray
     sat_err: np.ndarray
+    sys_err: np.ndarray
     ctm_vcd: np.ndarray
     aux1: np.ndarray
     aux2: np.ndarray
