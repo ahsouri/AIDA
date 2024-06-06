@@ -132,10 +132,11 @@ def tropomi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) ->
     uncertainty = (uncertainty*6.02214*1e19*1e-15).astype('float16')
 
     # read systematic error
-    sys_error = _read_group_nc(fname,['DETAILED_RESULTS'],
+    print('reading hcho')
+    sys_error = _read_group_nc(fname,['PRODUCT', 'SUPPORT_DATA','DETAILED_RESULTS'],
             'formaldehyde_tropospheric_vertical_column_trueness')
-    sys_error = (sys_error**6.02214*1e19*1e-15).astype('float16')
-
+    sys_error = (sys_error*6.02214*1e19*1e-15).astype('float16')
+    
     tropomi_hcho = satellite_amf(vcd, scd, time, np.empty((1)), latitude_center, longitude_center,
                                  [], [], uncertainty,sys_error, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
     # interpolation

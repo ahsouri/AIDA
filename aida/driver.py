@@ -69,7 +69,7 @@ class aida(object):
         self.oi_result = OI(self.averaged_fields.ctm_vcd, self.averaged_fields.sat_vcd,
                             (self.averaged_fields.ctm_vcd*error_ctm/100.0)**2, self.averaged_fields.sat_err**2, regularization_on=True)
 
-    def inversion(gasname, sat_type: str, self,index_iteration):
+    def inversion(self, gasname, sat_type: str, index_iteration):
         self.do_run_inversion = True
         if index_iteration == 0:
             self.inversion_result = IV(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err**2, self.averaged_fields.sys_err**2,

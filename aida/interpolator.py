@@ -177,10 +177,17 @@ def interpolator(interpolator_type: int, grid_size: float, sat_data, ctm_models_
         ctm_models_coordinate, grid_size, threshold_ctm)
     uncertainty = np.sqrt(uncertainty)
 
-    _, _, sys_error, _ = _upscaler(lons_grid, lats_grid, _interpolosis(
-        tri, sat_data.sys_error**2*mask, lons_grid, lats_grid, interpolator_type, dists, grid_size),
-        ctm_models_coordinate, grid_size, threshold_ctm)
-    sys_error = np.sqrt(sys_error)
+    print('in the interpolater',np.size(sat_data.sys_error))
+    if np.size(sat_data.sys_error) == 0:
+        print('....................... no sys error')
+        sys_error = np.ones_like(uncertainty)
+    else:
+        print('....................... sys error')
+        
+        _, _, sys_error, _ = _upscaler(lons_grid, lats_grid, _interpolosis(
+            tri, sat_data.sys_error**2*mask, lons_grid, lats_grid, interpolator_type, dists, grid_size),
+            ctm_models_coordinate, grid_size, threshold_ctm)
+        sys_error = np.sqrt(sys_error)
 
 
     # interpolate 3Ds fields for two-step retrievals (scattering weights, for example OMI NO2)

@@ -39,7 +39,10 @@ def IV(Y: np.array, So: np.array, So_sys: np.array, F: np.array, K: np.array, X0
         So_new = So + So_sys
     elif sat_type == "OMI" and gasname == "NO2":
         print("finding So for OMI NO2")
-        So_new = So 
+        So_new = So + 4.1**2
+        '''
+        reference: Johnson et al., 2023
+        '''
     elif sat_type == "OMI" and gasname == "HCHO":
         print("finding So for OMI HCHO")
         So_new = So + 3.59**2

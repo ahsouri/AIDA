@@ -194,6 +194,10 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
             '''
         elif sat_type == "OMI" and gasname == "NO2":
             print("applying bias correction for OMI NO2")
+            sat_averaged_vcd = (sat_averaged_vcd - 2.5*10**15)/0.63
+            ''' 
+            reference: Johnson et al., 2023
+            '''
         elif sat_type == "OMI" and gasname == "HCHO":
             print("applying bias correction for OMI HCHO")
             sat_averaged_vcd = (sat_averaged_vcd*10 - 1.06*10**15)/(0.66*10)
