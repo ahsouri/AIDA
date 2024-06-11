@@ -196,7 +196,7 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
        plotter(lon, lat, averaged_generic_fields.ddm_vcd, 'temp/ddm_' +
             fname + '.png', 'DDM (col)', 1, vmin_vcd, vmax_vcd)
        plotter(lon, lat, averaged_generic_fields.emis_total, 'temp/emis_tot_' +
-            fname + '.png', 'Emission (total)', 6, vmin_vcd, vmax_vcd/10.0)
+            fname + '.png', 'Prior Emission (total)', 6, vmin_vcd, vmax_vcd/10.0)
        plotter(lon, lat, averaged_generic_fields.emis_error, 'temp/emis_err_' +
             fname + '.png', 'Emission error (total)', 6, vmin_vcd, vmax_vcd/10.0)
 
@@ -218,6 +218,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
             fname + '.png', 'IV Ratio (sat_vcd/ctm_vcd)', 2, 0, vmax_ratio)
         plotter(lon, lat, inversion_fields.ratio, 'temp/iv_ratio_' +
             fname + '.png', 'IV Ratio (posterior/priori)', 2, 0, vmax_ratio)
+        plotter(lon, lat, inversion_fields.post_emis, 'temp/iv_post_emis_' +
+            fname + '.png', 'IV Posterior Emission (total)', 6, vmin_vcd, vmax_vcd/10.0)
         plotter(lon, lat, inversion_fields.increment, 'temp/iv_increment_' +
             fname + '.png', 'IV Increment (emission)', 6, vmin_vcd, vmax_vcd/20.0)
         plotter(lon, lat, inversion_fields.ak, 'temp/iv_ak_' +

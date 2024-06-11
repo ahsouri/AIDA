@@ -776,6 +776,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     # emission for model has lightning and aviation emissions in addition to emis_tot
     emis_tot = emis_bio + emis_bb + emis_anthro + emis_light
 
+    print("error printing",err_anthro,err_bio,err_bb,err_light)
     err_emis = ((emis_anthro/emis_tot)**2)*((err_anthro/100.0*emis_anthro)**2) + ((emis_bio/emis_tot)**2)*((err_bio/100.0*emis_bio)**2) + \
         ((emis_bb/emis_tot)**2)*((err_bb/100.0*emis_bb)**2) + \
         ((emis_light/emis_tot)**2)*((err_light/100.0*emis_light)**2)

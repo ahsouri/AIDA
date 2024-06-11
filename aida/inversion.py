@@ -2,6 +2,7 @@ import numpy as np
 from scipy.io import savemat
 from kneed import KneeLocator
 from aida.config import inversion_result
+import copy
 
 
 def IV(Y: np.array, So: np.array, So_sys: np.array, F: np.array, K: np.array, X0: np.array, Sa: np.array, index_iteration:int, gasname: str, sat_type: str, regularization_on=True):
@@ -29,14 +30,17 @@ def IV(Y: np.array, So: np.array, So_sys: np.array, F: np.array, K: np.array, X0
     # adding fixed error into So##
     if sat_type == "TROPOMI" and gasname == "NO2":
         print("finding So for TROPOMI NO2")
-        So_new = So + 2.4**2
+        So_new = So + 0.05**2 + (0.01**2)*(Y**2) #2.4**2
         '''
-        reference: Geffen et al., 2022, Sentinel-5P TROPOMI NO2 retrieval: impact of version v2.2 improvements and comparisons with OMI and
-        ground-based data
+        reference: Amir
         '''
     elif sat_type == "TROPOMI" and gasname == "HCHO":
         print("finding So for TROPOMI HCHO")
-        So_new = So + So_sys
+        So_new = So + 0.06**2 + (0.01**2)*(Y**2)#So_sys
+        '''
+        reference: Amir
+        '''
+
     elif sat_type == "OMI" and gasname == "NO2":
         print("finding So for OMI NO2")
         So_new = So + 4.1**2
@@ -50,7 +54,8 @@ def IV(Y: np.array, So: np.array, So_sys: np.array, F: np.array, K: np.array, X0
         reference: Ayazpour et al., submitted, Aura Ozone Monitoring Instrument (OMI) Collection 4 Formaldehyde Product
         '''
     ##############################
-    Y[Y < 0] = 0.0
+    Y_new = copy.deepcopy(Y)
+    Y_new[Y_new < 0] = 0.0
     if regularization_on == True:
         scaling_factors = np.arange(0.1, 10, 0.1)
         scaling_factors = list(scaling_factors)
@@ -88,10 +93,10 @@ def IV(Y: np.array, So: np.array, So_sys: np.array, F: np.array, K: np.array, X0
     Sb = Sb[int(knee_index[0])]
 
     if index_iteration == 0:
-        increment = kalman_gain*(Y-F)
+        increment = kalman_gain*(Y_new-F)
     else:
         #need to be done this part 
-        increment = kalman_gain*(Y-F + K*(X1-X0))
+        increment = kalman_gain*(Y_new-F + K*(X1-X0))
 
     Xb = X0 + increment
 

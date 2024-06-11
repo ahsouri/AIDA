@@ -180,17 +180,15 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
         sat_averaged_vcd = sat_averaged_vcd*10**15        
         if sat_type == "TROPOMI" and gasname == "NO2":
             print("applying bias correction for TROPOMI NO2")
-            sat_averaged_vcd = (sat_averaged_vcd - 1.0*10**15)/0.53
+            sat_averaged_vcd = (sat_averaged_vcd - 0.32*10**15)/0.66
             '''
-            reference:Geffen et al., 2022, Sentinel-5P TROPOMI NO2 retrieval: impact of version v2.2 improvements and comparisons with OMI 
-            and ground-based data
+            reference: Amir
             '''
         elif sat_type == "TROPOMI" and gasname == "HCHO":
             print("applying bias correction for TROPOMI HCHO")
-            sat_averaged_vcd = (sat_averaged_vcd - 1.17*10**15)/0.63
+            sat_averaged_vcd = (sat_averaged_vcd - 0.90*10**15)/0.59
             '''
-            reference: Vigouroux et al., 2020, TROPOMI-Sentinel-5 Precursor formaldehyde validation using an extensive network of ground-based
-            Fourier-transform infrared stations
+            reference: Amir
             '''
         elif sat_type == "OMI" and gasname == "NO2":
             print("applying bias correction for OMI NO2")

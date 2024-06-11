@@ -56,10 +56,10 @@ state_vector_conc_errors: # errors for NO2, HCHO, and CO columns in [%]
    - 50.0
 
 state_vector_nox_errors: # errors for NOx source (anthro, bio, bb, light)
-   - 100.0
-   - 400.0
-   - 600.0
-   - 600.0
+   - 50.0
+   - 200.0
+   - 300.0
+   - 300.0
 
 state_vector_voc_errors: # errors for VOC source (anthro, bio, bb)
    - 30.0
