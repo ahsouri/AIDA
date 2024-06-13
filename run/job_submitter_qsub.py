@@ -20,7 +20,7 @@ startdate = ctrl_opts['start_date']
 enddate = ctrl_opts['end_date']
 num_job = ctrl_opts['num_job']
 #hard coding for now
-num_job = 24
+num_job = 12
 python_bin = ctrl_opts['python_bin']
 debug_on = ctrl_opts['debug']
 
@@ -68,7 +68,8 @@ for year in range(np.min(list_years), np.max(list_years)+1):
         if debug_on:
             slurm_cmd += '#PBS -q devel  \n'
         slurm_cmd += 'cd $PBS_O_WORKDIR  \n'
-        slurm_cmd += python_bin + ' ./job.py ' + str(year) + ' ' + str(month)
+        slurm_cmd += 'source /nobackup/jjung13/miniconda3/bin/activate \n'
+        slurm_cmd += 'python ./job.py ' + str(year) + ' ' + str(month)
         file.writelines(slurm_cmd)
         file.close()
         os.system('qsub ' + './jobs/' + 'job_' + str(year) +
