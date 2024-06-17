@@ -42,13 +42,13 @@ state_vectors:
    - 'VOC'
 
 sensor:
-   - 'OMI'
-   - 'OMI'
+   - 'TROPOMI'
+   - 'TROPOMI'
 
 # set the path of L2 files
 sat_path:
-   - '/nobackup/jjung13/ACMAP_satellite/OMI_NO2_MINDS/'
-   - '/nobackup/jjung13/ACMAP_satellite/OMI_HCHO_SAO/'
+   - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_NO2/'
+   - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_HCHO/'
 
 state_vector_conc_errors: # errors for NO2, HCHO, and CO columns in [%]
    - 30.0

@@ -111,6 +111,8 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
         ctm_deltap = np.squeeze(
             ctm_data[closest_index_ctm_day].delta_p[closest_index_ctm_hour, :, :, :])
         ctm_partial_column = ctm_deltap*ctm_profile/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
+        ctm_longitude = ctm_data[0].longitude
+        ctm_latitude = ctm_data[0].latitude
 
         # take emissions and DDM for the right L2 data
         if ddm_read == True:
@@ -138,8 +140,8 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
                 sat_coordinate["Latitude"][0, 0] - sat_coordinate["Latitude"][1, 0])
             threshold_sat = np.sqrt(
                 size_grid_sat_lon**2 + size_grid_sat_lat**2)
-            ctm_longitude = ctm_data[0].longitude
-            ctm_latitude = ctm_data[0].latitude
+#            ctm_longitude = ctm_data[0].longitude
+#            ctm_latitude = ctm_data[0].latitude
             size_grid_model_lon = np.abs(
                 ctm_longitude[0, 0]-ctm_longitude[0, 1])
             size_grid_model_lat = np.abs(
@@ -155,6 +157,14 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
             ctm_partial_column = ctm_partial_new
             ctm_partial_new = []
             ctm_mid_pressure_new = []
+
+            _, _, ctm_longitude_new, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                                                                   ctm_data[0].longitude, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+            _, _, ctm_latitude_new, _  = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                                                                   ctm_data[0].latitude, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+ 
+
+
 
             if ddm_read == True:
                 ddm_partial_new = np.zeros((np.shape(ctm_mid_pressure)[0],
@@ -251,6 +261,13 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
         model_VCD[np.isinf(L2_granule.vcd)] = np.nan
         sat_data[counter].ctm_vcd = model_VCD
         sat_data[counter].ctm_time_at_sat = time_ctm[closest_index_ctm]
+        if L2_granule.ctm_upscaled_needed == True:
+            sat_data[counter].ctm_lat = ctm_latitude_new
+            sat_data[counter].ctm_lon = ctm_longitude_new
+        else:
+            sat_data[counter].ctm_lat = ctm_latitude
+            sat_data[counter].ctm_lon = ctm_longitude
+
         # populate ddm stuff if requested
         if ddm_read == True:
             ddm_vcd[np.isnan(L2_granule.vcd)] = np.nan

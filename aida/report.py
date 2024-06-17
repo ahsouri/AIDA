@@ -124,6 +124,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
     if gasname == 'HCHO':
         vmin_vcd = 0.0
         vmax_vcd = 20.0
+        vmin_ratio = -1.5
+        vmax_ratio = 1.5
         vmax_error = 15.0
         vmin_incre = -5.0
         vmax_incre = 5.0
@@ -132,6 +134,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
     if gasname == 'NO2':
         vmin_vcd = 0.0
         vmax_vcd = 10.0
+        vmin_ratio = -1.5
+        vmax_ratio = 1.5
         vmax_error = 5.0
         vmin_incre = -5.0
         vmax_incre = 5.0
@@ -140,6 +144,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
     if gasname == 'O3':
         vmin_vcd = 200.0
         vmax_vcd = 500.0
+        vmin_ratio = -1.5
+        vmax_ratio = 1.5
         vmax_error = 30.0
         vmin_incre = -20.0
         vmax_incre = 20.0
@@ -147,6 +153,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
     if gasname == 'CO':
         vmin_vcd = 0.0
         vmax_vcd = 3.0
+        vmin_ratio = -1.5
+        vmax_ratio = 1.5
         vmax_error = 0.2
         vmin_incre = -2.0
         vmax_incre = 2.0
@@ -163,7 +171,8 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
         unit_aux = 5
         vmin_aux = 0
         vmax_aux = 0.15
-
+    
+    
     # generic fields
     plotter(lon, lat, averaged_generic_fields.ctm_vcd, 'temp/ctm_vcd_before_' +
             fname + '.png', 'CTM VCD (prior)', unit, vmin_vcd, vmax_vcd)
@@ -185,7 +194,7 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
        plotter(lon, lat, averaged_generic_fields.ddm_vcd, 'temp/ddm_' +
             fname + '.png', 'DDM (col)', 1, vmin_vcd, vmax_vcd)
        plotter(lon, lat, averaged_generic_fields.emis_total, 'temp/emis_tot_' +
-            fname + '.png', 'Emission (total)', 6, vmin_vcd, vmax_vcd/10.0)
+            fname + '.png', 'Prior Emission (total)', 6, vmin_vcd, vmax_vcd/10.0)
        plotter(lon, lat, averaged_generic_fields.emis_error, 'temp/emis_err_' +
             fname + '.png', 'Emission error (total)', 6, vmin_vcd, vmax_vcd/10.0)
 
@@ -199,5 +208,21 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
             fname + '.png', 'Averaging Kernels', 2, 0.0, 1.0)
         plotter(lon, lat, oi_fields.error_analysis, 'temp/error_' +
             fname + '.png', 'OI estimate error', unit, 0.0, vmax_error)             
+
+    # Inversion fields
+    if inversion_fields:
+        vcd_ratio = averaged_generic_fields.sat_vcd/averaged_generic_fields.ctm_vcd
+        plotter(lon, lat, vcd_ratio , 'temp/iv_ratio_vcd_' +
+            fname + '.png', 'IV Ratio (sat_vcd/ctm_vcd)', 2, 0, vmax_ratio)
+        plotter(lon, lat, inversion_fields.ratio, 'temp/iv_ratio_' +
+            fname + '.png', 'IV Ratio (posterior/priori)', 2, 0, vmax_ratio)
+        plotter(lon, lat, inversion_fields.post_emis, 'temp/iv_post_emis_' +
+            fname + '.png', 'IV Posterior Emission (total)', 6, vmin_vcd, vmax_vcd/10.0)
+        plotter(lon, lat, inversion_fields.increment, 'temp/iv_increment_' +
+            fname + '.png', 'IV Increment (emission)', 6, vmin_vcd, vmax_vcd/20.0)
+        plotter(lon, lat, inversion_fields.ak, 'temp/iv_ak_' +
+            fname + '.png', 'IV Averaging Kernels', 2, 0.0, 1.0)
+        plotter(lon, lat, inversion_fields.error_analysis, 'temp/iv_error_' +
+            fname + '.png', 'IV estimate error', 6, vmin_vcd, vmax_vcd/10.0)
 
     topdf(fname, ffolder, 'AIDA_report_' + fname + '.pdf')

@@ -20,7 +20,7 @@ startdate = ctrl_opts['start_date']
 enddate = ctrl_opts['end_date']
 num_job = ctrl_opts['num_job']
 #hard coding for now
-num_job = 24
+num_job = 12
 python_bin = ctrl_opts['python_bin']
 debug_on = ctrl_opts['debug']
 
@@ -53,18 +53,23 @@ for year in range(np.min(list_years), np.max(list_years)+1):
         file = open('./jobs/' + 'job_' + str(year) +
                     '_' + str(month) + '.j', 'w')
         slurm_cmd = '#!/bin/bash \n'
-        slurm_cmd += '#PBS -l select=3:ncpus=6:mpiprocs=6:model=has  \n'
-        slurm_cmd += '#PBS -l walltime=7:00:00  \n'
+        slurm_cmd += '#PBS -l select=4:ncpus=7:mpiprocs=7:model=has  \n'
+        if debug_on:
+            slurm_cmd += '#PBS -l walltime=2:00:00  \n'
+        else:
+            slurm_cmd += '#PBS -l walltime=8:00:00  \n'
         slurm_cmd += '#PBS -N aida  \n'
         slurm_cmd += '#PBS -j oe  \n'
         #slurm_cmd += '#PBS -m abe  \n'
+        slurm_cmd += '#PBS -m abe \n'
         slurm_cmd += '#PBS -o aida_' + str(year) + str(month) + '.out  \n'
         slurm_cmd += '#PBS -e aida_' + str(year) + str(month) + '.err  \n'
         slurm_cmd += '#PBS -W group_list=s1395 \n'
         if debug_on:
             slurm_cmd += '#PBS -q devel  \n'
         slurm_cmd += 'cd $PBS_O_WORKDIR  \n'
-        slurm_cmd += python_bin + ' ./job.py ' + str(year) + ' ' + str(month)
+        slurm_cmd += 'source /nobackup/jjung13/miniconda3/bin/activate \n'
+        slurm_cmd += 'python ./job.py ' + str(year) + ' ' + str(month)
         file.writelines(slurm_cmd)
         file.close()
         os.system('qsub ' + './jobs/' + 'job_' + str(year) +

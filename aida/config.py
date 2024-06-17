@@ -65,6 +65,7 @@ class ctm_model:
     averaged: bool
 
 
+
 @dataclass
 class ddm_emis_model:
     time_ddm: list
@@ -95,5 +96,10 @@ class OI_result:
     error_analysis: np.ndarray
 
 @dataclass 
-class inversion:
-    temp: np.ndarray
+class inversion_result:
+    post_emis: np.array
+    ak: np.array
+    increment: np.array
+    error_analysis: np.array
+    ratio: np.array
+   

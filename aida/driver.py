@@ -3,6 +3,7 @@ from pathlib import Path
 from aida.amf_recal import amf_recal
 from aida.averaging import averaging
 from aida.optimal_interpolation import OI
+from aida.inversion import IV
 from aida.report import report
 from aida.ak_conv import ak_conv
 import numpy as np
@@ -52,7 +53,7 @@ class aida(object):
         self.reader_obj.sat_data = ak_conv(
             self.reader_obj.ctm_data, self.reader_obj.sat_data)
 
-    def average(self, startdate: str, enddate: str):
+    def average(self, startdate: str, enddate: str, gasname, bias_sat, sat_type: str):
         '''
             average the data
             Input:
@@ -60,7 +61,7 @@ class aida(object):
                 enddate [str]: ending date in YYYY-mm-dd format string  
         '''
         self.averaged_fields = averaging(
-            startdate, enddate, self.reader_obj)
+            startdate, enddate, self.reader_obj, gasname, bias_sat, sat_type)
 
     def oi(self, error_ctm=50.0):
 
@@ -68,9 +69,12 @@ class aida(object):
         self.oi_result = OI(self.averaged_fields.ctm_vcd, self.averaged_fields.sat_vcd,
                             (self.averaged_fields.ctm_vcd*error_ctm/100.0)**2, self.averaged_fields.sat_err**2, regularization_on=True)
 
-    def inversion(self):
-
+    def inversion(self, gasname, sat_type: str, index_iteration):
         self.do_run_inversion = True
+        if index_iteration == 0:
+            self.inversion_result = IV(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err**2, 
+                self.averaged_fields.ctm_vcd, self.averaged_fields.ddm_vcd/self.averaged_fields.emis_total, self.averaged_fields.emis_total, 
+                self.averaged_fields.emis_error**2, index_iteration, gasname, sat_type, regularization_on=True)
 
     def reporting(self, fname: str, gasname, folder='report'):
 
@@ -117,6 +121,8 @@ class aida(object):
         data4 = ncfile.createVariable(
             'sat_averaged_error', dtype('float32').char, ('x', 'y'))
         data4[:, :] = self.averaged_fields.sat_err
+
+
 
         if np.size(self.reader_obj.ctm_data[0].latitude)*np.size(self.reader_obj.ctm_data[0].longitude) > \
            np.size(self.reader_obj.sat_data[0].latitude_center)*np.size(self.reader_obj.sat_data[0].longitude_center):
@@ -177,6 +183,26 @@ class aida(object):
             data7 = ncfile.createVariable(
                 'scaling_factor_OI', dtype('float32').char, ('x', 'y'))
             data7[:, :] = scaling_factor
+        if self.inversion_result:
+            data17 = ncfile.createVariable(
+                'IV_posterior_emissions', dtype('float32').char, ('x', 'y'))
+            data17[:,:] = self.inversion_result.post_emis
+            
+            data18 = ncfile.createVariable(
+                'IV_ak', dtype('float32').char, ('x', 'y'))
+            data18[:,:] = self.inversion_result.ak
+
+            data19 = ncfile.createVariable(
+                'IV_increment', dtype('float32').char, ('x', 'y'))
+            data19[:,:] = self.inversion_result.increment
+
+            data20 = ncfile.createVariable(
+                'IV_error', dtype('float32').char, ('x', 'y'))
+            data20[:,:] = self.inversion_result.error_analysis
+
+            data21 = ncfile.createVariable(
+                'IV_ratio', dtype('float32').char, ('x', 'y'))
+            data21[:,:] = self.inversion_result.ratio
 
         data15 = ncfile.createVariable(
             'gap', dtype('float32').char, ('t', 'x', 'y'))
@@ -185,15 +211,15 @@ class aida(object):
         data16 = ncfile.createVariable(
             'time', dtype('float64').char, ('u'))
         data16[:] = self.averaged_fields.time_sat
-        # inversion TO DO
+        
         ncfile.close()
 
     def savedaily(self, folder, gasname, date):
         # extract sat data
         if not os.path.exists(folder):
             os.makedirs(folder)
-        latitude = self.reader_obj.ctm_data[0].latitude
-        longitude = self.reader_obj.ctm_data[0].longitude
+        latitude = self.reader_obj.sat_data[0].ctm_lat #self.reader_obj.ctm_data[0].latitude
+        longitude = self.reader_obj.sat_data[0].ctm_lon#self.reader_obj.ctm_data[0].longitude
         vcd_sat = np.zeros((np.shape(latitude)[0], np.shape(
             latitude)[1], len(self.reader_obj.sat_data)))
         vcd_err = np.zeros_like(vcd_sat)

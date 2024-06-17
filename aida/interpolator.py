@@ -177,6 +177,7 @@ def interpolator(interpolator_type: int, grid_size: float, sat_data, ctm_models_
         ctm_models_coordinate, grid_size, threshold_ctm)
     uncertainty = np.sqrt(uncertainty)
 
+
     # interpolate 3Ds fields for two-step retrievals (scattering weights, for example OMI NO2)
     if isinstance(sat_data, satellite_amf):
         if np.size(sat_data.scattering_weights) != 1:

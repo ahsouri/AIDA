@@ -30,6 +30,9 @@ num_job = ctrl_opts['num_job']
 sensor = ctrl_opts['sensor']
 validation_only = ctrl_opts['validation']
 save_daily = ctrl_opts['save_daily']
+index_iteration = ctrl_opts['index_iteration']
+bias_sat = ctrl_opts['bias_sat']
+
 
 year = int(sys.argv[1])
 month = int(sys.argv[2])
@@ -74,7 +77,7 @@ for statev in state_vectors:
     # calling AIDA
     aida_obj = aida()
     aida_obj.read_data(ctm_name, Path(ctm_conc_dir), Path(ctm_mcip_dir), gasname, sensor[cnt] + '_' + gasname, Path(sat_path[cnt]), str(year) + f"{month:02}",
-                       (state_err), Path(ctm_ddm_dir), Path(ctm_emis_dir), read_ddm=read_ddm, averaged=ctm_avg, read_ak=True, trop=troposphere_no2_only, num_job=num_job)
+                       (state_err), Path(ctm_ddm_dir[cnt]), Path(ctm_emis_dir), read_ddm=read_ddm, averaged=ctm_avg, read_ak=True, trop=troposphere_no2_only, num_job=num_job)
 
     if sensor[cnt] == "MOPITT":
         aida_obj.conv_ak()
@@ -86,15 +89,18 @@ for statev in state_vectors:
 
     if month != 12:
         aida_obj.average(str(
-               year) + '-' + f"{month:02}" + '-01', str(year) + '-' + f"{month+1:02}" + '-01')
+               year) + '-' + f"{month:02}" + '-01', str(year) + '-' + f"{month+1:02}" + '-01', gasname, bias_sat, sensor[cnt])
     else:
         aida_obj.average(
-               str(year) + '-' + f"{month:02}" + '-01', str(year+1) + '-' + "01" + '-01')
+               str(year) + '-' + f"{month:02}" + '-01', str(year+1) + '-' + "01" + '-01', gasname, bias_sat, sensor[cnt])
 
     if do_oi == True:
         aida_obj.oi(error_ctm=state_err)
 
+    if do_inversion == True:
+        aida_obj.inversion(gasname, sensor[cnt], index_iteration=index_iteration[0])
+
     aida_obj.reporting(gasname + '_' + str(year) +
-                       f"{month:02}", gasname, output_pdf_dir)
+            f"{month:02}" + '_' + str(index_iteration[0]), gasname, output_pdf_dir)
     aida_obj.write_to_nc(gasname + '_' + str(year) +
-                         f"{month:02}", output_nc_dir, read_ddm=read_ddm)
+            f"{month:02}" + '_' + str(index_iteration[0]), output_nc_dir, read_ddm=read_ddm)
