@@ -72,7 +72,7 @@ class aida(object):
     def inversion(self, gasname, sat_type: str, index_iteration):
         self.do_run_inversion = True
         if index_iteration == 0:
-            self.inversion_result = IV(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err**2, self.averaged_fields.sys_err**2,
+            self.inversion_result = IV(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err**2, 
                 self.averaged_fields.ctm_vcd, self.averaged_fields.ddm_vcd/self.averaged_fields.emis_total, self.averaged_fields.emis_total, 
                 self.averaged_fields.emis_error**2, index_iteration, gasname, sat_type, regularization_on=True)
 
@@ -122,9 +122,6 @@ class aida(object):
             'sat_averaged_error', dtype('float32').char, ('x', 'y'))
         data4[:, :] = self.averaged_fields.sat_err
 
-        data22 = ncfile.createVariable(
-            'sys_averaged_error', dtype('float32').char, ('x', 'y'))
-        data22[:, :] = self.averaged_fields.sys_err
 
 
         if np.size(self.reader_obj.ctm_data[0].latitude)*np.size(self.reader_obj.ctm_data[0].longitude) > \

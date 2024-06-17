@@ -5,7 +5,7 @@ from aida.config import inversion_result
 import copy
 
 
-def IV(Y: np.array, So: np.array, So_sys: np.array, F: np.array, K: np.array, X0: np.array, Sa: np.array, index_iteration:int, gasname: str, sat_type: str, regularization_on=True):
+def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np.array, index_iteration:int, gasname: str, sat_type: str, regularization_on=True):
     
     ''' 
     Inversion with CMAQ and satellite..

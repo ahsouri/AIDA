@@ -177,18 +177,6 @@ def interpolator(interpolator_type: int, grid_size: float, sat_data, ctm_models_
         ctm_models_coordinate, grid_size, threshold_ctm)
     uncertainty = np.sqrt(uncertainty)
 
-    print('in the interpolater',np.size(sat_data.sys_error))
-    if np.size(sat_data.sys_error) == 0:
-        print('....................... no sys error')
-        sys_error = np.ones_like(uncertainty)
-    else:
-        print('....................... sys error')
-        
-        _, _, sys_error, _ = _upscaler(lons_grid, lats_grid, _interpolosis(
-            tri, sat_data.sys_error**2*mask, lons_grid, lats_grid, interpolator_type, dists, grid_size),
-            ctm_models_coordinate, grid_size, threshold_ctm)
-        sys_error = np.sqrt(sys_error)
-
 
     # interpolate 3Ds fields for two-step retrievals (scattering weights, for example OMI NO2)
     if isinstance(sat_data, satellite_amf):
@@ -267,9 +255,9 @@ def interpolator(interpolator_type: int, grid_size: float, sat_data, ctm_models_
                                                                          * mask, lons_grid, lats_grid, interpolator_type, dists, grid_size), ctm_models_coordinate, grid_size, threshold_ctm)
     if isinstance(sat_data, satellite_opt):
         interpolated_sat = satellite_opt(vcd, sat_data.time, [], tropopause, latitude_center, longitude_center, [
-        ], [], uncertainty, sys_error, [], pressure_mid, averaging_kernels, upscaled_ctm_needed, [], [], [],
-            aprior_col, apriori_profile, surface_pressure, apriori_surface, x_col, [], [])
+        ], [], uncertainty, [], pressure_mid, averaging_kernels, upscaled_ctm_needed, [], [], [],
+            aprior_col, apriori_profile, surface_pressure, apriori_surface, x_col)
     elif isinstance(sat_data, satellite_amf):
         interpolated_sat = satellite_amf(vcd, scd, sat_data.time, tropopause, latitude_center, longitude_center, [
-        ], [], uncertainty, sys_error, [], pressure_mid, scattering_weights, upscaled_ctm_needed, [], [], [], [], [], [], [])
+        ], [], uncertainty, [], pressure_mid, scattering_weights, upscaled_ctm_needed, [], [], [], [], [], [], [])
     return interpolated_sat

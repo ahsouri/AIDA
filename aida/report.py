@@ -180,8 +180,6 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
             '.png', 'Satellite Observation (VCD)', unit, vmin_vcd, vmax_vcd)
     plotter(lon, lat, averaged_generic_fields.sat_err, 'temp/ctm_vcd_sat_zerr_' + fname +
             '.png', 'Satellite Error (VCD)', unit, 0.0, vmax_error)
-    plotter(lon, lat, averaged_generic_fields.sys_err, 'temp/ctm_vcd_sys_err_' + fname +
-            '.png', 'Satellite systematic Error (VCD)', unit, 0.0, vmax_error)
     if aux == "AMF":
         plotter(lon, lat, averaged_generic_fields.aux1, 'temp/aux1_' +
                 fname + '.png', 'New AMF', 2, 0.0, 4)
