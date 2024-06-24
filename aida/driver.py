@@ -3,7 +3,7 @@ from pathlib import Path
 from aida.amf_recal import amf_recal
 from aida.averaging import averaging
 from aida.optimal_interpolation import OI
-from aida.inversion import IV
+from aida.inversion import inv
 from aida.report import report
 from aida.ak_conv import ak_conv
 import numpy as np
@@ -62,6 +62,48 @@ class aida(object):
         '''
         self.averaged_fields = averaging(
             startdate, enddate, self.reader_obj, gasname, bias_sat, sat_type)
+        
+    def bias_correct(self, sat_type, gasname):
+        # apply bias correction based on several validation studies
+        
+        if sat_type == "TROPOMI" and gasname == "NO2":
+            print("applying the bias correction for TROPOMI NO2")
+            sat_averaged_vcd_bias_corrected = (self.averaged_fields.sat_vcd - 0.32)/0.66
+            '''
+            reference: Amir
+            '''
+        elif sat_type == "TROPOMI" and gasname == "HCHO":
+            print("applying the bias correction for TROPOMI HCHO")
+            sat_averaged_vcd_bias_corrected = (self.averaged_fields.sat_vcd - 0.90)/0.59
+            '''
+            reference: Amir
+            '''
+        elif sat_type == "OMI" and gasname == "NO2":
+            print("applying the bias correction for OMI NO2")
+            '''
+            need to work on these again
+            '''
+            sat_averaged_vcd_bias_corrected = self.averaged_fields.sat_vcd
+            #sat_averaged_vcd = (sat_averaged_vcd - 2.5*10**15)/0.63
+            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd < 5)] = 0.67*self.averaged_fields.sat_vcd[np.where(self.averaged_fields.sat_vcd < 5)] #clean
+            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd > 5)] = 1.15*self.averaged_fields.sat_vcd[np.where(self.averaged_fields.sat_vcd > 5)] #polluted
+            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd > 10)] = 1.30*self.averaged_fields.sat_vcd[np.where(self.averaged_fields.sat_vcd > 10)] #very polluted
+            ''' 
+            reference: Johnson et al., 2023
+            '''
+        elif sat_type == "OMI" and gasname == "HCHO":
+            print("applying the bias correction for OMI HCHO")
+            sat_averaged_vcd_bias_corrected = (self.averaged_fields.sat_vcd*10 - 1.06)/(0.66*10)
+            '''
+            reference: Ayazpour et al., Submitted, Auto Ozone Monitoring Instrument (OMI) Collection 4 Formaldehyde Product
+            '''
+        
+        else:
+            print("NOT applying the bias correction for satellite VCDs")
+            sat_averaged_vcd_bias_corrected = self.averaged_fields.sat_vcd
+        
+        # populating the averaged vcds with the bias corrected ones
+        self.averaged_fields.sat_vcd = sat_averaged_vcd_bias_corrected
 
     def oi(self, error_ctm=50.0):
 
@@ -72,7 +114,7 @@ class aida(object):
     def inversion(self, gasname, sat_type: str, index_iteration):
         self.do_run_inversion = True
         if index_iteration == 0:
-            self.inversion_result = IV(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err**2, 
+            self.inversion_result = inv(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err**2, 
                 self.averaged_fields.ctm_vcd, self.averaged_fields.ddm_vcd/self.averaged_fields.emis_total, self.averaged_fields.emis_total, 
                 self.averaged_fields.emis_error**2, index_iteration, gasname, sat_type, regularization_on=True)
 

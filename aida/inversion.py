@@ -5,8 +5,7 @@ from aida.config import inversion_result
 import copy
 
 
-def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np.array, index_iteration:int, gasname: str, sat_type: str, regularization_on=True):
-    
+def inv(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np.array, index_iteration: int, gasname: str, sat_type: str, regularization_on=True):
     ''' 
     Inversion with CMAQ and satellite..
     G = SaK^T(KSaK^T + So)^-1
@@ -25,18 +24,19 @@ def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np
     Input:
         index_iteration [int]: indicating it's the first iteration or not 
     '''
-    print('Inversion is working...!, index_iteration :', index_iteration, 'gasname :',gasname, ', sat_type: ',sat_type)
+    print('Inversion is being executed, index_iteration :', index_iteration,
+          'gasname :', gasname, ', sat_type: ', sat_type)
 
-    # adding fixed error into So##
+    # adding fixed error into So
     if sat_type == "TROPOMI" and gasname == "NO2":
         print("finding So for TROPOMI NO2")
-        So_new = So + 0.05**2 + (0.01**2)*(Y**2) #2.4**2
+        So_new = So + 0.05**2 + (0.01**2)*(Y**2)  # 2.4**2
         '''
         reference: Amir
         '''
     elif sat_type == "TROPOMI" and gasname == "HCHO":
         print("finding So for TROPOMI HCHO")
-        So_new = So + 0.06**2 + (0.01**2)*(Y**2)#So_sys
+        So_new = So + 0.06**2 + (0.01**2)*(Y**2)  # So_sys
         '''
         reference: Amir
         '''
@@ -68,6 +68,8 @@ def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np
     Sb = []
     averaging_kernel = []
     Sa_new = []
+    # note that this inversion is applied to each individual grid box separately, so the transpose of K and K 
+    # is identical. Likewise, we won't need to use np.matmul because each grid has one Y and one X. 
     for reg in scaling_factors:
         Sa_new = Sa*float(reg)
         kalman_gain_tmp = (Sa_new*K*(K*Sa_new*K+So_new)**(-1))
@@ -95,20 +97,17 @@ def IV(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np
     if index_iteration == 0:
         increment = kalman_gain*(Y_new-F)
     else:
-        #need to be done this part 
+        # need to be done this part
         increment = kalman_gain*(Y_new-F + K*(X1-X0))
 
     Xb = X0 + increment
 
-    ratio = np.ones_like(X0)
     ratio = Xb/X0
     ratio[np.isnan(ratio)] = 1.0
     ratio[np.isinf(ratio)] = 1.0
-    ratio[ratio<=0] = 1.0
-    
+    ratio[ratio <= 0] = 1.0
 
-    output = inversion_result(Xb, averaging_kernel, increment, np.sqrt(Sb), ratio)
+    output = inversion_result(Xb, averaging_kernel,
+                              increment, np.sqrt(Sb), ratio)
+
     return output
-
-
-

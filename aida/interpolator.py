@@ -154,8 +154,8 @@ def interpolator(interpolator_type: int, grid_size: float, sat_data, ctm_models_
         ctm_models_coordinate, grid_size, threshold_ctm)
     # decide if it's even worth continuing:
     if np.isnan(np.nanmean(vcd.flatten())):
-       print("the satellite granule doesn't fall into the region - skipping!")
-       return 0
+        print("the satellite granule doesn't fall into the region - skipping!")
+        return 0
     if isinstance(sat_data, satellite_amf):
         print('....................... scd')
         _, _, scd, _ = _upscaler(lons_grid, lats_grid, _interpolosis(
@@ -176,7 +176,6 @@ def interpolator(interpolator_type: int, grid_size: float, sat_data, ctm_models_
         tri, sat_data.uncertainty**2*mask, lons_grid, lats_grid, interpolator_type, dists, grid_size),
         ctm_models_coordinate, grid_size, threshold_ctm)
     uncertainty = np.sqrt(uncertainty)
-
 
     # interpolate 3Ds fields for two-step retrievals (scattering weights, for example OMI NO2)
     if isinstance(sat_data, satellite_amf):

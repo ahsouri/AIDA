@@ -343,7 +343,7 @@ def omi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=T
         tropopause = np.empty((1))
     # populate omi class
     omi_no2 = satellite_amf(vcd, scd, time, tropopause, latitude_center,
-                            longitude_center, [], [], uncertainty,quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
+                            longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
@@ -427,7 +427,8 @@ def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> sat
         tropopause = np.empty((1))
         # populate omi class
         omi_hcho = satellite_amf(vcd, scd, time, tropopause, latitude_center,
-                                 longitude_center, [], [], uncertainty,quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
+                                 longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
+
         # interpolation
         if (ctm_models_coordinate is not None):
             print('Currently interpolating ...')
@@ -620,8 +621,8 @@ def cmaq_reader_wrapper(dir_mcip: str, dir_cmaq: str, YYYYMM: str, k: int, gasna
     '''
     # finding the right files
     date = datetime.datetime.strptime(str(k), '%j').date()
-    cmaq_target_file = glob.glob(dir_cmaq + "/CCTM_CONC_v52*" + \
-        YYYYMM[:4] + "%03d" % int(k) + "*.nc")
+    cmaq_target_file = glob.glob(dir_cmaq + "/CCTM_CONC_v52*" +
+                                 YYYYMM[:4] + "%03d" % int(k) + "*.nc")
     cmaq_target_file = cmaq_target_file[0]
     grd_file_2d = dir_mcip + "/GRIDCRO2D_" + \
         YYYYMM[2:4] + date.strftime('%m%d')
@@ -939,10 +940,11 @@ class readers(object):
                                self.ddm_dir.as_posix(),
                                self.emis_product_dir.as_posix(),
                                YYYYMM, gas, read_ddm, error_frac)
-        
+
         self.ctm_data = ctm_data[0]
         self.ddm_data = ctm_data[1]
         ctm_data = []
+
 
 # testing
 if __name__ == "__main__":

@@ -65,7 +65,6 @@ class ctm_model:
     averaged: bool
 
 
-
 @dataclass
 class ddm_emis_model:
     time_ddm: list
@@ -74,6 +73,7 @@ class ddm_emis_model:
     emis_tot: np.ndarray
     emis_err: np.ndarray
     averaged: bool
+
 
 @dataclass
 class averaged_field:
@@ -88,6 +88,7 @@ class averaged_field:
     gap_field: np.ndarray
     time_sat: np.ndarray
 
+
 @dataclass
 class OI_result:
     ctm_corrected: np.ndarray
@@ -95,11 +96,11 @@ class OI_result:
     increment: np.ndarray
     error_analysis: np.ndarray
 
-@dataclass 
+
+@dataclass
 class inversion_result:
     post_emis: np.array
     ak: np.array
     increment: np.array
     error_analysis: np.array
     ratio: np.array
-   
