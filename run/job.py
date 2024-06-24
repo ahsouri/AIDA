@@ -85,22 +85,27 @@ for statev in state_vectors:
         aida_obj.recal_amf()
 
     if save_daily:
-        aida_obj.savedaily(output_nc_dir, gasname, str(year) + '_' + f"{month:02}" )
+        aida_obj.savedaily(output_nc_dir, gasname,
+                           str(year) + '_' + f"{month:02}")
 
     if month != 12:
         aida_obj.average(str(
-               year) + '-' + f"{month:02}" + '-01', str(year) + '-' + f"{month+1:02}" + '-01', gasname, bias_sat, sensor[cnt])
+            year) + '-' + f"{month:02}" + '-01', str(year) + '-' + f"{month+1:02}" + '-01')
     else:
         aida_obj.average(
-               str(year) + '-' + f"{month:02}" + '-01', str(year+1) + '-' + "01" + '-01', gasname, bias_sat, sensor[cnt])
+            str(year) + '-' + f"{month:02}" + '-01', str(year+1) + '-' + "01" + '-01')
+
+    if bias_sat == True:
+        aida_obj.bias_correct(sensor[cnt], gasname)
 
     if do_oi == True:
         aida_obj.oi(error_ctm=state_err)
 
     if do_inversion == True:
-        aida_obj.inversion(gasname, sensor[cnt], index_iteration=index_iteration[0])
+        aida_obj.inversion(
+            gasname, sensor[cnt], index_iteration=index_iteration[0])
 
     aida_obj.reporting(gasname + '_' + str(year) +
-            f"{month:02}" + '_' + str(index_iteration[0]), gasname, output_pdf_dir)
+                       f"{month:02}" + '_' + str(index_iteration[0]), gasname, output_pdf_dir)
     aida_obj.write_to_nc(gasname + '_' + str(year) +
-            f"{month:02}" + '_' + str(index_iteration[0]), output_nc_dir, read_ddm=read_ddm)
+                         f"{month:02}" + '_' + str(index_iteration[0]), output_nc_dir, read_ddm=read_ddm)

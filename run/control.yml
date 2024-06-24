@@ -62,17 +62,10 @@ state_vector_nox_errors: # errors for NOx source (anthro, bio, bb, light)
    - 300.0
 
 state_vector_voc_errors: # errors for VOC source (anthro, bio, bb)
-   - 30.0
-   - 50.0
-   - 50.0
-   - 0.0
-
-inflate_errors: #inflate the state vector errors (same order as state vectors)
-   - 1.0
-   - 1.0
-   - 1.0
-   - 1.0
-   - 1.0
+   - 150.0
+   - 200.0
+   - 200.0
+   - 300.0
 
 # total column or tropospheric column (only applicable for NO2)
 troposphere_no2_only: True
