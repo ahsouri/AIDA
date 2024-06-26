@@ -11,6 +11,7 @@ from scipy.io import savemat
 from numpy import dtype
 from netCDF4 import Dataset
 import os
+import glob
 
 
 class aida(object):
@@ -21,6 +22,8 @@ class aida(object):
         self.do_run_inversion = False
         self.oi_result = []
         self.inversion_result = []
+        self.X1 = 0.0
+        self.first_iteration = True
 
     def read_data(self, ctm_type: str, ctm_path: Path, mcip_path: Path, ctm_gas_name: str,
                   sat_type: str, sat_path: Path, YYYYMM: str, error_fraction: list,
@@ -62,19 +65,21 @@ class aida(object):
         '''
         self.averaged_fields = averaging(
             startdate, enddate, self.reader_obj, gasname, bias_sat, sat_type)
-        
+
     def bias_correct(self, sat_type, gasname):
         # apply bias correction based on several validation studies
-        
+
         if sat_type == "TROPOMI" and gasname == "NO2":
             print("applying the bias correction for TROPOMI NO2")
-            sat_averaged_vcd_bias_corrected = (self.averaged_fields.sat_vcd - 0.32)/0.66
+            sat_averaged_vcd_bias_corrected = (
+                self.averaged_fields.sat_vcd - 0.32)/0.66
             '''
             reference: Amir
             '''
         elif sat_type == "TROPOMI" and gasname == "HCHO":
             print("applying the bias correction for TROPOMI HCHO")
-            sat_averaged_vcd_bias_corrected = (self.averaged_fields.sat_vcd - 0.90)/0.59
+            sat_averaged_vcd_bias_corrected = (
+                self.averaged_fields.sat_vcd - 0.90)/0.59
             '''
             reference: Amir
             '''
@@ -85,23 +90,30 @@ class aida(object):
             '''
             sat_averaged_vcd_bias_corrected = self.averaged_fields.sat_vcd
             #sat_averaged_vcd = (sat_averaged_vcd - 2.5*10**15)/0.63
-            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd < 5)] = 0.67*self.averaged_fields.sat_vcd[np.where(self.averaged_fields.sat_vcd < 5)] #clean
-            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd > 5)] = 1.15*self.averaged_fields.sat_vcd[np.where(self.averaged_fields.sat_vcd > 5)] #polluted
-            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd > 10)] = 1.30*self.averaged_fields.sat_vcd[np.where(self.averaged_fields.sat_vcd > 10)] #very polluted
+            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd < 5)] = 0.67 * \
+                self.averaged_fields.sat_vcd[np.where(
+                    self.averaged_fields.sat_vcd < 5)]  # clean
+            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd > 5)] = 1.15 * \
+                self.averaged_fields.sat_vcd[np.where(
+                    self.averaged_fields.sat_vcd > 5)]  # polluted
+            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd > 10)] = 1.30 * \
+                self.averaged_fields.sat_vcd[np.where(
+                    self.averaged_fields.sat_vcd > 10)]  # very polluted
             ''' 
             reference: Johnson et al., 2023
             '''
         elif sat_type == "OMI" and gasname == "HCHO":
             print("applying the bias correction for OMI HCHO")
-            sat_averaged_vcd_bias_corrected = (self.averaged_fields.sat_vcd*10 - 1.06)/(0.66*10)
+            sat_averaged_vcd_bias_corrected = (
+                self.averaged_fields.sat_vcd*10 - 1.06)/(0.66*10)
             '''
             reference: Ayazpour et al., Submitted, Auto Ozone Monitoring Instrument (OMI) Collection 4 Formaldehyde Product
             '''
-        
+
         else:
             print("NOT applying the bias correction for satellite VCDs")
             sat_averaged_vcd_bias_corrected = self.averaged_fields.sat_vcd
-        
+
         # populating the averaged vcds with the bias corrected ones
         self.averaged_fields.sat_vcd = sat_averaged_vcd_bias_corrected
 
@@ -111,12 +123,24 @@ class aida(object):
         self.oi_result = OI(self.averaged_fields.ctm_vcd, self.averaged_fields.sat_vcd,
                             (self.averaged_fields.ctm_vcd*error_ctm/100.0)**2, self.averaged_fields.sat_err**2, regularization_on=True)
 
-    def inversion(self, gasname, sat_type: str, index_iteration):
+    def emission_last_iter(self, inv_folder: str, YYYYMM: str):
+
+        self.first_iteration = False
+        inverse_file = (glob.glob(inv_folder + "/*" + str(YYYYMM) + "*.nc"))
+        if not inverse_file:
+            raise Exception(
+                "We don't have the previous inversion states")
+        nc_fid = Dataset(inverse_file[0], 'r')
+        self.X1 = np.array(nc_fid.variables['inv_posterior_emissions'])
+        nc_fid.close()
+
+    def inversion(self, gasname, sat_type: str):
         self.do_run_inversion = True
-        if index_iteration == 0:
-            self.inversion_result = inv(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err**2, 
-                self.averaged_fields.ctm_vcd, self.averaged_fields.ddm_vcd/self.averaged_fields.emis_total, self.averaged_fields.emis_total, 
-                self.averaged_fields.emis_error**2, index_iteration, gasname, sat_type, regularization_on=True)
+        self.inversion_result = inv(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err**2,
+                                    self.averaged_fields.ctm_vcd, self.averaged_fields.ddm_vcd /
+                                    self.averaged_fields.emis_total,
+                                    self.averaged_fields.emis_total, self.X1,
+                                    self.averaged_fields.emis_error**2, self.first_iteration, gasname, sat_type, regularization_on=True)
 
     def reporting(self, fname: str, gasname, folder='report'):
 
@@ -163,8 +187,6 @@ class aida(object):
         data4 = ncfile.createVariable(
             'sat_averaged_error', dtype('float32').char, ('x', 'y'))
         data4[:, :] = self.averaged_fields.sat_err
-
-
 
         if np.size(self.reader_obj.ctm_data[0].latitude)*np.size(self.reader_obj.ctm_data[0].longitude) > \
            np.size(self.reader_obj.sat_data[0].latitude_center)*np.size(self.reader_obj.sat_data[0].longitude_center):
@@ -227,26 +249,26 @@ class aida(object):
             data7[:, :] = scaling_factor
 
         if self.inversion_result:
-            #inversion results
+            # inversion results
             data17 = ncfile.createVariable(
                 'inv_posterior_emissions', dtype('float32').char, ('x', 'y'))
-            data17[:,:] = self.inversion_result.post_emis
-            
+            data17[:, :] = self.inversion_result.post_emis
+
             data18 = ncfile.createVariable(
                 'inv_ak', dtype('float32').char, ('x', 'y'))
-            data18[:,:] = self.inversion_result.ak
+            data18[:, :] = self.inversion_result.ak
 
             data19 = ncfile.createVariable(
                 'inv_increment', dtype('float32').char, ('x', 'y'))
-            data19[:,:] = self.inversion_result.increment
+            data19[:, :] = self.inversion_result.increment
 
             data20 = ncfile.createVariable(
                 'inv_error_post', dtype('float32').char, ('x', 'y'))
-            data20[:,:] = self.inversion_result.error_analysis
+            data20[:, :] = self.inversion_result.error_analysis
 
             data21 = ncfile.createVariable(
                 'inv_ratio_post_prior', dtype('float32').char, ('x', 'y'))
-            data21[:,:] = self.inversion_result.ratio
+            data21[:, :] = self.inversion_result.ratio
 
         data15 = ncfile.createVariable(
             'gap', dtype('float32').char, ('t', 'x', 'y'))
@@ -255,14 +277,14 @@ class aida(object):
         data16 = ncfile.createVariable(
             'time', dtype('float64').char, ('u'))
         data16[:] = self.averaged_fields.time_sat
-        
+
         ncfile.close()
 
     def savedaily(self, folder, gasname, date):
         # extract sat data
         if not os.path.exists(folder):
             os.makedirs(folder)
-        latitude = self.reader_obj.sat_data[0].ctm_lat 
+        latitude = self.reader_obj.sat_data[0].ctm_lat
         longitude = self.reader_obj.sat_data[0].ctm_lon
         vcd_sat = np.zeros((np.shape(latitude)[0], np.shape(
             latitude)[1], len(self.reader_obj.sat_data)))
@@ -282,7 +304,8 @@ class aida(object):
 
         sat = {"vcd_sat": vcd_sat, "vcd_ctm": vcd_ctm,
                "vcd_err": vcd_err, "time_sat": time_sat, "lat": latitude, "lon": longitude}
-        savemat(folder + "/" + "sat_data_" + gasname + "_" + date +".mat", sat)
+        savemat(folder + "/" + "sat_data_" +
+                gasname + "_" + date + ".mat", sat)
 
 
 # testing

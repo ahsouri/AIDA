@@ -5,7 +5,7 @@ from aida.config import inversion_result
 import copy
 
 
-def inv(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: np.array, index_iteration: int, gasname: str, sat_type: str, regularization_on=True):
+def inv(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, X1: np.array, Sa: np.array, first_iteration: bool, gasname: str, sat_type: str, regularization_on=True):
     ''' 
     Inversion with CMAQ and satellite..
     G = SaK^T(KSaK^T + So)^-1
@@ -24,7 +24,7 @@ def inv(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: n
     Input:
         index_iteration [int]: indicating it's the first iteration or not 
     '''
-    print('Inversion is being executed, index_iteration :', index_iteration,
+    print('Inversion is being executed ',
           'gasname :', gasname, ', sat_type: ', sat_type)
 
     # adding fixed error into So
@@ -94,10 +94,9 @@ def inv(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, Sa: n
     averaging_kernel = averaging_kernel[int(knee_index[0])]
     Sb = Sb[int(knee_index[0])]
 
-    if index_iteration == 0:
+    if first_iteration == True:
         increment = kalman_gain*(Y_new-F)
     else:
-        # need to be done this part
         increment = kalman_gain*(Y_new-F + K*(X1-X0))
 
     Xb = X0 + increment

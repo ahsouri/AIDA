@@ -13,8 +13,11 @@ save_daily: False
 # to adjust bias of satellite VCD 
 bias_sat: True
 
-index_iteration: # index of iteration
-   - 0
+# is it the first iteration or not?
+first_estimate: True
+
+# previous estimates (if you are running the inversion for the second or higher iteration)
+inversion_prev: '/nobackup/jjung13/ACMAP_CMAQ_OUT/INV/'
 
 # number of jobs
 num_job: 12
@@ -69,7 +72,6 @@ state_vector_voc_errors: # errors for VOC source (anthro, bio, bb)
 
 # total column or tropospheric column (only applicable for NO2)
 troposphere_no2_only: True
-
 
 # starting date (YYYY-MM) and ending date (YYYY-MM) (the end point will be considered)
 start_date: '2019-05'

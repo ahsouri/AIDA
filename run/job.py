@@ -20,7 +20,6 @@ state_vectors = ctrl_opts['state_vectors']
 state_vector_conc_errors = ctrl_opts['state_vector_conc_errors']
 state_vector_nox_errors = ctrl_opts['state_vector_nox_errors']
 state_vector_voc_errors = ctrl_opts['state_vector_voc_errors']
-inflate_errors = ctrl_opts['inflate_errors']
 sensor = ctrl_opts['sensor']
 troposphere_no2_only = ctrl_opts['troposphere_no2_only']
 sat_path = ctrl_opts['sat_path']
@@ -30,7 +29,8 @@ num_job = ctrl_opts['num_job']
 sensor = ctrl_opts['sensor']
 validation_only = ctrl_opts['validation']
 save_daily = ctrl_opts['save_daily']
-index_iteration = ctrl_opts['index_iteration']
+bool_iteration = ctrl_opts['first_estimate']
+inversion_previous_folder = ctrl_opts['inversion_prev']
 bias_sat = ctrl_opts['bias_sat']
 
 
@@ -101,11 +101,15 @@ for statev in state_vectors:
     if do_oi == True:
         aida_obj.oi(error_ctm=state_err)
 
+    if bool_iteration == False:
+        aida_obj.emission_last_iter(
+            inversion_previous_folder, str(year) + f"{month:02}")
+
     if do_inversion == True:
         aida_obj.inversion(
-            gasname, sensor[cnt], index_iteration=index_iteration[0])
+            gasname, sensor[cnt])
 
     aida_obj.reporting(gasname + '_' + str(year) +
-                       f"{month:02}" + '_' + str(index_iteration[0]), gasname, output_pdf_dir)
+                       f"{month:02}" + '_', gasname, output_pdf_dir)
     aida_obj.write_to_nc(gasname + '_' + str(year) +
-                         f"{month:02}" + '_' + str(index_iteration[0]), output_nc_dir, read_ddm=read_ddm)
+                         f"{month:02}" + '_', output_nc_dir, read_ddm=read_ddm)
