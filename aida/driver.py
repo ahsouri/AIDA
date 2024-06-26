@@ -225,25 +225,27 @@ class aida(object):
             data7 = ncfile.createVariable(
                 'scaling_factor_OI', dtype('float32').char, ('x', 'y'))
             data7[:, :] = scaling_factor
+
         if self.inversion_result:
+            #inversion results
             data17 = ncfile.createVariable(
-                'IV_posterior_emissions', dtype('float32').char, ('x', 'y'))
+                'inv_posterior_emissions', dtype('float32').char, ('x', 'y'))
             data17[:,:] = self.inversion_result.post_emis
             
             data18 = ncfile.createVariable(
-                'IV_ak', dtype('float32').char, ('x', 'y'))
+                'inv_ak', dtype('float32').char, ('x', 'y'))
             data18[:,:] = self.inversion_result.ak
 
             data19 = ncfile.createVariable(
-                'IV_increment', dtype('float32').char, ('x', 'y'))
+                'inv_increment', dtype('float32').char, ('x', 'y'))
             data19[:,:] = self.inversion_result.increment
 
             data20 = ncfile.createVariable(
-                'IV_error', dtype('float32').char, ('x', 'y'))
+                'inv_error_post', dtype('float32').char, ('x', 'y'))
             data20[:,:] = self.inversion_result.error_analysis
 
             data21 = ncfile.createVariable(
-                'IV_ratio', dtype('float32').char, ('x', 'y'))
+                'inv_ratio_post_prior', dtype('float32').char, ('x', 'y'))
             data21[:,:] = self.inversion_result.ratio
 
         data15 = ncfile.createVariable(
@@ -260,8 +262,8 @@ class aida(object):
         # extract sat data
         if not os.path.exists(folder):
             os.makedirs(folder)
-        latitude = self.reader_obj.sat_data[0].ctm_lat #self.reader_obj.ctm_data[0].latitude
-        longitude = self.reader_obj.sat_data[0].ctm_lon#self.reader_obj.ctm_data[0].longitude
+        latitude = self.reader_obj.sat_data[0].ctm_lat 
+        longitude = self.reader_obj.sat_data[0].ctm_lon
         vcd_sat = np.zeros((np.shape(latitude)[0], np.shape(
             latitude)[1], len(self.reader_obj.sat_data)))
         vcd_err = np.zeros_like(vcd_sat)

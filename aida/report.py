@@ -194,16 +194,16 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
        plotter(lon, lat, averaged_generic_fields.ddm_vcd, 'temp/ddm_' +
             fname + '.png', 'DDM (col)', 1, vmin_vcd, vmax_vcd)
        plotter(lon, lat, averaged_generic_fields.emis_total, 'temp/emis_tot_' +
-            fname + '.png', 'Prior Emission (total)', 6, vmin_vcd, vmax_vcd/10.0)
+            fname + '.png', 'Prior Emissions (total)', 6, vmin_vcd, vmax_vcd/10.0)
        plotter(lon, lat, averaged_generic_fields.emis_error, 'temp/emis_err_' +
-            fname + '.png', 'Emission error (total)', 6, vmin_vcd, vmax_vcd/10.0)
+            fname + '.png', 'Emission errors (total)', 6, vmin_vcd, vmax_vcd/10.0)
 
     # OI fields
     if oi_fields:
         plotter(lon, lat, oi_fields.ctm_corrected, 'temp/ctm_vcd_after_' +
             fname + '.png', 'CTM VCD (posterior)', unit, vmin_vcd, vmax_vcd)
         plotter(lon, lat, oi_fields.increment, 'temp/increment_' +
-            fname + '.png', 'Increment (VCD)', unit, vmin_incre, vmax_incre)
+            fname + '.png', 'Increments (VCD)', unit, vmin_incre, vmax_incre)
         plotter(lon, lat, oi_fields.ak, 'temp/dak_' +
             fname + '.png', 'Averaging Kernels', 2, 0.0, 1.0)
         plotter(lon, lat, oi_fields.error_analysis, 'temp/error_' +
@@ -213,16 +213,16 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
     if inversion_fields:
         vcd_ratio = averaged_generic_fields.sat_vcd/averaged_generic_fields.ctm_vcd
         plotter(lon, lat, vcd_ratio , 'temp/iv_ratio_vcd_' +
-            fname + '.png', 'IV Ratio (sat_vcd/ctm_vcd)', 2, 0, vmax_ratio)
+            fname + '.png', 'Ratio (sat_vcd/ctm_vcd)', 2, 0, vmax_ratio)
         plotter(lon, lat, inversion_fields.ratio, 'temp/iv_ratio_' +
-            fname + '.png', 'IV Ratio (posterior/priori)', 2, 0, vmax_ratio)
+            fname + '.png', 'Ratio (posterior/prior)', 2, 0, vmax_ratio)
         plotter(lon, lat, inversion_fields.post_emis, 'temp/iv_post_emis_' +
-            fname + '.png', 'IV Posterior Emission (total)', 6, vmin_vcd, vmax_vcd/10.0)
+            fname + '.png', 'Posterior Emissions (total)', 6, vmin_vcd, vmax_vcd/10.0)
         plotter(lon, lat, inversion_fields.increment, 'temp/iv_increment_' +
-            fname + '.png', 'IV Increment (emission)', 6, vmin_vcd, vmax_vcd/20.0)
+            fname + '.png', 'Increments (emission)', 6, vmin_vcd, vmax_vcd/20.0)
         plotter(lon, lat, inversion_fields.ak, 'temp/iv_ak_' +
-            fname + '.png', 'IV Averaging Kernels', 2, 0.0, 1.0)
+            fname + '.png', 'Averaging Kernels', 2, 0.0, 1.0)
         plotter(lon, lat, inversion_fields.error_analysis, 'temp/iv_error_' +
-            fname + '.png', 'IV estimate error', 6, vmin_vcd, vmax_vcd/10.0)
+            fname + '.png', 'Estimate error', 6, vmin_vcd, vmax_vcd/10.0)
 
     topdf(fname, ffolder, 'AIDA_report_' + fname + '.pdf')

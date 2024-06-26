@@ -30,6 +30,7 @@ def _time_lister(data: list, tagname='time'):
 
 
 def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
+    
     print('AMF Recal begins...')
     # list the time in ctm_data
     time_ctm, time_ctm_hour_only, time_ctm_datetype = _time_lister(ctm_data)
@@ -147,7 +148,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
             gridsize_ctm = np.sqrt(size_grid_model_lon **
                                    2 + size_grid_model_lat**2)
             for z in range(0, np.shape(ctm_mid_pressure)[0]):
-                _, _, ctm_mid_pressure_new[z, :, :], _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                ctm_longitude, ctm_latitude, ctm_mid_pressure_new[z, :, :], _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
                                                                    ctm_mid_pressure[z, :, :], sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
                 _, _, ctm_partial_new[z, :, :], _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
                                                               ctm_deltap[z, :, :]*ctm_profile[z, :, :]/g/Mair*N_A*1e-4*1e-15*100.0*1e-9, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
@@ -156,10 +157,6 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
             ctm_partial_new = []
             ctm_mid_pressure_new = []
 
-            _, _, ctm_longitude_new, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
-                                                   ctm_data[0].longitude, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
-            _, _, ctm_latitude_new, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
-                                                  ctm_data[0].latitude, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
             if ddm_read == True:
                 ddm_partial_new = np.zeros((np.shape(ctm_mid_pressure)[0],
                                             np.shape(L2_granule.longitude_center)[0], np.shape(
@@ -225,14 +222,14 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
                 interpolated_SW = f(np.log(ctm_mid_pressure_tmp))
                 # remove bad values
                 interpolated_SW[np.isinf(interpolated_SW)] = 0.0
-                # remove above tropopause SWs
+                # remove above tropopause SWs (in case of NO2)
                 if np.size(L2_granule.tropopause) != 1:
                     interpolated_SW[ctm_mid_pressure_tmp <
                                     L2_granule.tropopause[i, j]] = np.nan
-                    ctm_partial_column_tmp[ctm_mid_pressure_tmp <
+                    ctm_partial_column_tmp[ctm_mid_pressure_tmp <=
                                            L2_granule.tropopause[i, j]] = np.nan
                     if ddm_read == True:
-                        ctm_partial_column_ddm_tmp[ctm_mid_pressure_tmp <
+                        ctm_partial_column_ddm_tmp[ctm_mid_pressure_tmp <=
                                                    L2_granule.tropopause[i, j]] = np.nan
                 # calculate model SCD
                 model_SCD = np.nansum(interpolated_SW*ctm_partial_column_tmp)
@@ -255,12 +252,6 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
         model_VCD[np.isinf(L2_granule.vcd)] = np.nan
         sat_data[counter].ctm_vcd = model_VCD
         sat_data[counter].ctm_time_at_sat = time_ctm[closest_index_ctm]
-        if L2_granule.ctm_upscaled_needed == True:
-            sat_data[counter].ctm_lat = ctm_latitude_new
-            sat_data[counter].ctm_lon = ctm_longitude_new
-        else:
-            sat_data[counter].ctm_lat = ctm_latitude
-            sat_data[counter].ctm_lon = ctm_longitude
 
         # populate ddm stuff if requested
         if ddm_read == True:

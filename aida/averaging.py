@@ -1,7 +1,6 @@
 import numpy as np
 import datetime
 from aida.config import satellite_amf, averaged_field
-import copy
 
 
 def _daterange(start_date, end_date):
@@ -9,7 +8,7 @@ def _daterange(start_date, end_date):
         yield start_date + datetime.timedelta(n)
 
 
-def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, sat_type: str):
+def averaging(startdate: str, enddate: str, reader_obj):
     '''
           average the data
           Input:
@@ -167,5 +166,6 @@ def averaging(startdate: str, enddate: str, reader_obj, gasname: str, bias_sat, 
         emis_err_averaged = []
 
     output = averaged_field(sat_averaged_vcd, sat_averaged_error, ctm_averaged_vcd,
-                            sat_aux1, sat_aux2, ddm_averaged, emis_averaged, emis_err_averaged, gap_chosen, time_chosen)
+                            sat_aux1, sat_aux2, ddm_averaged, emis_averaged, emis_err_averaged, 
+                            gap_chosen, time_chosen)
     return output
