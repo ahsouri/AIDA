@@ -207,7 +207,7 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
         plotter(lon, lat, oi_fields.ak, 'temp/dak_' +
             fname + '.png', 'Averaging Kernels', 2, 0.0, 1.0)
         plotter(lon, lat, oi_fields.error_analysis, 'temp/error_' +
-            fname + '.png', 'OI estimate error', unit, 0.0, vmax_error)             
+            fname + '.png', 'OI estimate error', unit, 0.0, vmax_error)
 
     # Inversion fields
     if inversion_fields:
@@ -219,7 +219,7 @@ def report(lon: np.ndarray, lat: np.ndarray, averaged_generic_fields,  oi_fields
         plotter(lon, lat, inversion_fields.post_emis, 'temp/iv_post_emis_' +
             fname + '.png', 'Posterior Emissions (total)', 6, vmin_vcd, vmax_vcd/10.0)
         plotter(lon, lat, inversion_fields.increment, 'temp/iv_increment_' +
-            fname + '.png', 'Increments (emission)', 6, vmin_vcd, vmax_vcd/20.0)
+            fname + '.png', 'Increments (emission)', 6, -vmax_vcd/20.0, vmax_vcd/20.0)
         plotter(lon, lat, inversion_fields.ak, 'temp/iv_ak_' +
             fname + '.png', 'Averaging Kernels', 2, 0.0, 1.0)
         plotter(lon, lat, inversion_fields.error_analysis, 'temp/iv_error_' +

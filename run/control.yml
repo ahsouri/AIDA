@@ -1,8 +1,8 @@
 # set your python executable path
-python_bin: '/nobackup/jjung13/miniconda3/bin/python3'
+python_bin: '/nobackup/asouri/TOOLS/miniconda3/bin/python3'
 
 # to run the job on debug queue
-debug: False 
+debug: False
 
 # validation only (if True, inversion and assimilation will be set to False)
 validation: False
@@ -61,13 +61,13 @@ state_vector_conc_errors: # errors for NO2, HCHO, and CO columns in [%]
 state_vector_nox_errors: # errors for NOx source (anthro, bio, bb, light)
    - 50.0
    - 200.0
-   - 300.0
+   - 200.0
    - 300.0
 
 state_vector_voc_errors: # errors for VOC source (anthro, bio, bb)
    - 150.0
    - 200.0
-   - 200.0
+   - 300.0
    - 300.0
 
 # total column or tropospheric column (only applicable for NO2)

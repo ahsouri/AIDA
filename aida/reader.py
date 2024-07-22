@@ -236,7 +236,7 @@ def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_
     else:
         tropopause = np.empty((1))
     tropomi_no2 = satellite_amf(vcd, scd, time, tropopause, latitude_center, longitude_center,
-                                [], [], uncertainty, [], quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
+                                [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')

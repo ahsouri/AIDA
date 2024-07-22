@@ -110,6 +110,6 @@ for statev in state_vectors:
             gasname, sensor[cnt])
 
     aida_obj.reporting(gasname + '_' + str(year) +
-                       f"{month:02}" + '_', gasname, output_pdf_dir)
+                       f"{month:02}", gasname, output_pdf_dir)
     aida_obj.write_to_nc(gasname + '_' + str(year) +
-                         f"{month:02}" + '_', output_nc_dir, read_ddm=read_ddm)
+                         f"{month:02}", output_nc_dir, read_ddm=read_ddm)
