@@ -1,5 +1,5 @@
 # set your python executable path
-python_bin: '/nobackup/asouri/TOOLS/miniconda3/bin/python3'
+python_bin: '/nobackup/jjung13/miniconda3/bin/python3'
 
 # to run the job on debug queue
 debug: False
