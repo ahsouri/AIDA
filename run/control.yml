@@ -1,5 +1,5 @@
 # set your python executable path
-python_bin: '/nobackup/jjung13/miniconda3/bin/python3'
+python_bin: '/nobackup/asouri/TOOLS/miniconda3/bin/python3'
 
 # to run the job on debug queue
 debug: False
@@ -26,7 +26,7 @@ num_job: 12
 ctm_name: 'CMAQ'
 
 # set the path of CTM netcdf files (either relative or absolute)
-ctm_conc_dir: '/nobackup/jjung13/ACMAP_CMAQ_OUT/BASE/2019_const_4D_crt_avis_rdc_lgt_BC/'
+ctm_conc_dir: '/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_NOX/'
 
 # set the path of MCIP netcdf files (either relative or absolute)
 ctm_mcip_dir: '/nobackup/jjung13/ACMAP_mcipout/2019/'
@@ -58,11 +58,12 @@ state_vector_conc_errors: # errors for NO2, HCHO, and CO columns in [%]
    - 50.0
    - 50.0
 
-state_vector_nox_errors: # errors for NOx source (anthro, bio, bb, light)
+state_vector_nox_errors: # errors for NOx source (anthro, bio, bb, light, avi)
    - 50.0
    - 200.0
    - 200.0
    - 300.0
+   - 100.0
 
 state_vector_voc_errors: # errors for VOC source (anthro, bio, bb)
    - 150.0

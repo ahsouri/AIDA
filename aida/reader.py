@@ -667,7 +667,7 @@ def cmaq_reader_wrapper(dir_mcip: str, dir_cmaq: str, YYYYMM: str, k: int, gasna
 
 
 def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: int, gasname: str, err_anthro: float,
-                                 err_bio: float, err_bb: float, err_light: float):
+                                 err_bio: float, err_bb: float, err_light: float, err_avi: float):
     '''
         cmaq reader DDM wrapper
              dir_ddm [str]: the folder containing the ddm outputs
@@ -675,7 +675,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
              YYYYMM [str]: the target month and year, e.g., 202005 (May 2020)
              k [int]: the index of the file
              gasname [str]: the name of the gas to read
-             err_[x][float]: fractional errors of [anthro/bio/bb/light] emission sectors
+             err_[x][float]: fractional errors of [anthro/bio/bb/light/avi] emission sectors
         Output [ddm_emis_model]: the ddm_emiss structure @dataclass
     '''
     # locate different files for different compounds
@@ -697,6 +697,11 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
         YYYYMM[:4] + "%03d" % int(k) + ".nc"
     file_emis_light = dir_emis + "/CCTM_ACMAP_EMIS_LNT_v52_" + \
         YYYYMM[:4] + "%03d" % int(k) + ".nc"
+    # convert tjd to yymmdd for aviation emiss
+    date_reformat = datetime.datetime.strptime(YYYYMM[:4] + "_" + "%03d" % int(k), '%Y_%j')
+    avi_str_date  = date_reformat.strftime('%Y%m%d')
+    file_emis_avi = dir_emis + "/CMAQ_ready2_aviation_" + \
+        avi_str_date[2:] + ".nc"
 
     print("Currently reading ddm and emis ... ")
     print(file_ddm.split('/')[-1])
@@ -721,10 +726,14 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
         emisname = 'ISOP'
         emis_mole_w = 68.1
 
+    #aviation emissions were produced differently so we need to specify what it has
+    emis_avi_list = ["SO2","PEC","NO","NO2","FORM","ALD2","ETOH","MEOH","ETHA","PAR","OLE",
+                     "ISOP","CO","POC","NH3"]
     emis_bio = []
     emis_bb = []
     emis_anthro = []
     emis_light = []
+    emis_avi = []
     emis_tot = []
 
     ddm_out = _read_nc(file_ddm, ddmname).astype(
@@ -745,6 +754,10 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
         temp = _read_nc(file_emis_light, emisname[i]).astype(
             'float32')*emis_mole_w[i]
         emis_light.append(temp)
+        if emisname[i] in emis_avi_list:
+           temp = _read_nc(file_emis_avi, emisname[i]).astype(
+               'float32')*emis_mole_w[i]
+           emis_avi.append(temp)
 
     time_var_emis = _read_nc(file_emis_anthro, 'TFLAG')
     time_var_emis = time_var_emis[1:, :, :]
@@ -756,24 +769,30 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     emis_bb = np.sum(emis_bb, axis=0).squeeze()/12.0/12.0
     emis_anthro = np.sum(emis_anthro, axis=0).squeeze()/12.0/12.0
     emis_light = np.sum(emis_light, axis=0).squeeze()/12.0/12.0
+    emis_avi = np.sum(emis_avi, axis=0).squeeze()/12.0/12.0
+
     # sum over vertical distribution
     # unit g/s, time: 0~24 UTC but always zero at 0 UTC
     emis_bio = np.sum(emis_bio, axis=1).squeeze()
     emis_bb = np.sum(emis_bb, axis=1).squeeze()
     emis_anthro = np.sum(emis_anthro, axis=1).squeeze()
     emis_light = np.sum(emis_light, axis=1).squeeze()
+    emis_avi = np.sum(emis_avi, axis=1).squeeze()
 
     emis_bio = emis_bio[1:, :, :]  # removed 0 UTC, so 1 ~ 24 UTC
     emis_bb = emis_bb[1:, :, :]
     emis_anthro = emis_anthro[1:, :, :]
     emis_light = emis_light[1:, :, :]
+    emis_avi = emis_avi[1:, :, :]
 
     # emission for model has lightning and aviation emissions in addition to emis_tot
-    emis_tot = emis_bio + emis_bb + emis_anthro + emis_light
+    emis_tot = emis_bio + emis_bb + emis_anthro + emis_light + emis_avi
 
     err_emis = ((emis_anthro/emis_tot)**2)*((err_anthro/100.0*emis_anthro)**2) + ((emis_bio/emis_tot)**2)*((err_bio/100.0*emis_bio)**2) + \
         ((emis_bb/emis_tot)**2)*((err_bb/100.0*emis_bb)**2) + \
-        ((emis_light/emis_tot)**2)*((err_light/100.0*emis_light)**2)
+        ((emis_light/emis_tot)**2)*((err_light/100.0*emis_light)**2) + \
+        ((emis_avi/emis_tot)**2)*((err_avi/100.0*emis_avi)**2)
+
     err_emis[np.isinf(err_emis)] = 0.0
     err_emis = np.sqrt(err_emis)  # same unit as the emissions
 
@@ -811,7 +830,7 @@ def CMAQ_reader(product_dir: str, mcip_product_dir: str, ddm_product_dir: str, e
              YYYYMM [str]: the target month and year, e.g., 202005 (May 2020)
              gases_to_be_saved [str]: name of gases to be loaded. e.g., ['NO2']
              read_inv [str]: whether read ddm output and emissions or not
-             error_frac [list]: fractional errors of anthro, bio, bb, and lightning
+             error_frac [list]: fractional errors of anthro, bio, bb, lightning, and aviation
        Output:
              cmaq_fields [ctm_model]: a dataclass format (see config.py)
     '''
@@ -846,7 +865,7 @@ def CMAQ_reader(product_dir: str, mcip_product_dir: str, ddm_product_dir: str, e
             mcip_product_dir, product_dir, YYYYMM, k, gas_to_be_saved))
         if read_inv == True:
             outputs_ddm.append(cmaq_reader_ddm_emis_wrapper(
-                ddm_product_dir, emis_product_dir, YYYYMM, k, gas_to_be_saved, error_frac[0], error_frac[1], error_frac[2], error_frac[3]))
+                ddm_product_dir, emis_product_dir, YYYYMM, k, gas_to_be_saved, error_frac[0], error_frac[1], error_frac[2], error_frac[3], error_frac[4]))
 
     return outputs_ctm, outputs_ddm
 
