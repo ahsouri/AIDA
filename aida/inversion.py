@@ -30,26 +30,26 @@ def inv(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, X1: n
     # adding fixed error into So
     if sat_type == "TROPOMI" and gasname == "NO2":
         print("finding So for TROPOMI NO2")
-        So_new = So + 0.05**2 + (0.01**2)*(Y**2)  # 2.4**2
+        So_new = So + 0.05**2 + (0.01**2)*(Y**2)  
         '''
         reference: Amir
         '''
     elif sat_type == "TROPOMI" and gasname == "HCHO":
         print("finding So for TROPOMI HCHO")
-        So_new = So + 0.06**2 + (0.01**2)*(Y**2)  # So_sys
+        So_new = So + 0.06**2 + (0.01**2)*(Y**2)  
         '''
         reference: Amir
         '''
 
     elif sat_type == "OMI" and gasname == "NO2":
         print("finding So for OMI NO2")
-        #So_new = So + 4.1**2
+        So_new = So + 0.83**2 + (0.1)**2*(Y**2) 
         '''
         reference: Johnson et al., 2023
         '''
     elif sat_type == "OMI" and gasname == "HCHO":
         print("finding So for OMI HCHO")
-        #So_new = So + 3.59**2
+        So_new = So + 3.59**2
         '''
         reference: Ayazpour et al., submitted, Aura Ozone Monitoring Instrument (OMI) Collection 4 Formaldehyde Product
         '''

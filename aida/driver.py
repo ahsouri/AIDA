@@ -89,18 +89,18 @@ class aida(object):
             need to work on these again
             '''
             sat_averaged_vcd_bias_corrected = self.averaged_fields.sat_vcd
-            #sat_averaged_vcd = (sat_averaged_vcd - 2.5*10**15)/0.63
-            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd < 5)] = 0.67 * \
-                self.averaged_fields.sat_vcd[np.where(
-                    self.averaged_fields.sat_vcd < 5)]  # clean
-            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd > 5)] = 1.15 * \
-                self.averaged_fields.sat_vcd[np.where(
-                    self.averaged_fields.sat_vcd > 5)]  # polluted
-            sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd > 10)] = 1.30 * \
-                self.averaged_fields.sat_vcd[np.where(
-                    self.averaged_fields.sat_vcd > 10)]  # very polluted
+            sat_averaged_vcd = (sat_averaged_vcd - 0.32)/0.63
+            #sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd < 5)] = 0.67 * \
+                #self.averaged_fields.sat_vcd[np.where(
+                #    self.averaged_fields.sat_vcd < 5)]  # clean
+            #sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd > 5)] = 1.15 * \
+            #    self.averaged_fields.sat_vcd[np.where(
+            #        self.averaged_fields.sat_vcd > 5)]  # polluted
+            #sat_averaged_vcd_bias_corrected[np.where(self.averaged_fields.sat_vcd > 10)] = 1.30 * \
+            #    self.averaged_fields.sat_vcd[np.where(
+            #        self.averaged_fields.sat_vcd > 10)]  # very polluted
             ''' 
-            reference: Johnson et al., 2023
+            reference: Johnson et al., 2023 -- offset is from TROPOMI NO2, slope is from Matt's paper
             '''
         elif sat_type == "OMI" and gasname == "HCHO":
             print("applying the bias correction for OMI HCHO")
