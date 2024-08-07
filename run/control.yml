@@ -45,13 +45,13 @@ state_vectors:
    - 'VOC'
 
 sensor:
-   - 'OMI'
-   - 'OMI'
+   - 'TROPOMI'
+   - 'TROPOMI'
 
 # set the path of L2 files
 sat_path:
-   - '/nobackup/jjung13/ACMAP_satellite/OMI_NO2_MINDS/'
-   - '/nobackup/jjung13/ACMAP_satellite/OMI_HCHO_SAO/'
+   - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_NO2/'
+   - '/nobackup/jjung13/ACMAP_satellite/TROPOMI_HCHO/'
 
 state_vector_conc_errors: # errors for NO2, HCHO, and CO columns in [%]
    - 30.0
@@ -65,11 +65,12 @@ state_vector_nox_errors: # errors for NOx source (anthro, bio, bb, light, avi)
    - 300.0
    - 100.0
 
-state_vector_voc_errors: # errors for VOC source (anthro, bio, bb)
+state_vector_voc_errors: # errors for VOC source (anthro, bio, bb, light, avi)
    - 150.0
    - 200.0
    - 300.0
    - 300.0
+   - 100.0
 
 # total column or tropospheric column (only applicable for NO2)
 troposphere_no2_only: True
@@ -79,10 +80,10 @@ start_date: '2019-05'
 end_date:   '2019-05'
 
 # output folder for PDF reports
-output_pdf_dir: './report_iv'
+output_pdf_dir: './report_iv_trop'
 
 # output folder for NC diags
-output_nc_dir: './diag_iv'
+output_nc_dir: './diag_iv_trop'
 
 
 
