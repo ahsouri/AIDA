@@ -708,6 +708,8 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     print(file_emis_bio.split('/')[-1])
     print(file_emis_bb.split('/')[-1])
     print(file_emis_anthro.split('/')[-1])
+    print(file_emis_light.split('/')[-1])
+    print(file_emis_avi.split('/')[-1])
 
     if gasname == 'NO2':
         ddmname = 'NO2_ENX'
