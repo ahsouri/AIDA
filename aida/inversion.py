@@ -49,7 +49,7 @@ def inv(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array, X1: n
         '''
     elif sat_type == "OMI" and gasname == "HCHO":
         print("finding So for OMI HCHO")
-        So_new = So + 3.59**2
+        So_new = So + (0.203)**2 + (0.03)**2*(Y**2)
         '''
         reference: Ayazpour et al., submitted, Aura Ozone Monitoring Instrument (OMI) Collection 4 Formaldehyde Product
         '''
