@@ -95,9 +95,10 @@ class aida(object):
         elif sat_type == "OMI" and gasname == "HCHO":
             print("applying the bias correction for OMI HCHO")
             sat_averaged_vcd_bias_corrected = (
-                self.averaged_fields.sat_vcd*10 - 1.06)/(0.66*10)
+                self.averaged_fields.sat_vcd*10 - 0.821)/(0.79*10)
             '''
             reference: Ayazpour et al., Submitted, Auto Ozone Monitoring Instrument (OMI) Collection 4 Formaldehyde Product
+	    based on Figure 11, monthly climatology regression
             '''
 
         else:
