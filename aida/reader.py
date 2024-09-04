@@ -132,7 +132,7 @@ def tropomi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) ->
     uncertainty = (uncertainty*6.02214*1e19*1e-15).astype('float16')
 
     tropomi_hcho = satellite_amf(vcd, scd, time, np.empty((1)), latitude_center, longitude_center,
-                                 [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
+                                 [], [], uncertainty, quality_flag, p_mid, SWs,[], [], [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
@@ -236,7 +236,7 @@ def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_
     else:
         tropopause = np.empty((1))
     tropomi_no2 = satellite_amf(vcd, scd, time, tropopause, latitude_center, longitude_center,
-                                [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
+                                [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
@@ -343,7 +343,7 @@ def omi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=T
         tropopause = np.empty((1))
     # populate omi class
     omi_no2 = satellite_amf(vcd, scd, time, tropopause, latitude_center,
-                            longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
+                            longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
@@ -427,7 +427,7 @@ def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> sat
         tropopause = np.empty((1))
         # populate omi class
         omi_hcho = satellite_amf(vcd, scd, time, tropopause, latitude_center,
-                                 longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [])
+                                 longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [], [], [])
 
         # interpolation
         if (ctm_models_coordinate is not None):

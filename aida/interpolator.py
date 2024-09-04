@@ -258,5 +258,5 @@ def interpolator(interpolator_type: int, grid_size: float, sat_data, ctm_models_
             aprior_col, apriori_profile, surface_pressure, apriori_surface, x_col)
     elif isinstance(sat_data, satellite_amf):
         interpolated_sat = satellite_amf(vcd, scd, sat_data.time, tropopause, latitude_center, longitude_center, [
-        ], [], uncertainty, [], pressure_mid, scattering_weights, upscaled_ctm_needed, [], [], [], [], [], [], [])
+        ], [], uncertainty, [], pressure_mid, scattering_weights, upscaled_ctm_needed, [], [], [], [], [], [], [], [], [])
     return interpolated_sat

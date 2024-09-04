@@ -19,10 +19,12 @@ class satellite_amf:
     scattering_weights: np.ndarray
     ctm_upscaled_needed: bool
     ctm_vcd: np.ndarray
+    ctm_surface_conc: np.ndarray
     ctm_time_at_sat: datetime.datetime
     old_amf: np.ndarray
     new_amf: np.ndarray
     ddm_vcd: np.ndarray
+    ddm_surface: np.ndarray
     emis_tot: np.ndarray
     emis_err: np.ndarray
 
@@ -80,9 +82,11 @@ class averaged_field:
     sat_vcd: np.ndarray
     sat_err: np.ndarray
     ctm_vcd: np.ndarray
+    ctm_surface: np.ndarray
     aux1: np.ndarray
     aux2: np.ndarray
     ddm_vcd: np.ndarray
+    ddm_surface: np.ndarray
     emis_total: np.ndarray
     emis_error: np.ndarray
     gap_field: np.ndarray

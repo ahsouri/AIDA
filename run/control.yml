@@ -19,6 +19,9 @@ first_estimate: True
 # previous estimates (if you are running the inversion for the second or higher iteration)
 inversion_prev: '/nobackup/jjung13/ACMAP_CMAQ_OUT/INV/'
 
+# two types: SAT (satellite only) or SAT+AQS (satellite and in-situ)
+inversion_type: 'SAT'
+
 # number of jobs
 num_job: 12
 

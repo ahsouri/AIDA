@@ -125,6 +125,8 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
                 ddm_data[closest_index_emis_day].emis_err[closest_index_emis_hour, :, :])
             # convert the DDM to represent the partial column
             ddm_partial = ctm_deltap*ddm_out/g/Mair*N_A*1e-4*1e-15*100.0*1e-9
+            ddm_surface = ddm_out[0,:,:].squeeze()
+            surface_conc = ctm_profile[0,:,:].squeeze()
         # see if we need to upscale the ctm fields
         if L2_granule.ctm_upscaled_needed == True:
             ctm_mid_pressure_new = np.zeros((np.shape(ctm_mid_pressure)[0],
@@ -169,10 +171,19 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
                                                 emis_total, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
                 _, _, emis_error, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
                                                 emis_error**2, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+                _, _, ddm_surface_new, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                                                ddm_surface, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+                _, _, surface_conc_new, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
+                                                surface_conc, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+
                 emis_error = np.sqrt(emis_error)
 
                 ddm_partial = ddm_partial_new
                 ddm_partial_new = []
+                ddm_surface = ddm_surface_new
+                ddm_surface_new = []
+                surface_conc = surface_conc_new
+                surface_conc_new = []
 
         # interpolate vertical grid
         # check if AMF recal is even possible
@@ -235,7 +246,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
                 model_SCD = np.nansum(interpolated_SW*ctm_partial_column_tmp)
                 # ddm vcd
                 if ddm_read == True:
-                    ddm_vcd[i, j] = np.nansum(ctm_partial_column_ddm_tmp)
+                    ddm_vcd[i, j] = np.nansum(ctm_partial_column_ddm_tmp) 
                 # calculate model VCD
                 model_VCD[i, j] = np.nansum(ctm_partial_column_tmp)
                 # calculate model AMF
@@ -261,7 +272,13 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
             emis_total[np.isinf(L2_granule.vcd)] = np.nan
             emis_error[np.isnan(L2_granule.vcd)] = np.nan
             emis_error[np.isinf(L2_granule.vcd)] = np.nan
+            ddm_surface[np.isnan(L2_granule.vcd)] = np.nan
+            ddm_surface[np.isinf(L2_granule.vcd)] = np.nan
+            surface_conc[np.isnan(L2_granule.vcd)] = np.nan
+            surface_conc[np.isinf(L2_granule.vcd)] = np.nan
             sat_data[counter].ddm_vcd = ddm_vcd
+            sat_data[counter].ddm_surface = ddm_surface
+            sat_data[counter].surface_conc = surface_conc
             sat_data[counter].emis_tot = emis_total
             sat_data[counter].emis_err = emis_error
         counter += 1
