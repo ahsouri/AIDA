@@ -20,7 +20,10 @@ first_estimate: True
 inversion_prev: '/nobackup/jjung13/ACMAP_CMAQ_OUT/INV/'
 
 # two types: SAT (satellite only) or SAT+AQS (satellite and in-situ)
-inversion_type: 'SAT'
+inversion_type: 'SAT+AQS'
+
+# AQS csv folder (in case of SAT+AQS)
+AQS_folder: './AQS_files/'
 
 # number of jobs
 num_job: 12
@@ -45,10 +48,8 @@ ctm_emis_dir: '/nobackup/jjung13/ACMAP_4D_EMIS/2019/sources/'
 # state vectors
 state_vectors: 
    - 'NOx'
-   - 'VOC'
 
 sensor:
-   - 'TROPOMI'
    - 'TROPOMI'
 
 # set the path of L2 files

@@ -33,7 +33,7 @@ bool_iteration = ctrl_opts['first_estimate']
 inversion_previous_folder = ctrl_opts['inversion_prev']
 inversion_type = ctrl_opts['inversion_type']
 bias_sat = ctrl_opts['bias_sat']
-
+aqs_folder = ctrl_opts['AQS_folder']
 
 year = int(sys.argv[1])
 month = int(sys.argv[2])
@@ -108,7 +108,7 @@ for statev in state_vectors:
 
     if do_inversion == True:
         aida_obj.inversion(
-            gasname, sensor[cnt], inversion_type)
+            gasname, sensor[cnt], inversion_type, aqs_folder = aqs_folder)
 
     aida_obj.reporting(gasname + '_' + sensor[cnt] + '_' + str(year) +
                        f"{month:02}", gasname, output_pdf_dir)
