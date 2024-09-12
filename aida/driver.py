@@ -3,7 +3,7 @@ from pathlib import Path
 from aida.amf_recal import amf_recal
 from aida.averaging import averaging
 from aida.optimal_interpolation import OI
-from aida.inversion import inv
+from aida.inversion import inv_sat, inv_sat_aqs
 from aida.report import report
 from aida.ak_conv import ak_conv
 import numpy as np
@@ -89,7 +89,8 @@ class aida(object):
             '''
             need to work on these again
             '''
-            sat_averaged_vcd_bias_corrected = (self.averaged_fields.sat_vcd - 0.32)/0.63
+            sat_averaged_vcd_bias_corrected = (
+                self.averaged_fields.sat_vcd - 0.32)/0.63
             '''
             reference: Johnson et al., 2023 -- offset is from TROPOMI NO2, slope is from Matt's paper
             '''
@@ -126,53 +127,51 @@ class aida(object):
         self.X1 = np.array(nc_fid.variables['inv_posterior_emissions'])
         nc_fid.close()
 
-    def inversion(self, gasname, sat_type: str, inv_type: str, aqs_folder = None):
+    def inversion(self, gasname, sat_type: str, inv_type: str, aqs_folder=None):
         self.do_run_inversion = True
         if (inv_type == 'SAT+AQS') and (gasname == 'HCHO'):
-            inv_type == 'SAT' # we haven't implemented it plus surface HCHO obs are sparse
+            inv_type == 'SAT'  # we haven't implemented it plus surface HCHO obs are sparse
 
         if inv_type == 'SAT':
-           self.inversion_result = inv(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err**2,
-                                    self.averaged_fields.ctm_vcd, self.averaged_fields.ddm_vcd /
-                                    self.averaged_fields.emis_total,
-                                    self.averaged_fields.emis_total, self.X1,
-                                    self.averaged_fields.emis_error**2, self.first_iteration, gasname, sat_type, regularization_on=True)
+            self.inversion_result = inv_sat(self.averaged_fields.sat_vcd, self.averaged_fields.sat_err**2,
+                                            self.averaged_fields.ctm_vcd, self.averaged_fields.ddm_vcd /
+                                            self.averaged_fields.emis_total,
+                                            self.averaged_fields.emis_total, self.X1,
+                                            self.averaged_fields.emis_error**2, self.first_iteration, gasname, sat_type, regularization_on=True)
         if inv_type == 'SAT+AQS':
-           # read AQS data here
-           file_aqs = sorted(glob.glob(aqs_folder + "/*" +
-                                self.YYYYMM + "*.csv"))
-           output_aqs = np.loadtxt(file_aqs[0],delimiter=',')
-           # prepare 2D AQS output for the current lat/lon maps
-           if np.size(self.reader_obj.ctm_data[0].latitude)*np.size(self.reader_obj.ctm_data[0].longitude) > \
-              np.size(self.reader_obj.sat_data[0].latitude_center)*np.size(self.reader_obj.sat_data[0].longitude_center):
+            # read AQS data here
+            file_aqs = sorted(glob.glob(aqs_folder + "/*" +
+                                        self.YYYYMM + "*.csv"))
+            output_aqs = np.loadtxt(file_aqs[0], delimiter=',')
+            # prepare 2D AQS output for the current lat/lon maps
+            if np.size(self.reader_obj.ctm_data[0].latitude)*np.size(self.reader_obj.ctm_data[0].longitude) > \
+               np.size(self.reader_obj.sat_data[0].latitude_center)*np.size(self.reader_obj.sat_data[0].longitude_center):
 
-              lat = self.reader_obj.sat_data[0].latitude_center
-              lon = self.reader_obj.sat_data[0].longitude_center
-           else:
-              lat = self.reader_obj.ctm_data[0].latitude
-              lon = self.reader_obj.ctm_data[0].longitude
-           
-           moutput = {}
-           moutput["lat"] = lat
-           moutput["lon"] = lon
-           moutput["vcd"] = self.averaged_fields.sat_vcd
-           moutput["sat_err"] = self.averaged_fields.sat_err**2
-           moutput["aqs"] = output_aqs
-           moutput["ctm_vcd"] = self.averaged_fields.ctm_vcd
-           moutput["ctm_surf"] = self.averaged_fields.ctm_surface
-           moutput["ddm_vcd"] = self.averaged_fields.ddm_vcd
-           moutput["ddm_surf"] = self.averaged_fields.ddm_surface
-           moutput["Enox"] = self.averaged_fields.emis_total
-           moutput["Enox_error"] = self.averaged_fields.emis_error**2
+                lat = self.reader_obj.sat_data[0].latitude_center
+                lon = self.reader_obj.sat_data[0].longitude_center
+            else:
+                lat = self.reader_obj.ctm_data[0].latitude
+                lon = self.reader_obj.ctm_data[0].longitude
 
-           savemat("inversion_aqs.mat", moutput)
-           exit()
-           self.inversion_result = inv(self.averaged_fields.sat_vcd, AQS_map, self.averaged_fields.sat_err**2,
-                                    self.averaged_fields.ctm_vcd, self.averaged_fields.ctm_surface, self.averaged_fields.ddm_vcd /
-                                    self.averaged_fields.emis_total, self.averaged_fields.ddm_surface /
-                                    self.averaged_fields.emis_total, self.averaged_fields.emis_total, self.X1,
-                                    self.averaged_fields.emis_error**2, self.first_iteration, gasname, sat_type, 
-                                    regularization_on=True)
+            AQS_map = np.zeros_like(lat)
+            for i in range(0, np.shape(lat)[0]):
+                for j in range(0, np.shape(lat)[1]):
+                    cost = np.sqrt((lat[i, j]-output_aqs[:, 0])
+                                   ** 2+(lon[i, j]-output_aqs[:, 1])**2)
+                    index_i = np.argwhere(cost <= 0.05)
+                    Z = output_aqs[:, 2]
+                    chosen_aqs = Z[index_i]
+                    if np.size(chosen_aqs) > 1:
+                        chosen_aqs = np.nanmean(chosen_aqs)
+                    if np.size(chosen_aqs) != 0:
+                        AQS_map[i, j] = chosen_aqs
+
+            self.inversion_result = inv_sat_aqs(self.averaged_fields.sat_vcd, AQS_map, self.averaged_fields.sat_err**2,
+                                                self.averaged_fields.ctm_vcd, self.averaged_fields.ctm_surface, self.averaged_fields.ddm_vcd /
+                                                self.averaged_fields.emis_total, self.averaged_fields.ddm_surface /
+                                                self.averaged_fields.emis_total, self.averaged_fields.emis_total, self.X1,
+                                                self.averaged_fields.emis_error**2, self.first_iteration, gasname, sat_type,
+                                                aqs_error_percent=20.0, regularization_on=True)
 
     def reporting(self, fname: str, gasname, folder='report'):
 
