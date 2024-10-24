@@ -58,7 +58,7 @@ def inv_sat(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array,
     Y_new = copy.deepcopy(Y)
     Y_new[Y_new < 0] = 0.0
     if regularization_on == True:
-        scaling_factors = np.arange(0.1, 10, 0.1)
+        scaling_factors = np.arange(0.1, 20, 0.1)
         scaling_factors = list(scaling_factors)
     else:
         scaling_factors = []
@@ -89,16 +89,16 @@ def inv_sat(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array,
                               averaging_kernel_mean, direction='increasing')
         knee_index = np.argwhere(np.array(scaling_factors) == kneedle.knee)
         if np.size(knee_index) == 0:
-            knee_index = [0]
+            knee_index = 9 # equal to 1.0
     else:
-        knee_index = [0]
+        knee_index = 9
 
     print('The optimal regularization factor is ' +
           str(scaling_factors[int(knee_index)]))
     
-    kalman_gain = kalman_gain[int(knee_index[0])]
-    averaging_kernel = averaging_kernel[int(knee_index[0])]
-    Sb = Sb[int(knee_index[0])]
+    kalman_gain = kalman_gain[int(knee_index)]
+    averaging_kernel = averaging_kernel[int(knee_index)]
+    Sb = Sb[int(knee_index)]
 
     if first_iteration == True:
         increment = kalman_gain*(Y_new-F)
@@ -175,7 +175,7 @@ def inv_sat_aqs(Y: np.array, aqs_data: np.array, So: np.array, F_VCD: np.array, 
     Y_new[Y_new < 0] = 0.0
 
     if regularization_on == True:
-        scaling_factors = np.arange(0.1, 10, 0.1)
+        scaling_factors = np.arange(0.1, 20, 0.1)
         scaling_factors = list(scaling_factors)
     else:
         scaling_factors = []
@@ -220,10 +220,12 @@ def inv_sat_aqs(Y: np.array, aqs_data: np.array, So: np.array, F_VCD: np.array, 
                               averaging_kernel_mean, direction='increasing')
         knee_index = np.argwhere(np.array(scaling_factors) == kneedle.knee)
         if np.size(knee_index) == 0:
-            knee_index = [0]
+            knee_index = 9 # equal to 1.0
     else:
-        knee_index = [0]
+        knee_index = 9
 
+    print("knee_index")
+    print(knee_index)
     print('The optimal regularization factor is ' +
           str(scaling_factors[int(knee_index)]))
 

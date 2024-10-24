@@ -680,14 +680,15 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     '''
     # locate different files for different compounds
     if gasname == 'NO2':
-        file_ddm = dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_NOX_" + \
-            YYYYMM[:4] + "%03d" % int(k)
+        file_ddm = glob.glob(dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_NOX*" + \
+            YYYYMM[:4] + "%03d" % int(k))
     if gasname == 'HCHO':
-        file_ddm = dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_VOC_" + \
-            YYYYMM[:4] + "%03d" % int(k)
+        file_ddm = glob.glob(dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_VOC*" + \
+            YYYYMM[:4] + "%03d" % int(k))
     if gasname == 'ISOP':
-        file_ddm = dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_ISOP_" + \
-            YYYYMM[:4] + "%03d" % int(k)
+        file_ddm = glob.glob(dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_ISOP*" + \
+            YYYYMM[:4] + "%03d" % int(k))
+    file_ddm = file_ddm[0]
 
     file_emis_bio = dir_emis + "/CCTM_ACMAP_EMIS_beis_v52_" + \
         YYYYMM[:4] + "%03d" % int(k) + ".nc"
