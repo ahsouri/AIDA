@@ -207,12 +207,12 @@ def inv_sat_aqs(Y: np.array, aqs_data: np.array, So: np.array, F_VCD: np.array, 
                     K = np.array([K_vcd[i, j]])
                     Sa_new = Sa[i, j]*float(reg)
                     kalman_gain_tmp = (
-                        Sa_new*K*(K*Sa_new*K+So_new[i, j])**(-1))
+                        Sa_new*K*(K*Sa_new*K+So)**(-1))
                     Sb_tmp = (1-kalman_gain_tmp*K)*Sa_new
                     AK = np.ones_like(Sb_tmp)-(Sb_tmp)/(Sa_new)
                     averaging_kernel.append(AK)
 
-        averaging_kernel_mean.append(np.nanmean(AK.flatten()))
+        averaging_kernel_mean.append(np.nanmean(np.array(averaging_kernel).flatten()))
 
     if regularization_on == True:
         averaging_kernel_mean = np.array(averaging_kernel_mean)
@@ -237,7 +237,7 @@ def inv_sat_aqs(Y: np.array, aqs_data: np.array, So: np.array, F_VCD: np.array, 
         for j in range(0, np.shape(Y_new)[1]):
             if aqs_data[i, j] != 0.0:  # we have surface obs
                 OBS = np.array([[Y_new[i, j]], [aqs_data[i, j]]])
-                # 10% error for AQS
+                # 20% error for AQS
                 So = np.array(
                     [[So_new[i, j], 0], [0, (aqs_data[i, j]*aqs_error_percent/100.0)**2]])
                 K = np.array([[K_vcd[i, j]], [K_surf[i, j]]])
@@ -262,7 +262,7 @@ def inv_sat_aqs(Y: np.array, aqs_data: np.array, So: np.array, F_VCD: np.array, 
                     [So_new[i, j]])
                 K = np.array([K_vcd[i, j]])
                 Sa_new = Sa[i, j]*float(reg)
-                kalman_gain_tmp = (Sa_new*K*(K*Sa_new*K+So_new[i, j])**(-1))
+                kalman_gain_tmp = (Sa_new*K*(K*Sa_new*K+So)**(-1))
                 Sb_tmp = (1-kalman_gain_tmp*K)*Sa_new
                 Sb[i, j] = Sb_tmp
                 averaging_kernel[i, j] = np.ones_like(Sb_tmp)-(Sb_tmp)/(Sa_new)

@@ -120,6 +120,7 @@ class aida(object):
 
         self.first_iteration = False
         inverse_file = (glob.glob(inv_folder + "/*" + str(YYYYMM) + "*.nc"))
+        print("reading the previous inversion from " + str(inverse_file[0]))
         if not inverse_file:
             raise Exception(
                 "We don't have the previous inversion states")
@@ -165,7 +166,19 @@ class aida(object):
                         chosen_aqs = np.nanmean(chosen_aqs)
                     if np.size(chosen_aqs) != 0:
                         AQS_map[i, j] = chosen_aqs
-
+            # save everything for testing
+            #output_test = {}
+            #output_test["sat_vcd"] = self.averaged_fields.sat_vcd
+            #output_test["AQS_map"] = AQS_map
+            #output_test["ctm_vcd"] = self.averaged_fields.ctm_vcd
+            #output_test["ctm_surf"] = self.averaged_fields.ctm_surface
+            #output_test["emis"] = self.averaged_fields.emis_total
+            #output_test["K_vcd"] = self.averaged_fields.ddm_vcd/self.averaged_fields.emis_total
+            #output_test["K_surf"] = self.averaged_fields.ddm_surface/self.averaged_fields.emis_total
+            #output_test["Se"] = self.averaged_fields.emis_error**2
+            #output_test["So"] = self.averaged_fields.sat_err**2
+            #output_test["X1"] = self.X1
+            #savemat("test_second_iteration.mat", output_test)
             self.inversion_result = inv_sat_aqs(self.averaged_fields.sat_vcd, AQS_map, self.averaged_fields.sat_err**2,
                                                 self.averaged_fields.ctm_vcd, self.averaged_fields.ctm_surface, self.averaged_fields.ddm_vcd /
                                                 self.averaged_fields.emis_total, self.averaged_fields.ddm_surface /
