@@ -182,10 +182,9 @@ def inv_sat_aqs(Y: np.array, aqs_data: np.array, So: np.array, F_VCD: np.array, 
         scaling_factors.append(1.0)
 
     averaging_kernel_mean = []
-    averaging_kernel = []
-
     # finding the optimal reg factor
     for reg in scaling_factors:
+        averaging_kernel = []
         for i in range(0, np.shape(Y_new)[0]):
             for j in range(0, np.shape(Y_new)[1]):
                 if aqs_data[i, j] != 0.0:  # we have surface obs
@@ -199,7 +198,7 @@ def inv_sat_aqs(Y: np.array, aqs_data: np.array, So: np.array, F_VCD: np.array, 
                         Sa_new*K.transpose(), np.linalg.inv(np.matmul(K*Sa_new, K.transpose())+So))
                     Sb_tmp = (1-np.matmul(kalman_gain_tmp, K))*Sa_new
                     AK = np.ones_like(Sb_tmp)-(Sb_tmp)/(Sa_new)
-                    averaging_kernel.append(AK)
+                    averaging_kernel.append(AK[0])
                 else: # we don't have surface obs
                     OBS = np.array([Y_new[i, j]])
                     So = np.array(
