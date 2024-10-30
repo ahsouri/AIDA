@@ -104,7 +104,7 @@ for statev in state_vectors:
 
     if bool_iteration == False:
         aida_obj.emission_last_iter(
-            inversion_previous_folder, str(year) + f"{month:02}")
+            inversion_previous_folder, str(year) + f"{month:02}", gasname)
 
     if do_inversion == True:
         aida_obj.inversion(
