@@ -7,6 +7,21 @@ def _daterange(start_date, end_date):
     for n in range(int((end_date - start_date).days)):
         yield start_date + datetime.timedelta(n)
 
+def remove_non_numbers(lst):
+    return [x for x in lst if isinstance(x, (int, float))]
+
+def error_averager(error_X: np.array):
+    error_Y = np.zeros((np.shape(error_X)[1],np.shape(error_X)[2]))*np.nan
+    for i in range(0,np.shape(error_X)[1]):
+        for j in range(0,np.shape(error_X[2])):
+            temp = []
+            for k in range(0,np.shape(error_X)[0]):
+                temp.append(error_X[k,i,j])
+            temp = remove_non_numbers(temp)
+            temp = np.array(temp)
+            error_Y[i,j] = np.sum(temp)/(np.size(temp)**2)
+
+    error_Y = np.sqrt(error_Y)
 
 def averaging(startdate: str, enddate: str, reader_obj):
     '''
@@ -106,7 +121,7 @@ def averaging(startdate: str, enddate: str, reader_obj):
             sat_averaged_vcd[:, :, month - min(list_months), year - min(
                 list_years)] = np.squeeze(np.nanmean(sat_chosen_vcd, axis=0))
             sat_averaged_error[:, :, month - min(list_months), year - min(
-                list_years)] = np.sqrt(np.squeeze(np.nanmean(sat_chosen_error**2, axis=0)))
+                list_years)] = error_averager(sat_chosen_error**2)
             ctm_averaged_vcd[:, :, month - min(list_months), year - min(
                 list_years)] = np.squeeze(np.nanmean(ctm_chosen_vcd, axis=0))
 
@@ -119,7 +134,7 @@ def averaging(startdate: str, enddate: str, reader_obj):
                 emis_averaged[:, :, month - min(list_months), year - min(
                     list_years)] = np.squeeze(np.nanmean(emis_chosen, axis=0))
                 emis_err_averaged[:, :, month - min(list_months), year - min(
-                    list_years)] = np.sqrt(np.squeeze(np.nanmean(emis_err_chosen**2, axis=0)))
+                    list_years)] = error_averager(emis_err_chosen**2)
                 ddm_averaged[:, :, month - min(list_months), year - min(
                     list_years)] = np.squeeze(np.nanmean(ddm_chosen, axis=0))
                 ddm_surface_averaged[:, :, month - min(list_months), year - min(
@@ -169,6 +184,7 @@ def averaging(startdate: str, enddate: str, reader_obj):
     if sat_averaged_vcd.ndim == 3:
         sat_averaged_vcd = np.nanmean(sat_averaged_vcd, axis=2).squeeze()
         ctm_averaged_vcd = np.nanmean(ctm_averaged_vcd, axis=2).squeeze()
+        # TODO: we should update this but we never average over several months or years
         sat_averaged_error = np.sqrt(np.nanmean(
             sat_averaged_error**2, axis=2).squeeze())
         sat_aux1 = np.nanmean(sat_aux1, axis=2).squeeze()
