@@ -116,10 +116,10 @@ class aida(object):
         self.oi_result = OI(self.averaged_fields.ctm_vcd, self.averaged_fields.sat_vcd,
                             (self.averaged_fields.ctm_vcd*error_ctm/100.0)**2, self.averaged_fields.sat_err**2, regularization_on=True)
 
-    def emission_last_iter(self, inv_folder: str, YYYYMM: str):
+    def emission_last_iter(self, inv_folder: str, YYYYMM: str, gasname):
 
         self.first_iteration = False
-        inverse_file = (glob.glob(inv_folder + "/*" + str(YYYYMM) + "*.nc"))
+        inverse_file = (glob.glob(inv_folder + "/" + gasname + "*" + str(YYYYMM) + ".nc"))
         print("reading the previous inversion from " + str(inverse_file[0]))
         if not inverse_file:
             raise Exception(
