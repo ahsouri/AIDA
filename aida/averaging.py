@@ -22,6 +22,7 @@ def error_averager(error_X: np.array):
             error_Y[i,j] = np.sum(temp)/(np.size(temp)**2)
 
     error_Y = np.sqrt(error_Y)
+    return error_Y
 
 def averaging(startdate: str, enddate: str, reader_obj):
     '''
