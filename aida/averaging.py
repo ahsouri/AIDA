@@ -13,7 +13,7 @@ def remove_non_numbers(lst):
 def error_averager(error_X: np.array):
     error_Y = np.zeros((np.shape(error_X)[1],np.shape(error_X)[2]))*np.nan
     for i in range(0,np.shape(error_X)[1]):
-        for j in range(0,np.shape(error_X[2])):
+        for j in range(0,np.shape(error_X)[2]):
             temp = []
             for k in range(0,np.shape(error_X)[0]):
                 temp.append(error_X[k,i,j])
