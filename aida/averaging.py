@@ -7,9 +7,6 @@ def _daterange(start_date, end_date):
     for n in range(int((end_date - start_date).days)):
         yield start_date + datetime.timedelta(n)
 
-def remove_non_numbers(lst):
-    return [x for x in lst if isinstance(x, (int, float))]
-
 def error_averager(error_X: np.array):
     error_Y = np.zeros((np.shape(error_X)[1],np.shape(error_X)[2]))*np.nan
     for i in range(0,np.shape(error_X)[1]):
@@ -17,9 +14,10 @@ def error_averager(error_X: np.array):
             temp = []
             for k in range(0,np.shape(error_X)[0]):
                 temp.append(error_X[k,i,j])
-            temp = remove_non_numbers(temp)
             temp = np.array(temp)
-            error_Y[i,j] = np.sum(temp)/(np.size(temp)**2)
+            temp[np.isinf(temp)]=np.nan
+            temp2 = temp[~np.isnan(temp)]
+            error_Y[i,j] = np.sum(temp2)/(np.size(temp2)**2)
 
     error_Y = np.sqrt(error_Y)
     return error_Y
