@@ -170,7 +170,7 @@ def amf_recal(ctm_data: list, sat_data: list, ddm_data: list, ddm_read=False):
                 _, _, emis_total, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
                                                 emis_total, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
                 _, _, emis_error, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
-                                                emis_error**2, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
+                                                emis_error**2, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri, error=True)
                 _, _, ddm_surface_new, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
                                                 ddm_surface, sat_coordinate, gridsize_ctm, threshold_sat, tri=tri)
                 _, _, surface_conc_new, _ = _upscaler(ctm_data[0].longitude, ctm_data[0].latitude,
