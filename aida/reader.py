@@ -620,7 +620,7 @@ def cmaq_reader_wrapper(dir_mcip: str, dir_cmaq: str, YYYYMM: str, k: int, gasna
         Output [ctm_model]: the ctm @dataclass
     '''
     # finding the right files
-    date = datetime.datetime.strptime(str(k), '%j').date()
+    date = datetime.datetime.strptime(YYYYMM[:4] + "-" + str(k), '%Y-%j').date()
     cmaq_target_file = glob.glob(dir_cmaq + "/CCTM_CONC_v52*" +
                                  YYYYMM[:4] + "%03d" % int(k) + "*.nc")
     cmaq_target_file = cmaq_target_file[0]
@@ -629,7 +629,9 @@ def cmaq_reader_wrapper(dir_mcip: str, dir_cmaq: str, YYYYMM: str, k: int, gasna
     met_file_2d = dir_mcip + "/METCRO2D_" + YYYYMM[2:4] + date.strftime('%m%d')
     met_file_3d = dir_mcip + "/METCRO3D_" + YYYYMM[2:4] + date.strftime('%m%d')
 
+    
     print("Currently reading: " + cmaq_target_file.split('/')[-1])
+    
     # reading time and coordinates
     lat = _read_nc(grd_file_2d, 'LAT')
     lon = _read_nc(grd_file_2d, 'LON')
