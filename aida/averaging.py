@@ -28,8 +28,7 @@ def averaging(startdate: str, enddate: str, reader_obj):
           Input:
               startdate [str]: starting date in YYYY-mm-dd format string
               enddate [str]: ending date in YYYY-mm-dd format string
-              gasname [str], bias_sat (True or False), and sat_type (TROPOMI, OMI..) 
-                are for applying bias correction for satellite VCD
+              reader_obj [obj] contains information about satellite and model fields
     '''
     # convert dates to datetime
     start_date = datetime.date(int(startdate[0:4]), int(
@@ -55,17 +54,30 @@ def averaging(startdate: str, enddate: str, reader_obj):
                   np.max(list_months)+1)),
         len(range(np.min(list_years), np.max(list_years)+1))))
 
+    # check for the dual constraints
+    if reader_obj.sat_data[0].emis_tot.ndim == 3: 
+        dual = 1
+    else:
+        dual = 0
     #sat_samples = np.zeros_like(sat_averaged_vcd)*np.nan
     sat_averaged_error = np.zeros_like(sat_averaged_vcd)*np.nan
     ctm_averaged_vcd = np.zeros_like(sat_averaged_vcd)*np.nan
     sat_aux1 = np.zeros_like(sat_averaged_vcd)*np.nan
     sat_aux2 = np.zeros_like(sat_averaged_vcd)*np.nan
     if reader_obj.read_ddm == True:
-        emis_averaged = np.zeros_like(sat_averaged_vcd)*np.nan
-        ddm_averaged = np.zeros_like(sat_averaged_vcd)*np.nan
-        ddm_surface_averaged = np.zeros_like(sat_averaged_vcd)*np.nan
-        ctm_surface_averaged = np.zeros_like(sat_averaged_vcd)*np.nan
-        emis_err_averaged = np.zeros_like(sat_averaged_vcd)*np.nan
+        if dual == 1:
+           shape = sat_averaged_vcd.shape + (2,)  # Add one more dimension of size 2
+           emis_averaged         = np.full(shape, np.nan)
+           ddm_averaged          = np.full(shape, np.nan)
+           ddm_surface_averaged  = np.full(shape, np.nan)
+           emis_err_averaged     = np.full(shape, np.nan)
+        else:
+           emis_averaged         = np.full_like(sat_averaged_vcd, np.nan)
+           ddm_averaged          = np.full_like(sat_averaged_vcd, np.nan)
+           ddm_surface_averaged  = np.full_like(sat_averaged_vcd, np.nan)
+           emis_err_averaged     = np.full_like(sat_averaged_vcd, np.nan)
+        ctm_surface_averaged  = np.full_like(sat_averaged_vcd, np.nan)
+
     for year in range(np.min(list_years), np.max(list_years)+1):
         for month in range(np.min(list_months), np.max(list_months)+1):
             sat_chosen_vcd = []
@@ -117,12 +129,10 @@ def averaging(startdate: str, enddate: str, reader_obj):
             gap_chosen = np.array(gap_chosen)
             time_chosen = np.array(time_chosen, dtype=np.float64)
         if np.size(sat_chosen_vcd) != 0:
-            sat_averaged_vcd[:, :, month - min(list_months), year - min(
-                list_years)] = np.squeeze(np.nanmean(sat_chosen_vcd, axis=0))
-            sat_averaged_error[:, :, month - min(list_months), year - min(
-                list_years)] = error_averager(sat_chosen_error**2)
-            ctm_averaged_vcd[:, :, month - min(list_months), year - min(
-                list_years)] = np.squeeze(np.nanmean(ctm_chosen_vcd, axis=0))
+            index = (slice(None), slice(None), month - min(list_months), year - min(list_years))
+            sat_averaged_vcd[index] = np.squeeze(np.nanmean(sat_chosen_vcd, axis=0))
+            sat_averaged_error[index] = error_averager(sat_chosen_error**2)
+            ctm_averaged_vcd[index] = np.squeeze(np.nanmean(ctm_chosen_vcd, axis=0))
 
             if reader_obj.read_ddm == True:
                 emis_chosen = np.array(emis_chosen)
@@ -130,21 +140,23 @@ def averaging(startdate: str, enddate: str, reader_obj):
                 ddm_chosen = np.array(ddm_chosen)
                 ddm_surface_chosen = np.array(ddm_surface_chosen)
                 ctm_chosen_surface = np.array(ctm_chosen_surface)
-                emis_averaged[:, :, month - min(list_months), year - min(
-                    list_years)] = np.squeeze(np.nanmean(emis_chosen, axis=0))
-                emis_err_averaged[:, :, month - min(list_months), year - min(
-                    list_years)] = error_averager(emis_err_chosen**2)
-                ddm_averaged[:, :, month - min(list_months), year - min(
-                    list_years)] = np.squeeze(np.nanmean(ddm_chosen, axis=0))
-                ddm_surface_averaged[:, :, month - min(list_months), year - min(
-                    list_years)] = np.squeeze(np.nanmean(ddm_surface_chosen, axis=0))
-                ctm_surface_averaged[:, :, month - min(list_months), year - min(
-                    list_years)] = np.squeeze(np.nanmean(ctm_chosen_surface, axis=0))
+                if dual == 0:
+                   emis_averaged[index] = np.squeeze(np.nanmean(emis_chosen, axis=0))
+                   emis_err_averaged[index] = error_averager(emis_err_chosen**2)
+                   ddm_averaged[index] = np.squeeze(np.nanmean(ddm_chosen, axis=0))
+                   ddm_surface_averaged[index] = np.squeeze(np.nanmean(ddm_surface_chosen, axis=0))
+                   ctm_surface_averaged[index] = np.squeeze(np.nanmean(ctm_chosen_surface, axis=0))
+                else:
+                   index_expanded = index + (slice(None),)
+                   emis_averaged[index_expanded] = np.squeeze(np.nanmean(emis_chosen, axis=0))
+                   emis_err_averaged[index_expanded] = error_averager(emis_err_chosen**2)
+                   ddm_averaged[index_expanded] = np.squeeze(np.nanmean(ddm_chosen, axis=0))
+                   ddm_surface_averaged[index_expanded] = np.squeeze(np.nanmean(ddm_surface_chosen, axis=0))
+                # ctm_surface is indepedent of the dual use   
+                ctm_surface_averaged[index] = np.squeeze(np.nanmean(ctm_chosen_surface, axis=0))                    
         if np.size(sat_chosen_aux1) != 0:
-            sat_aux1[:, :, month - min(list_months), year - min(
-                list_years)] = np.squeeze(np.nanmean(sat_chosen_aux1, axis=0))
-            sat_aux2[:, :, month - min(list_months), year - min(
-                list_years)] = np.squeeze(np.nanmean(sat_chosen_aux2, axis=0))
+            sat_aux1[index] = np.squeeze(np.nanmean(sat_chosen_aux1, axis=0))
+            sat_aux2[index] = np.squeeze(np.nanmean(sat_chosen_aux2, axis=0))
     # squeeze it
     sat_averaged_vcd = sat_averaged_vcd.squeeze()
     sat_averaged_error = sat_averaged_error.squeeze()
@@ -157,46 +169,7 @@ def averaging(startdate: str, enddate: str, reader_obj):
         ddm_averaged = ddm_averaged.squeeze()
         ddm_surface_averaged = ddm_surface_averaged.squeeze()
         ctm_surface_averaged = ctm_surface_averaged.squeeze()
-    # average over all data
-    if sat_averaged_vcd.ndim == 4:
-        sat_averaged_vcd = np.nanmean(np.nanmean(
-            sat_averaged_vcd, axis=3).squeeze(), axis=2).squeeze()
-        ctm_averaged_vcd = np.nanmean(np.nanmean(
-            ctm_averaged_vcd, axis=3).squeeze(), axis=2).squeeze()
-        sat_averaged_error = np.sqrt(np.nanmean(np.nanmean(
-            sat_averaged_error**2, axis=3).squeeze(), axis=2).squeeze())
-        sat_aux1 = np.nanmean(np.nanmean(
-            sat_aux1, axis=3).squeeze(), axis=2).squeeze()
-        sat_aux2 = np.nanmean(np.nanmean(
-            sat_aux2, axis=3).squeeze(), axis=2).squeeze()
-        if reader_obj.read_ddm == True:
-            emis_averaged = np.nanmean(np.nanmean(
-                emis_averaged, axis=3).squeeze(), axis=2).squeeze()
-            ddm_averaged = np.nanmean(np.nanmean(
-                ddm_averaged, axis=3).squeeze(), axis=2).squeeze()
-            ddm_surface_averaged = np.nanmean(np.nanmean(
-                ddm_surface_averaged, axis=3).squeeze(), axis=2).squeeze()
-            emis_err_averaged = np.sqrt(np.nanmean(np.nanmean(
-                emis_err_averaged**2, axis=3).squeeze(), axis=2).squeeze())
-            ctm_surface_averaged = np.nanmean(np.nanmean(
-                ctm_surface_averaged, axis=3).squeeze(), axis=2).squeeze()
-    if sat_averaged_vcd.ndim == 3:
-        sat_averaged_vcd = np.nanmean(sat_averaged_vcd, axis=2).squeeze()
-        ctm_averaged_vcd = np.nanmean(ctm_averaged_vcd, axis=2).squeeze()
-        # TODO: we should update this but we never average over several months or years
-        sat_averaged_error = np.sqrt(np.nanmean(
-            sat_averaged_error**2, axis=2).squeeze())
-        sat_aux1 = np.nanmean(sat_aux1, axis=2).squeeze()
-        sat_aux2 = np.nanmean(sat_aux2, axis=2).squeeze()
-        if reader_obj.read_ddm == True:
-            ddm_averaged = np.nanmean(ddm_averaged, axis=2).squeeze()
-            ddm_surface_averaged = np.nanmean(
-                ddm_surface_averaged, axis=2).squeeze()
-            ctm_surface_averaged = np.nanmean(
-                ctm_surface_averaged, axis=2).squeeze()
-            emis_averaged = np.nanmean(emis_averaged, axis=2).squeeze()
-            emis_err_averaged = np.sqrt(np.nanmean(
-                emis_err_averaged**2, axis=2).squeeze())
+
     if reader_obj.read_ddm == False:
         ddm_averaged = []
         ddm_surface_averaged = []

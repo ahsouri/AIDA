@@ -19,7 +19,7 @@ first_estimate: True
 # previous estimates (if you are running the inversion for the second or higher iteration)
 inversion_prev: '/nobackup/jjung13/ACMAP_CMAQ_OUT/INV/'
 
-# two types: SAT (satellite only) or SAT+AQS (satellite and in-situ)
+# two types: SAT (satellite only) or SAT+AQS (satellite and in-situ) or SAT+AQS+Dual (two separate emissions)
 inversion_type: 'SAT+AQS'
 
 # AQS csv folder (in case of SAT+AQS)
@@ -41,6 +41,10 @@ ctm_mcip_dir: '/nobackup/jjung13/ACMAP_mcipout/2019/'
 ctm_ddm_dir: 
    - '/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_NOX/'
    - '/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_VOC/'
+
+# set the second path of CTM DDM netcdf files (either relative or absolute) in the case of dual constraints (SAT+AQS+Dual)
+ctm_ddm_dir2: 
+   - '/nobackup/jjung13/ACMAP_CMAQ_OUT/DDM/2019_NOX/'
 
 # set the path of CTM EMISS netcdf files (either relative or absolute)
 ctm_emis_dir: '/nobackup/jjung13/ACMAP_4D_EMIS/2019/sources/'
@@ -84,10 +88,10 @@ start_date: '2019-05'
 end_date:   '2019-05'
 
 # output folder for PDF reports
-output_pdf_dir: './report_iv_trop'
+output_pdf_dir: './report_inv_trop'
 
 # output folder for NC diags
-output_nc_dir: './diag_iv_trop'
+output_nc_dir: './diag_inv_trop'
 
 
 

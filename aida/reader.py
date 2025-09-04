@@ -32,6 +32,16 @@ def _get_nc_attr(filename, var):
     return attr
 
 
+def _separate_emis(emis_var, mask_below, mask_above):
+    # Apply masks
+    emis_below = np.where(mask_below, emis_var, 0.0)
+    emis_above = np.where(mask_above, emis_var, 0.0)
+    # Sum over the vertical (level) axis and replace them with level-based fields
+    emis_var[:, 0, :, :] = np.sum(emis_below, axis=1)  # shape: (time, x, y)
+    emis_var[:, 1, :, :] = np.sum(emis_above, axis=1)  # shape: (time, x, y)
+    return emis_var
+
+
 def _get_nc_attr_group_mopitt(fname):
     # getting attributes for mopitt
     nc_f = fname
@@ -132,7 +142,7 @@ def tropomi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) ->
     uncertainty = (uncertainty*6.02214*1e19*1e-15).astype('float16')
 
     tropomi_hcho = satellite_amf(vcd, scd, time, np.empty((1)), latitude_center, longitude_center,
-                                 [], [], uncertainty, quality_flag, p_mid, SWs,[], [], [], [], [], [], [], [], [], [])
+                                 [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
         print('Currently interpolating ...')
@@ -667,7 +677,8 @@ def cmaq_reader_wrapper(dir_mcip: str, dir_cmaq: str, YYYYMM: str, k: int, gasna
 
 
 def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: int, gasname: str, err_anthro: float,
-                                 err_bio: float, err_bb: float, err_light: float, err_avi: float):
+                                 err_bio: float, err_bb: float, err_light: float, err_avi: float,
+                                 dir_mcip=None, dir_ddm2=None):
     '''
         cmaq reader DDM wrapper
              dir_ddm [str]: the folder containing the ddm outputs
@@ -676,18 +687,36 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
              k [int]: the index of the file
              gasname [str]: the name of the gas to read
              err_[x][float]: fractional errors of [anthro/bio/bb/light/avi] emission sectors
+             dir_mcip [str]: this is None by default but if you provide the folder, it means
+                              you want to separate NOx emissions within PBL and above it
+             dir_ddm2 [str]: an additional ddm output in case of dual constraints
         Output [ddm_emis_model]: the ddm_emiss structure @dataclass
     '''
     # locate different files for different compounds
     if gasname == 'NO2':
-        file_ddm = glob.glob(dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_NOX*" + \
-            YYYYMM[:4] + "%03d" % int(k))
+        file_ddm = glob.glob(dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_NOX*" +
+                             YYYYMM[:4] + "%03d" % int(k))
     if gasname == 'HCHO':
-        file_ddm = glob.glob(dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_VOC*" + \
-            YYYYMM[:4] + "%03d" % int(k))
+        file_ddm = glob.glob(dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_VOC*" +
+                             YYYYMM[:4] + "%03d" % int(k))
     if gasname == 'ISOP':
-        file_ddm = glob.glob(dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_ISOP*" + \
-            YYYYMM[:4] + "%03d" % int(k))
+        file_ddm = glob.glob(dir_ddm + "/CCTM_v52.exe.ASENS.v52_DDM_ISOP*" +
+                             YYYYMM[:4] + "%03d" % int(k))
+    ddm_out2 = []
+    if dir_mcip is not None: # dual constraints
+        date = datetime.datetime.strptime(str(k), '%j').date()
+        met_file_2d = dir_mcip + "/METCRO2D_" + \
+            YYYYMM[2:4] + date.strftime('%m%d')
+        met_file_3d = dir_mcip + "/METCRO3D_" + \
+            YYYYMM[2:4] + date.strftime('%m%d')
+        PBLH = _read_nc(met_file_2d, 'PBLH')
+        ZH = _read_nc(met_file_3d, 'ZH')
+        file_ddm2 = glob.glob(dir_ddm2 + "/CCTM_v52.exe.ASENS.v52_DDM_NOX*" +
+                              YYYYMM[:4] + "%03d" % int(k))
+        file_ddm2 = file_ddm2[0]
+        ddm_out2 = _read_nc(file_ddm2, 'NO2_ENX').astype(
+            'float32')*1000.0  # time: 0 ~ 23 UTC, unit: ppbv
+
     file_ddm = file_ddm[0]
 
     file_emis_bio = dir_emis + "/CCTM_ACMAP_EMIS_beis_v52_" + \
@@ -699,8 +728,9 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     file_emis_light = dir_emis + "/CCTM_ACMAP_EMIS_LNT_v52_" + \
         YYYYMM[:4] + "%03d" % int(k) + ".nc"
     # convert tjd to yymmdd for aviation emiss
-    date_reformat = datetime.datetime.strptime(YYYYMM[:4] + "_" + "%03d" % int(k), '%Y_%j')
-    avi_str_date  = date_reformat.strftime('%Y%m%d')
+    date_reformat = datetime.datetime.strptime(
+        YYYYMM[:4] + "_" + "%03d" % int(k), '%Y_%j')
+    avi_str_date = date_reformat.strftime('%Y%m%d')
     file_emis_avi = dir_emis + "/CMAQ_ready2_aviation_" + \
         avi_str_date[2:] + ".nc"
 
@@ -729,9 +759,9 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
         emisname = 'ISOP'
         emis_mole_w = 68.1
 
-    #aviation emissions were produced differently so we need to specify what it has
-    emis_avi_list = ["SO2","PEC","NO","NO2","FORM","ALD2","ETOH","MEOH","ETHA","PAR","OLE",
-                     "ISOP","CO","POC","NH3"]
+    # aviation emissions were produced differently so we need to specify what it has
+    emis_avi_list = ["SO2", "PEC", "NO", "NO2", "FORM", "ALD2", "ETOH", "MEOH", "ETHA", "PAR", "OLE",
+                     "ISOP", "CO", "POC", "NH3"]
     emis_bio = []
     emis_bb = []
     emis_anthro = []
@@ -741,6 +771,9 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
 
     ddm_out = _read_nc(file_ddm, ddmname).astype(
         'float32')*1000.0  # time: 0 ~ 23 UTC, unit: ppbv
+    # if you want to constrain two state vectors (only used for AQS+SAT)
+    if ddm_out2:
+        ddm_out = np.stack([ddm_out, ddm_out2], axis=4)  # (time,level,x,y,2)
     # timeflag for ddm
     time_var_ddm = _read_nc(file_ddm, 'TFLAG')
 
@@ -758,9 +791,9 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
             'float32')*emis_mole_w[i]
         emis_light.append(temp)
         if emisname[i] in emis_avi_list:
-           temp = _read_nc(file_emis_avi, emisname[i]).astype(
-               'float32')*emis_mole_w[i]
-           emis_avi.append(temp)
+            temp = _read_nc(file_emis_avi, emisname[i]).astype(
+                'float32')*emis_mole_w[i]
+            emis_avi.append(temp)
 
     time_var_emis = _read_nc(file_emis_anthro, 'TFLAG')
     time_var_emis = time_var_emis[1:, :, :]
@@ -777,17 +810,35 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
 
     # sum over vertical distribution
     # unit g/s, time: 0~24 UTC but always zero at 0 UTC
-    emis_bio = np.sum(emis_bio, axis=1).squeeze()
-    emis_bb = np.sum(emis_bb, axis=1).squeeze()
-    emis_anthro = np.sum(emis_anthro, axis=1).squeeze()
-    emis_light = np.sum(emis_light, axis=1).squeeze()
-    emis_avi = np.sum(emis_avi, axis=1).squeeze()
+    if dir_mcip is not None:  # we would like to separate PBL-emission from non-PBL emissions
+        # Expand PBLH to broadcast shape (time, level, x, y)
+        pblh_expanded = np.expand_dims(PBLH, axis=1)  # (time, 1, x, y)
+        mask_below = ZH <= pblh_expanded
+        mask_above = ZH > pblh_expanded
+        # Apply masks
+        emis_bio = _separate_emis(
+            emis_bio, mask_below, mask_above)  # (time, 2, x, y)
+        emis_bb = _separate_emis(emis_bio, mask_below, mask_above)
+        emis_anthro = _separate_emis(emis_bio, mask_below, mask_above)
+        emis_light = _separate_emis(emis_bio, mask_below, mask_above)
+        emis_avi = _separate_emis(emis_bio, mask_below, mask_above)
+        emis_bio = emis_bio[1:, :, :, :]  # removed 0 UTC, so 1 ~ 24 UTC
+        emis_bb = emis_bb[1:, :, :, :]
+        emis_anthro = emis_anthro[1:, :, :, :]
+        emis_light = emis_light[1:, :, :, :]
+        emis_avi = emis_avi[1:, :, :, :]
+    else: #single constraint
+        emis_bio = np.sum(emis_bio, axis=1).squeeze()
+        emis_bb = np.sum(emis_bb, axis=1).squeeze()
+        emis_anthro = np.sum(emis_anthro, axis=1).squeeze()
+        emis_light = np.sum(emis_light, axis=1).squeeze()
+        emis_avi = np.sum(emis_avi, axis=1).squeeze()
 
-    emis_bio = emis_bio[1:, :, :]  # removed 0 UTC, so 1 ~ 24 UTC
-    emis_bb = emis_bb[1:, :, :]
-    emis_anthro = emis_anthro[1:, :, :]
-    emis_light = emis_light[1:, :, :]
-    emis_avi = emis_avi[1:, :, :]
+        emis_bio = emis_bio[1:, :, :]  # removed 0 UTC, so 1 ~ 24 UTC
+        emis_bb = emis_bb[1:, :, :]
+        emis_anthro = emis_anthro[1:, :, :]
+        emis_light = emis_light[1:, :, :]
+        emis_avi = emis_avi[1:, :, :]
 
     # emission for model has lightning and aviation emissions in addition to emis_tot
     emis_tot = emis_bio + emis_bb + emis_anthro + emis_light + emis_avi
@@ -799,7 +850,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
 
     err_emis[np.isinf(err_emis)] = 0.0
     err_emis[np.isnan(err_emis)] = 0.0
-    err_emis[err_emis<0] = 0.0
+    err_emis[err_emis < 0] = 0.0
     err_emis = np.sqrt(err_emis)  # same unit as the emissions
 
     # time for ddm and emiss list files
@@ -825,7 +876,9 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     return ddm_emis
 
 
-def CMAQ_reader(product_dir: str, mcip_product_dir: str, ddm_product_dir: str, emis_product_dir: str, YYYYMM: str, gas_to_be_saved: str, read_inv: bool, error_frac: list):
+def CMAQ_reader(product_dir: str, mcip_product_dir: str, ddm_product_dir: str, emis_product_dir: str, YYYYMM: str,
+                gas_to_be_saved: str, read_inv: bool, error_frac: list, emiss_pbl_separation=False,
+                ddm_product_dir2=None, averaging=False):
     '''
        GMI reader
        Inputs:
@@ -863,15 +916,21 @@ def CMAQ_reader(product_dir: str, mcip_product_dir: str, ddm_product_dir: str, e
     target_jdays = range(
         jday_mm_st[int(YYYYMM[-2:])-1], jday_mm_ed[int(YYYYMM[-2:])-1]+1)
 
-    outputs_ctm = []
-    outputs_ddm = []
+    # this is the intense way of reading CMAQ and DDM (it will be very memory intensive)
+    if averaging == False:
+        outputs_ctm = []
+        outputs_ddm = []
 
-    for k in target_jdays:
-        outputs_ctm.append(cmaq_reader_wrapper(
-            mcip_product_dir, product_dir, YYYYMM, k, gas_to_be_saved))
-        if read_inv == True:
-            outputs_ddm.append(cmaq_reader_ddm_emis_wrapper(
-                ddm_product_dir, emis_product_dir, YYYYMM, k, gas_to_be_saved, error_frac[0], error_frac[1], error_frac[2], error_frac[3], error_frac[4]))
+        for k in target_jdays:
+            outputs_ctm.append(cmaq_reader_wrapper(
+                mcip_product_dir, product_dir, YYYYMM, k, gas_to_be_saved))
+            if read_inv == True:
+                outputs_ddm.append(cmaq_reader_ddm_emis_wrapper(
+                    ddm_product_dir, emis_product_dir, YYYYMM, k, gas_to_be_saved, error_frac[
+                        0], error_frac[1],
+                    error_frac[2], error_frac[3], error_frac[4],
+                    dir_mcip=mcip_product_dir if emiss_pbl_separation else None,
+                    dir_ddm2=ddm_product_dir2 if emiss_pbl_separation else None))
 
     return outputs_ctm, outputs_ddm
 
@@ -901,7 +960,7 @@ class readers(object):
         self.satellite_product_name = product_name
 
     def add_ctm_data(self, product_name: int, product_dir: Path, mcip_dir: Path,
-                     ddm_dir: Path, emis_dir: Path):
+                     ddm_dir: Path, emis_dir: Path, ddm_dir2=None):
         '''
             add CTM data
             Input:
@@ -911,6 +970,7 @@ class readers(object):
                 mcip_dir  [Path]: a path object describing the path of MCIP files
                 ddm_dir [Path]: a path object describing the path of DDM output
                 emis dir [Path]: a path object describing the path of emission files (beis, fire, gc, tot)
+                ddm_dir2 [Path]: (optional) only used for AQS+SAT to constrain two state vectors
 
         '''
 
@@ -918,6 +978,7 @@ class readers(object):
         self.mcip_product_dir = mcip_dir
         self.ctm_product = product_name
         self.ddm_dir = ddm_dir
+        self.ddm_dir2 = ddm_dir2
         self.emis_product_dir = emis_dir
 
     def read_satellite_data(self, YYYYMM: str, read_ak=True, trop=False, num_job=1):
@@ -948,7 +1009,7 @@ class readers(object):
         else:
             raise Exception("the satellite is not supported, come tomorrow!")
 
-    def read_ctm_data(self, YYYYMM: str, gas: str, error_frac: list, read_ddm=False, averaged=False):
+    def read_ctm_data(self, YYYYMM: str, gas: str, error_frac: list, read_ddm=False, averaging=False, emis_pbl_separation=False):
         '''
             read ctm data
             Input:
@@ -956,19 +1017,16 @@ class readers(object):
              gas [str]: name of the gas to be loaded. e.g., 'NO2'
              error_frac [list]: fractional errors of anthro, bio, and bb
              read_ddm [bool]: whether read ddm output and emissions or not
-             averaged [bool]: averaging ctm over a month or use the daily values
+             averaging [bool]: averaging ctm over a month or use the daily values
         '''
         self.read_ddm = read_ddm
 
-        ctm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
-                               self.mcip_product_dir.as_posix(),
-                               self.ddm_dir.as_posix(),
-                               self.emis_product_dir.as_posix(),
-                               YYYYMM, gas, read_ddm, error_frac)
-
-        self.ctm_data = ctm_data[0]
-        self.ddm_data = ctm_data[1]
-        ctm_data = []
+        self.ctm_data, self.ddm_data = CMAQ_reader(self.ctm_product_dir.as_posix(),
+                                                   self.mcip_product_dir.as_posix(),
+                                                   self.ddm_dir.as_posix(),
+                                                   self.emis_product_dir.as_posix(),
+                                                   YYYYMM, gas, read_ddm, error_frac, emiss_pbl_separation=emis_pbl_separation,
+                                                   ddm_product_dir2=self.ddm_dir2, averaging=averaging)
 
 
 # testing

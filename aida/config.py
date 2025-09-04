@@ -64,7 +64,7 @@ class ctm_model:
     tempeature_mid: np.ndarray
     delta_p: np.ndarray
     ctmtype: str
-    averaged: bool
+    averaging: bool
 
 
 @dataclass
@@ -74,7 +74,7 @@ class ddm_emis_model:
     ddm_out: np.ndarray
     emis_tot: np.ndarray
     emis_err: np.ndarray
-    averaged: bool
+    averaging: bool
 
 
 @dataclass

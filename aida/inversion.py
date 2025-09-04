@@ -27,34 +27,6 @@ def inv_sat(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array,
     '''
     print('The inversion is being executed for ',
           'gasname :', gasname, ', sat_type: ', sat_type)
-
-    # adding fixed error into So
-    if sat_type == "TROPOMI" and gasname == "NO2":
-        print("finding So for TROPOMI NO2")
-        So_new = So + 0.05**2 + (0.01**2)*(Y**2)
-        '''
-        reference: Amir
-        '''
-    elif sat_type == "TROPOMI" and gasname == "HCHO":
-        print("finding So for TROPOMI HCHO")
-        So_new = So + 0.06**2 + (0.01**2)*(Y**2)
-        '''
-        reference: Amir
-        '''
-
-    elif sat_type == "OMI" and gasname == "NO2":
-        print("finding So for OMI NO2")
-        So_new = So + 0.83**2 + (0.1)**2*(Y**2)
-        '''
-        reference: Johnson et al., 2023
-        '''
-    elif sat_type == "OMI" and gasname == "HCHO":
-        print("finding So for OMI HCHO")
-        So_new = So + (0.203)**2 + (0.03)**2*(Y**2)
-        '''
-        reference: Ayazpour et al., submitted, Aura Ozone Monitoring Instrument (OMI) Collection 4 Formaldehyde Product
-        '''
-    ##############################
     Y_new = copy.deepcopy(Y)
     Y_new[Y_new < 0] = 0.0
     if regularization_on == True:
@@ -75,7 +47,7 @@ def inv_sat(Y: np.array, So: np.array, F: np.array, K: np.array, X0: np.array,
     # finding the optimal reg factor
     for reg in scaling_factors:
         Sa_new = Sa*float(reg)
-        kalman_gain_tmp = (Sa_new*K*(K*Sa_new*K+So_new)**(-1))
+        kalman_gain_tmp = (Sa_new*K*(K*Sa_new*K+So)**(-1))
         kalman_gain.append(kalman_gain_tmp)
         Sb_tmp = (np.ones_like(kalman_gain_tmp)-kalman_gain_tmp*K)*Sa_new
         Sb.append(Sb_tmp)
@@ -144,33 +116,6 @@ def inv_sat_aqs(Y: np.array, aqs_data: np.array, So: np.array, F_VCD: np.array, 
     print('The inversion is being executed for',
           'gasname :', gasname, ', sat_type: ', sat_type)
 
-    # adding fixed error to So
-    if sat_type == "TROPOMI" and gasname == "NO2":
-        print("finding So for TROPOMI NO2")
-        So_new = So + 0.05**2 + (0.01**2)*(Y**2)
-        '''
-        reference: Amir
-        '''
-    elif sat_type == "TROPOMI" and gasname == "HCHO":
-        print("finding So for TROPOMI HCHO")
-        So_new = So + 0.06**2 + (0.01**2)*(Y**2)
-        '''
-        reference: Amir
-        '''
-
-    elif sat_type == "OMI" and gasname == "NO2":
-        print("finding So for OMI NO2")
-        So_new = So + 0.83**2 + (0.1)**2*(Y**2)
-        '''
-        reference: Johnson et al., 2023
-        '''
-    elif sat_type == "OMI" and gasname == "HCHO":
-        print("finding So for OMI HCHO")
-        So_new = So + (0.203)**2 + (0.03)**2*(Y**2)
-        '''
-        reference: Ayazpour et al., submitted, Aura Ozone Monitoring Instrument (OMI) Collection 4 Formaldehyde Product
-        '''
-    ##############################
     Y_new = copy.deepcopy(Y)
     Y_new[Y_new < 0] = 0.0
 
@@ -191,7 +136,7 @@ def inv_sat_aqs(Y: np.array, aqs_data: np.array, So: np.array, F_VCD: np.array, 
                     OBS = np.array([[Y_new[i, j]], [aqs_data[i, j]]])
                     # 10% error for AQS
                     So = np.array(
-                        [[So_new[i, j], 0], [0, (aqs_data[i, j]*aqs_error_percent/100.0)**2]])
+                        [[So[i, j], 0], [0, (aqs_data[i, j]*aqs_error_percent/100.0)**2]])
                     K = np.array([[K_vcd[i, j]], [K_surf[i, j]]])
                     Sa_new = Sa[i, j]*float(reg)
                     kalman_gain_tmp = np.matmul(
@@ -202,7 +147,7 @@ def inv_sat_aqs(Y: np.array, aqs_data: np.array, So: np.array, F_VCD: np.array, 
                 else: # we don't have surface obs
                     OBS = np.array([Y_new[i, j]])
                     So = np.array(
-                        [So_new[i, j]])
+                        [So[i, j]])
                     K = np.array([K_vcd[i, j]])
                     Sa_new = Sa[i, j]*float(reg)
                     kalman_gain_tmp = (

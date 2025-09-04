@@ -1,6 +1,6 @@
 from aida.reader import readers
 from pathlib import Path
-from aida.amf_recal import amf_recal
+from aida.amf_recal_old import amf_recal
 from aida.averaging import averaging
 from aida.optimal_interpolation import OI
 from aida.inversion import inv_sat, inv_sat_aqs
@@ -27,13 +27,13 @@ class aida(object):
 
     def read_data(self, ctm_type: str, ctm_path: Path, mcip_path: Path, ctm_gas_name: str,
                   sat_type: str, sat_path: Path, YYYYMM: str, error_fraction: list,
-                  ddm_path=[], emis_path=[], read_ddm=False, averaged=False, read_ak=True, trop=True, num_job=1
-                  ):
+                  ddm_path=[], emis_path=[], read_ddm=False, averaging=False, read_ak=True, trop=True, num_job=1,
+                  inversion_type=None, ddm_path2=[]):
         reader_obj = readers()
         reader_obj.add_ctm_data(
-            ctm_type, ctm_path, mcip_path, ddm_path, emis_path)
+            ctm_type, ctm_path, mcip_path, ddm_path, emis_path, ddm_dir2 = ddm_path2)
         reader_obj.read_ctm_data(
-            YYYYMM, ctm_gas_name, error_fraction, read_ddm=read_ddm, averaged=averaged)
+            YYYYMM, ctm_gas_name, error_fraction, read_ddm=read_ddm, averaging=averaging, emiss_pbl_separation=True if inversion_type=='SAT+AQS+Dual' else False)
         reader_obj.add_satellite_data(
             sat_type, sat_path)
         reader_obj.read_satellite_data(
@@ -116,7 +116,7 @@ class aida(object):
         self.oi_result = OI(self.averaged_fields.ctm_vcd, self.averaged_fields.sat_vcd,
                             (self.averaged_fields.ctm_vcd*error_ctm/100.0)**2, self.averaged_fields.sat_err**2, regularization_on=True)
 
-    def emission_last_iter(self, inv_folder: str, YYYYMM: str, gasname):
+    def emission_next_iter(self, inv_folder: str, YYYYMM: str, gasname):
 
         self.first_iteration = False
         inverse_file = (glob.glob(inv_folder + "/" + gasname + "*" + str(YYYYMM) + ".nc"))
@@ -179,6 +179,53 @@ class aida(object):
             #output_test["So"] = self.averaged_fields.sat_err**2
             #output_test["X1"] = self.X1
             #savemat("test_second_iteration.mat", output_test)
+            self.inversion_result = inv_sat_aqs(self.averaged_fields.sat_vcd, AQS_map, self.averaged_fields.sat_err**2,
+                                                self.averaged_fields.ctm_vcd, self.averaged_fields.ctm_surface, self.averaged_fields.ddm_vcd /
+                                                self.averaged_fields.emis_total, self.averaged_fields.ddm_surface /
+                                                self.averaged_fields.emis_total, self.averaged_fields.emis_total, self.X1,
+                                                self.averaged_fields.emis_error**2, self.first_iteration, gasname, sat_type,
+                                                aqs_error_percent=20.0, regularization_on=True)
+        if inv_type == 'SAT+AQS+Dual':
+            # read AQS data here
+            file_aqs = sorted(glob.glob(aqs_folder + "/*" +
+                                        self.YYYYMM + "*.csv"))
+            output_aqs = np.loadtxt(file_aqs[0], delimiter=',')
+            # prepare 2D AQS output for the current lat/lon maps
+            if np.size(self.reader_obj.ctm_data[0].latitude)*np.size(self.reader_obj.ctm_data[0].longitude) > \
+               np.size(self.reader_obj.sat_data[0].latitude_center)*np.size(self.reader_obj.sat_data[0].longitude_center):
+
+                lat = self.reader_obj.sat_data[0].latitude_center
+                lon = self.reader_obj.sat_data[0].longitude_center
+            else:
+                lat = self.reader_obj.ctm_data[0].latitude
+                lon = self.reader_obj.ctm_data[0].longitude
+
+            AQS_map = np.zeros_like(lat)
+            for i in range(0, np.shape(lat)[0]):
+                for j in range(0, np.shape(lat)[1]):
+                    cost = np.sqrt((lat[i, j]-output_aqs[:, 0])
+                                   ** 2+(lon[i, j]-output_aqs[:, 1])**2)
+                    index_i = np.argwhere(cost <= 0.05)
+                    Z = output_aqs[:, 2]
+                    chosen_aqs = Z[index_i]
+                    if np.size(chosen_aqs) > 1:
+                        chosen_aqs = np.nanmean(chosen_aqs)
+                    if np.size(chosen_aqs) != 0:
+                        AQS_map[i, j] = chosen_aqs
+            # save everything for testing
+            output_test = {}
+            output_test["sat_vcd"] = self.averaged_fields.sat_vcd
+            output_test["AQS_map"] = AQS_map
+            output_test["ctm_vcd"] = self.averaged_fields.ctm_vcd
+            output_test["ctm_surf"] = self.averaged_fields.ctm_surface
+            output_test["emis"] = self.averaged_fields.emis_total
+            output_test["K_vcd"] = self.averaged_fields.ddm_vcd/self.averaged_fields.emis_total
+            output_test["K_surf"] = self.averaged_fields.ddm_surface/self.averaged_fields.emis_total
+            output_test["Se"] = self.averaged_fields.emis_error**2
+            output_test["So"] = self.averaged_fields.sat_err**2
+            output_test["X1"] = self.X1
+            savemat("test_second_iteration.mat", output_test)
+            exit()
             self.inversion_result = inv_sat_aqs(self.averaged_fields.sat_vcd, AQS_map, self.averaged_fields.sat_err**2,
                                                 self.averaged_fields.ctm_vcd, self.averaged_fields.ctm_surface, self.averaged_fields.ddm_vcd /
                                                 self.averaged_fields.emis_total, self.averaged_fields.ddm_surface /
