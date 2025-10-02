@@ -80,10 +80,10 @@ for statev in state_vectors:
     aida_obj = aida()
     if inversion_type == 'SAT+AQS+Dual':
         aida_obj.read_data(ctm_name, Path(ctm_conc_dir), Path(ctm_mcip_dir), gasname, sensor[cnt] + '_' + gasname, Path(sat_path[cnt]), str(year) + f"{month:02}",
-                       (state_err), Path(ctm_ddm_dir[cnt]), Path(ctm_emis_dir), read_ddm=read_ddm, averaged=ctm_avg, read_ak=True, trop=troposphere_no2_only, num_job=num_job, inversion_type=inversion_type, ddm_path2=Path(ctm_ddm_dir2[cnt]))      
+                       (state_err), Path(ctm_ddm_dir[cnt]), Path(ctm_emis_dir), read_ddm=read_ddm, averaging=ctm_avg, read_ak=True, trop=troposphere_no2_only, num_job=num_job, inversion_type=inversion_type, ddm_path2=Path(ctm_ddm_dir2[cnt]))      
     else:
        aida_obj.read_data(ctm_name, Path(ctm_conc_dir), Path(ctm_mcip_dir), gasname, sensor[cnt] + '_' + gasname, Path(sat_path[cnt]), str(year) + f"{month:02}",
-                       (state_err), Path(ctm_ddm_dir[cnt]), Path(ctm_emis_dir), read_ddm=read_ddm, averaged=ctm_avg, read_ak=True, trop=troposphere_no2_only, num_job=num_job, inversion_type=inversion_type)
+                       (state_err), Path(ctm_ddm_dir[cnt]), Path(ctm_emis_dir), read_ddm=read_ddm, averaging=ctm_avg, read_ak=True, trop=troposphere_no2_only, num_job=num_job, inversion_type=inversion_type)
 
     if sensor[cnt] == "MOPITT":
         aida_obj.conv_ak()

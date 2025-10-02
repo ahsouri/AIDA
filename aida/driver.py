@@ -1,6 +1,6 @@
 from aida.reader import readers
 from pathlib import Path
-from aida.amf_recal_old import amf_recal
+from aida.amf_recal import amf_recal
 from aida.averaging import averaging
 from aida.optimal_interpolation import OI
 from aida.inversion import inv_sat, inv_sat_aqs
@@ -32,8 +32,13 @@ class aida(object):
         reader_obj = readers()
         reader_obj.add_ctm_data(
             ctm_type, ctm_path, mcip_path, ddm_path, emis_path, ddm_dir2 = ddm_path2)
+        if inversion_type=='SAT+AQS+Dual':
+           emis_pbl_separation = True
+        else:
+           emis_pbl_separation = False
+
         reader_obj.read_ctm_data(
-            YYYYMM, ctm_gas_name, error_fraction, read_ddm=read_ddm, averaging=averaging, emiss_pbl_separation=True if inversion_type=='SAT+AQS+Dual' else False)
+            YYYYMM, ctm_gas_name, error_fraction, read_ddm=read_ddm, averaging=averaging, emis_pbl_separation=emis_pbl_separation)
         reader_obj.add_satellite_data(
             sat_type, sat_path)
         reader_obj.read_satellite_data(
@@ -221,6 +226,8 @@ class aida(object):
             output_test["emis"] = self.averaged_fields.emis_total
             output_test["K_vcd"] = self.averaged_fields.ddm_vcd/self.averaged_fields.emis_total
             output_test["K_surf"] = self.averaged_fields.ddm_surface/self.averaged_fields.emis_total
+            output_test["DDM_vcd"] = self.averaged_fields.ddm_vcd
+            output_test["DDM_surf"] = self.averaged_fields.ddm_surface
             output_test["Se"] = self.averaged_fields.emis_error**2
             output_test["So"] = self.averaged_fields.sat_err**2
             output_test["X1"] = self.X1

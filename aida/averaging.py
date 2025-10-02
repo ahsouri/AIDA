@@ -133,7 +133,6 @@ def averaging(startdate: str, enddate: str, reader_obj):
             sat_averaged_vcd[index] = np.squeeze(np.nanmean(sat_chosen_vcd, axis=0))
             sat_averaged_error[index] = error_averager(sat_chosen_error**2)
             ctm_averaged_vcd[index] = np.squeeze(np.nanmean(ctm_chosen_vcd, axis=0))
-
             if reader_obj.read_ddm == True:
                 emis_chosen = np.array(emis_chosen)
                 emis_err_chosen = np.array(emis_err_chosen)
@@ -148,12 +147,14 @@ def averaging(startdate: str, enddate: str, reader_obj):
                    ctm_surface_averaged[index] = np.squeeze(np.nanmean(ctm_chosen_surface, axis=0))
                 else:
                    index_expanded = index + (slice(None),)
-                   emis_averaged[index_expanded] = np.squeeze(np.nanmean(emis_chosen, axis=0))
-                   emis_err_averaged[index_expanded] = error_averager(emis_err_chosen**2)
+                   emis_averaged[index_expanded] = np.squeeze(np.nanmean(emis_chosen, axis=0)).transpose(1, 2, 0)
+                   error_arr = np.stack([error_averager(emis_err_chosen[:,0,:,:].squeeze()**2),
+                                         error_averager(emis_err_chosen[:,1,:,:].squeeze()**2)], axis=0)
+                   emis_err_averaged[index_expanded] = error_arr.transpose(1, 2, 0)
                    ddm_averaged[index_expanded] = np.squeeze(np.nanmean(ddm_chosen, axis=0))
-                   ddm_surface_averaged[index_expanded] = np.squeeze(np.nanmean(ddm_surface_chosen, axis=0))
+                   ddm_surface_averaged[index_expanded] = np.squeeze(np.nanmean(ddm_surface_chosen, axis=0)).transpose(1,2,0) 
                 # ctm_surface is indepedent of the dual use   
-                ctm_surface_averaged[index] = np.squeeze(np.nanmean(ctm_chosen_surface, axis=0))                    
+                ctm_surface_averaged[index] = np.squeeze(np.nanmean(ctm_chosen_surface, axis=0))
         if np.size(sat_chosen_aux1) != 0:
             sat_aux1[index] = np.squeeze(np.nanmean(sat_chosen_aux1, axis=0))
             sat_aux2[index] = np.squeeze(np.nanmean(sat_chosen_aux2, axis=0))

@@ -32,12 +32,15 @@ def _time_lister(data, tagname='time'):
     return np.array(time_data), np.array(time_data_hour_only), time_data_datetype
 
 def _find_closest(time_sat, time_sat_hour_only, time_ctm, time_ctm_hour_only, averaged, freq=24):
+
     if not averaged:
         idx = np.argmin(np.abs(time_sat - time_ctm))
-        day, hour = divmod(idx, freq+1)
+        day = int(np.floor(idx / freq))
+        hour = int(idx % freq)
     else:
         idx = np.argmin(np.abs(time_sat_hour_only - time_ctm_hour_only))
-        day, hour = 0, idx
+        hour = int(idx)
+        day = 0
     return day, hour, idx
 
 def _upscale_fields(field_3d, sat_coord, tri, ctm_lon, ctm_lat, gridsize_ctm, threshold_sat):
@@ -51,7 +54,7 @@ def amf_recal(ctm_data, sat_data, ddm_data, ddm_read=False):
 
     print('AMF Recal begins...')
     time_ctm, time_ctm_hour_only, time_ctm_datetype = _time_lister(ctm_data)
-    averaged = ctm_data[0].averaged
+    averaged = ctm_data[0].averaging
 
     if ddm_read:
         print('Synching DDM and SAT...')
@@ -68,11 +71,11 @@ def amf_recal(ctm_data, sat_data, ddm_data, ddm_read=False):
         time_sat_hour_only = _hour_only_time(L2_granule.time)
 
         # Find closest indices
-        day_ctm, hour_ctm, idx_ctm = _find_closest(time_sat, time_sat_hour_only, time_ctm, time_ctm_hour_only, averaged, freq=24 if averaged else 25)
+        day_ctm, hour_ctm, idx_ctm = _find_closest(time_sat, time_sat_hour_only, time_ctm, time_ctm_hour_only, averaged, freq=25)
         print(f"CMAQ file for L2 at {L2_granule.time}: {time_ctm_datetype[day_ctm][hour_ctm]}")
         if ddm_read:
-            day_ddm, hour_ddm, _ = _find_closest(time_sat, time_sat_hour_only, time_ddm, time_ddm_hour_only, averaged)
-            day_emis, hour_emis, _ = _find_closest(time_sat, time_sat_hour_only, time_emis, time_emis_hour_only, averaged)
+            day_ddm, hour_ddm, _ = _find_closest(time_sat, time_sat_hour_only, time_ddm, time_ddm_hour_only, averaged, freq=24)
+            day_emis, hour_emis, _ = _find_closest(time_sat, time_sat_hour_only, time_emis, time_emis_hour_only, averaged, freq=24)
             print(f"DDM file: {time_ddm_datetype[day_ddm][hour_ddm]}")
             print(f"EMIS file: {time_emis_datetype[day_emis][hour_emis]}")
 
@@ -186,28 +189,37 @@ def amf_recal(ctm_data, sat_data, ddm_data, ddm_read=False):
                     if dual: ddm_vcd2[i, j] = np.nansum(ctm_partial_ddm_1)
 
         # Update sat_data
-        sat_data[idx].old_amf = getattr(sat_data[idx], "scd", np.empty((1))) / getattr(sat_data[idx], "vcd", np.empty((1)))
+        sat_data[idx].old_amf = np.squeeze(getattr(sat_data[idx], "amf", np.empty((1))))
         new_amf[mask] = np.nan
-        sat_data[idx].new_amf = new_amf
-        sat_data[idx].vcd = getattr(sat_data[idx], "scd", np.empty((1))) / new_amf
+        sat_data[idx].new_amf = np.squeeze(new_amf)
+        sat_data[idx].vcd = np.squeeze(getattr(sat_data[idx], "vcd", np.empty((1)))*getattr(sat_data[idx], "amf", np.empty((1))) / new_amf)
         model_VCD[mask] = np.nan
-        sat_data[idx].ctm_vcd = model_VCD
+        sat_data[idx].ctm_vcd = np.squeeze(model_VCD)
         sat_data[idx].ctm_time_at_sat = time_ctm[idx_ctm]
 
         # DDM population
         if ddm_read:
             if dual:
                 ddm_vcd2[mask] = np.nan
-                for arr in [emis_total, emis_error, ddm_surface]:
-                    arr = np.array(arr)
-                    arr[mask,:] = np.nan
+                ddm_vcd[mask] = np.nan
+                emis_total = np.array(emis_total).squeeze()
+                emis_total[:,mask]=np.nan
+                emis_error = np.array(emis_error).squeeze()
+                emis_error[:,mask]=np.nan
+                ddm_surface = np.array(ddm_surface).squeeze()
+                ddm_surface[:,mask]=np.nan
+                sat_data[idx].ddm_vcd = np.stack((ddm_vcd, ddm_vcd2), axis=2)
             else:
-                for arr in [emis_total, emis_error, ddm_surface]:
-                    arr = np.array(arr)
-                    arr[mask] = np.nan
-            ddm_vcd[mask] = np.nan
+                emis_total = np.array(emis_total).squeeze()
+                emis_total[mask]=np.nan
+                emis_error = np.array(emis_error).squeeze()
+                emis_error[mask]=np.nan
+                ddm_surface = np.array(ddm_surface).squeeze()
+                ddm_surface[mask]=np.nan
+                ddm_vcd[mask] = np.nan
+                sat_data[idx].ddm_vcd = ddm_vcd
+
             surface_conc[mask] = np.nan
-            sat_data[idx].ddm_vcd = np.stack((ddm_vcd, ddm_vcd2), axis=2)
             sat_data[idx].ddm_surface = ddm_surface
             sat_data[idx].ctm_surface_conc = surface_conc
             sat_data[idx].emis_tot = emis_total

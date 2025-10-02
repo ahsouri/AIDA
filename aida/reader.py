@@ -105,10 +105,7 @@ def tropomi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) ->
     # read total hcho
     vcd = _read_group_nc(fname, ['PRODUCT'],
                          'formaldehyde_tropospheric_vertical_column')
-    scd = _read_group_nc(fname, ['PRODUCT'], 'formaldehyde_tropospheric_vertical_column') *\
-        amf_total
     vcd = (vcd*6.02214*1e19*1e-15).astype('float16')
-    scd = (scd*6.02214*1e19*1e-15).astype('float16')
     # read quality flag
     quality_flag = _read_group_nc(
         fname, ['PRODUCT'], 'qa_value').astype('float16')
@@ -141,7 +138,7 @@ def tropomi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) ->
                                  'formaldehyde_tropospheric_vertical_column_precision')
     uncertainty = (uncertainty*6.02214*1e19*1e-15).astype('float16')
 
-    tropomi_hcho = satellite_amf(vcd, scd, time, np.empty((1)), latitude_center, longitude_center,
+    tropomi_hcho = satellite_amf(vcd, amf_total, time, np.empty((1)), latitude_center, longitude_center,
                                  [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
@@ -188,21 +185,19 @@ def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_
     if trop == False:
         vcd = _read_group_nc(
             fname, ['PRODUCT', 'SUPPORT_DATA', 'DETAILED_RESULTS'], 'nitrogendioxide_total_column')
-        scd = _read_group_nc(
-            fname, ['PRODUCT', 'SUPPORT_DATA', 'DETAILED_RESULTS'], 'nitrogendioxide_slant_column_density')
+        amf = amf_total
         # read the precision
         uncertainty = _read_group_nc(fname, ['PRODUCT', 'SUPPORT_DATA', 'DETAILED_RESULTS'],
                                      'nitrogendioxide_total_column_precision')
     else:
         vcd = _read_group_nc(
             fname, ['PRODUCT'], 'nitrogendioxide_tropospheric_column')
-        scd = vcd*_read_group_nc(
+        amf = _read_group_nc(
             fname, ['PRODUCT'], 'air_mass_factor_troposphere')
         # read the precision
         uncertainty = _read_group_nc(fname, ['PRODUCT'],
                                      'nitrogendioxide_tropospheric_column_precision')
     vcd = (vcd*6.02214*1e19*1e-15).astype('float16')
-    scd = (scd*6.02214*1e19*1e-15).astype('float16')
     uncertainty = (uncertainty*6.02214*1e19*1e-15).astype('float16')
     # read quality flag
     quality_flag = _read_group_nc(
@@ -245,7 +240,7 @@ def tropomi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_
                     tropopause[i, j] = np.nan
     else:
         tropopause = np.empty((1))
-    tropomi_no2 = satellite_amf(vcd, scd, time, tropopause, latitude_center, longitude_center,
+    tropomi_no2 = satellite_amf(vcd, amf, time, tropopause, latitude_center, longitude_center,
                                 [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
@@ -288,23 +283,18 @@ def omi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=T
     if trop == False:
         vcd = _read_group_nc(
             fname, ['SCIENCE_DATA'], 'ColumnAmountNO2')
-        scd = _read_group_nc(fname, ['SCIENCE_DATA'], 'AmfTrop') *\
-            _read_group_nc(fname, ['SCIENCE_DATA'], 'ColumnAmountNO2Trop') +\
-            _read_group_nc(fname, ['SCIENCE_DATA'], 'AmfStrat') *\
-            _read_group_nc(fname, ['SCIENCE_DATA'], 'ColumnAmountNO2Strat')
+        amf = _read_group_nc(fname, ['SCIENCE_DATA'], 'Amf')
         # read the precision
         uncertainty = _read_group_nc(fname, ['SCIENCE_DATA'],
                                      'ColumnAmountNO2Std')
     else:
         vcd = _read_group_nc(
             fname, ['SCIENCE_DATA'], 'ColumnAmountNO2Trop')
-        scd = _read_group_nc(fname, ['SCIENCE_DATA'], 'AmfTrop') *\
-            _read_group_nc(fname, ['SCIENCE_DATA'], 'ColumnAmountNO2Trop')
+        amf = _read_group_nc(fname, ['SCIENCE_DATA'], 'AmfTrop')
         # read the precision
         uncertainty = _read_group_nc(fname, ['SCIENCE_DATA'],
                                      'ColumnAmountNO2TropStd')
     vcd = (vcd*1e-15).astype('float16')
-    scd = (scd*1e-15).astype('float16')
     uncertainty = (uncertainty*1e-15).astype('float16')
     # read quality flag
     cf_fraction = quality_flag_temp = _read_group_nc(
@@ -352,7 +342,7 @@ def omi_reader_no2(fname: str, trop: bool, ctm_models_coordinate=None, read_ak=T
     else:
         tropopause = np.empty((1))
     # populate omi class
-    omi_no2 = satellite_amf(vcd, scd, time, tropopause, latitude_center,
+    omi_no2 = satellite_amf(vcd, amf, time, tropopause, latitude_center,
                             longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [], [], [])
     # interpolation
     if (ctm_models_coordinate is not None):
@@ -394,13 +384,11 @@ def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> sat
         # read hcho
         vcd = _read_group_nc(
             fname, ['key_science_data'], 'column_amount')
-        scd = _read_group_nc(fname, ['support_data'], 'amf') *\
-            _read_group_nc(fname, ['key_science_data'], 'column_amount')
+        amf = _read_group_nc(fname, ['support_data'], 'amf')
         # read the precision
         uncertainty = _read_group_nc(fname, ['key_science_data'],
                                      'column_uncertainty')
         vcd = (vcd*1e-15).astype('float16')
-        scd = (scd*1e-15).astype('float16')
         uncertainty = (uncertainty*1e-15).astype('float16')
         # read quality flag
         cf_fraction = _read_group_nc(
@@ -436,7 +424,7 @@ def omi_reader_hcho(fname: str, ctm_models_coordinate=None, read_ak=True) -> sat
         # no need to read tropopause for hCHO
         tropopause = np.empty((1))
         # populate omi class
-        omi_hcho = satellite_amf(vcd, scd, time, tropopause, latitude_center,
+        omi_hcho = satellite_amf(vcd, amf, time, tropopause, latitude_center,
                                  longitude_center, [], [], uncertainty, quality_flag, p_mid, SWs, [], [], [], [], [], [], [], [], [], [])
 
         # interpolation
@@ -709,10 +697,11 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
             YYYYMM[2:4] + date.strftime('%m%d')
         met_file_3d = dir_mcip + "/METCRO3D_" + \
             YYYYMM[2:4] + date.strftime('%m%d')
-        PBLH = _read_nc(met_file_2d, 'PBLH')
+        P = _read_nc(met_file_3d, 'PRES')/100.0
         ZH = _read_nc(met_file_3d, 'ZH')
         file_ddm2 = glob.glob(dir_ddm2 + "/CCTM_v52.exe.ASENS.v52_DDM_NOX*" +
                               YYYYMM[:4] + "%03d" % int(k))
+        print("Reading the second DDM " + str(file_ddm2[0]))
         file_ddm2 = file_ddm2[0]
         ddm_out2 = _read_nc(file_ddm2, 'NO2_ENX').astype(
             'float32')*1000.0  # time: 0 ~ 23 UTC, unit: ppbv
@@ -772,7 +761,7 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     ddm_out = _read_nc(file_ddm, ddmname).astype(
         'float32')*1000.0  # time: 0 ~ 23 UTC, unit: ppbv
     # if you want to constrain two state vectors (only used for AQS+SAT)
-    if ddm_out2:
+    if dir_mcip is not None:
         ddm_out = np.stack([ddm_out, ddm_out2], axis=4)  # (time,level,x,y,2)
     # timeflag for ddm
     time_var_ddm = _read_nc(file_ddm, 'TFLAG')
@@ -811,17 +800,16 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     # sum over vertical distribution
     # unit g/s, time: 0~24 UTC but always zero at 0 UTC
     if dir_mcip is not None:  # we would like to separate PBL-emission from non-PBL emissions
-        # Expand PBLH to broadcast shape (time, level, x, y)
-        pblh_expanded = np.expand_dims(PBLH, axis=1)  # (time, 1, x, y)
-        mask_below = ZH <= pblh_expanded
-        mask_above = ZH > pblh_expanded
+        # (time, level, x, y)
+        mask_below = P >= 750.0
+        mask_above = P < 750.0
         # Apply masks
         emis_bio = _separate_emis(
             emis_bio, mask_below, mask_above)  # (time, 2, x, y)
-        emis_bb = _separate_emis(emis_bio, mask_below, mask_above)
-        emis_anthro = _separate_emis(emis_bio, mask_below, mask_above)
-        emis_light = _separate_emis(emis_bio, mask_below, mask_above)
-        emis_avi = _separate_emis(emis_bio, mask_below, mask_above)
+        emis_bb = _separate_emis(emis_bb, mask_below, mask_above)
+        emis_anthro = _separate_emis(emis_anthro, mask_below, mask_above)
+        emis_light = _separate_emis(emis_light, mask_below, mask_above)
+        emis_avi = _separate_emis(emis_avi, mask_below, mask_above)
         emis_bio = emis_bio[1:, :, :, :]  # removed 0 UTC, so 1 ~ 24 UTC
         emis_bb = emis_bb[1:, :, :, :]
         emis_anthro = emis_anthro[1:, :, :, :]
@@ -1026,7 +1014,7 @@ class readers(object):
                                                    self.ddm_dir.as_posix(),
                                                    self.emis_product_dir.as_posix(),
                                                    YYYYMM, gas, read_ddm, error_frac, emiss_pbl_separation=emis_pbl_separation,
-                                                   ddm_product_dir2=self.ddm_dir2, averaging=averaging)
+                                                   ddm_product_dir2=self.ddm_dir2.as_posix(), averaging=averaging)
 
 
 # testing
