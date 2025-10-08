@@ -24,6 +24,7 @@ class aida(object):
         self.inversion_result = []
         self.X1 = 0.0
         self.first_iteration = True
+        self.dual = False
 
     def read_data(self, ctm_type: str, ctm_path: Path, mcip_path: Path, ctm_gas_name: str,
                   sat_type: str, sat_path: Path, YYYYMM: str, error_fraction: list,
@@ -179,6 +180,7 @@ class aida(object):
                                                 self.averaged_fields.emis_error**2, self.first_iteration, gasname, sat_type,
                                                 aqs_error_percent=20.0, regularization_on=True)
         if inv_type == 'SAT+AQS+Dual':
+            self.dual = True
             # read AQS data here
             file_aqs = sorted(glob.glob(aqs_folder + "/*" +
                                         self.YYYYMM + "*.csv"))
@@ -245,6 +247,7 @@ class aida(object):
         ncfile.createDimension('y', np.shape(self.averaged_fields.sat_vcd)[1])
         ncfile.createDimension('t', None)  # unlimited
         ncfile.createDimension('u', None)  # unlimited
+        ncfile.createDimension('d', None)  # unlimited
         # generic fields
         data1 = ncfile.createVariable(
             'sat_averaged_vcd', dtype('float32').char, ('x', 'y'))
@@ -285,17 +288,30 @@ class aida(object):
 
         # DDM
         if read_ddm == True:
-            data12 = ncfile.createVariable(
-                'ddm_vcd', dtype('float32').char, ('x', 'y'))
-            data12[:, :] = self.averaged_fields.ddm_vcd
+            if self.dual == True:
+                data12 = ncfile.createVariable(
+                    'ddm_vcd', dtype('float32').char, ('x', 'y', 'd'))
+                data12[:, :, :] = self.averaged_fields.ddm_vcd
 
-            data13 = ncfile.createVariable(
-                'emis_tot', dtype('float32').char, ('x', 'y'))
-            data13[:, :] = self.averaged_fields.emis_total
+                data13 = ncfile.createVariable(
+                    'emis_tot', dtype('float32').char, ('x', 'y', 'd'))
+                data13[:, :, :] = self.averaged_fields.emis_total
 
-            data14 = ncfile.createVariable(
-                'emis_err', dtype('float32').char, ('x', 'y'))
-            data14[:, :] = self.averaged_fields.emis_error
+                data14 = ncfile.createVariable(
+                    'emis_err', dtype('float32').char, ('x', 'y', 'd'))
+                data14[:, :, :] = self.averaged_fields.emis_error
+            else:
+                data12 = ncfile.createVariable(
+                    'ddm_vcd', dtype('float32').char, ('x', 'y'))
+                data12[:, :] = self.averaged_fields.ddm_vcd
+
+                data13 = ncfile.createVariable(
+                    'emis_tot', dtype('float32').char, ('x', 'y'))
+                data13[:, :] = self.averaged_fields.emis_total
+
+                data14 = ncfile.createVariable(
+                    'emis_err', dtype('float32').char, ('x', 'y'))
+                data14[:, :] = self.averaged_fields.emis_error
 
         if self.oi_result:
             # OI results
@@ -320,25 +336,46 @@ class aida(object):
 
         if self.inversion_result:
             # inversion results
-            data17 = ncfile.createVariable(
-                'inv_posterior_emissions', dtype('float32').char, ('x', 'y'))
-            data17[:, :] = self.inversion_result.post_emis
+            if self.dual == True:
+                data17 = ncfile.createVariable(
+                    'inv_posterior_emissions', dtype('float32').char, ('x', 'y', 'd'))
+                data17[:, :, :] = self.inversion_result.post_emis
 
-            data18 = ncfile.createVariable(
-                'inv_ak', dtype('float32').char, ('x', 'y'))
-            data18[:, :] = self.inversion_result.ak
+                data18 = ncfile.createVariable(
+                    'inv_ak', dtype('float32').char, ('x', 'y', 'd'))
+                data18[:, :, :] = self.inversion_result.ak
 
-            data19 = ncfile.createVariable(
-                'inv_increment', dtype('float32').char, ('x', 'y'))
-            data19[:, :] = self.inversion_result.increment
+                data19 = ncfile.createVariable(
+                    'inv_increment', dtype('float32').char, ('x', 'y', 'd'))
+                data19[:, :, :] = self.inversion_result.increment
 
-            data20 = ncfile.createVariable(
-                'inv_error_post', dtype('float32').char, ('x', 'y'))
-            data20[:, :] = self.inversion_result.error_analysis
+                data20 = ncfile.createVariable(
+                    'inv_error_post', dtype('float32').char, ('x', 'y', 'd'))
+                data20[:, :, :] = self.inversion_result.error_analysis
 
-            data21 = ncfile.createVariable(
-                'inv_ratio_post_prior', dtype('float32').char, ('x', 'y'))
-            data21[:, :] = self.inversion_result.ratio
+                data21 = ncfile.createVariable(
+                    'inv_ratio_post_prior', dtype('float32').char, ('x', 'y', 'd'))
+                data21[:, :, :] = self.inversion_result.ratio
+            else:
+                data17 = ncfile.createVariable(
+                    'inv_posterior_emissions', dtype('float32').char, ('x', 'y'))
+                data17[:, :] = self.inversion_result.post_emis
+
+                data18 = ncfile.createVariable(
+                    'inv_ak', dtype('float32').char, ('x', 'y'))
+                data18[:, :] = self.inversion_result.ak
+
+                data19 = ncfile.createVariable(
+                    'inv_increment', dtype('float32').char, ('x', 'y'))
+                data19[:, :] = self.inversion_result.increment
+
+                data20 = ncfile.createVariable(
+                    'inv_error_post', dtype('float32').char, ('x', 'y'))
+                data20[:, :] = self.inversion_result.error_analysis
+
+                data21 = ncfile.createVariable(
+                    'inv_ratio_post_prior', dtype('float32').char, ('x', 'y'))
+                data21[:, :] = self.inversion_result.ratio
 
         data15 = ncfile.createVariable(
             'gap', dtype('float32').char, ('t', 'x', 'y'))
