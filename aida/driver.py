@@ -31,11 +31,11 @@ class aida(object):
                   inversion_type=None, ddm_path2=[]):
         reader_obj = readers()
         reader_obj.add_ctm_data(
-            ctm_type, ctm_path, mcip_path, ddm_path, emis_path, ddm_dir2 = ddm_path2)
-        if inversion_type=='SAT+AQS+Dual':
-           emis_pbl_separation = True
+            ctm_type, ctm_path, mcip_path, ddm_path, emis_path, ddm_dir2=ddm_path2)
+        if inversion_type == 'SAT+AQS+Dual':
+            emis_pbl_separation = True
         else:
-           emis_pbl_separation = False
+            emis_pbl_separation = False
 
         reader_obj.read_ctm_data(
             YYYYMM, ctm_gas_name, error_fraction, read_ddm=read_ddm, averaging=averaging, emis_pbl_separation=emis_pbl_separation)
@@ -124,7 +124,8 @@ class aida(object):
     def emission_next_iter(self, inv_folder: str, YYYYMM: str, gasname):
 
         self.first_iteration = False
-        inverse_file = (glob.glob(inv_folder + "/" + gasname + "*" + str(YYYYMM) + ".nc"))
+        inverse_file = (glob.glob(inv_folder + "/" +
+                        gasname + "*" + str(YYYYMM) + ".nc"))
         print("reading the previous inversion from " + str(inverse_file[0]))
         if not inverse_file:
             raise Exception(
@@ -171,19 +172,6 @@ class aida(object):
                         chosen_aqs = np.nanmean(chosen_aqs)
                     if np.size(chosen_aqs) != 0:
                         AQS_map[i, j] = chosen_aqs
-            # save everything for testing
-            #output_test = {}
-            #output_test["sat_vcd"] = self.averaged_fields.sat_vcd
-            #output_test["AQS_map"] = AQS_map
-            #output_test["ctm_vcd"] = self.averaged_fields.ctm_vcd
-            #output_test["ctm_surf"] = self.averaged_fields.ctm_surface
-            #output_test["emis"] = self.averaged_fields.emis_total
-            #output_test["K_vcd"] = self.averaged_fields.ddm_vcd/self.averaged_fields.emis_total
-            #output_test["K_surf"] = self.averaged_fields.ddm_surface/self.averaged_fields.emis_total
-            #output_test["Se"] = self.averaged_fields.emis_error**2
-            #output_test["So"] = self.averaged_fields.sat_err**2
-            #output_test["X1"] = self.X1
-            #savemat("test_second_iteration.mat", output_test)
             self.inversion_result = inv_sat_aqs(self.averaged_fields.sat_vcd, AQS_map, self.averaged_fields.sat_err**2,
                                                 self.averaged_fields.ctm_vcd, self.averaged_fields.ctm_surface, self.averaged_fields.ddm_vcd /
                                                 self.averaged_fields.emis_total, self.averaged_fields.ddm_surface /
@@ -217,28 +205,12 @@ class aida(object):
                         chosen_aqs = np.nanmean(chosen_aqs)
                     if np.size(chosen_aqs) != 0:
                         AQS_map[i, j] = chosen_aqs
-            # save everything for testing
-            output_test = {}
-            output_test["sat_vcd"] = self.averaged_fields.sat_vcd
-            output_test["AQS_map"] = AQS_map
-            output_test["ctm_vcd"] = self.averaged_fields.ctm_vcd
-            output_test["ctm_surf"] = self.averaged_fields.ctm_surface
-            output_test["emis"] = self.averaged_fields.emis_total
-            output_test["K_vcd"] = self.averaged_fields.ddm_vcd/self.averaged_fields.emis_total
-            output_test["K_surf"] = self.averaged_fields.ddm_surface/self.averaged_fields.emis_total
-            output_test["DDM_vcd"] = self.averaged_fields.ddm_vcd
-            output_test["DDM_surf"] = self.averaged_fields.ddm_surface
-            output_test["Se"] = self.averaged_fields.emis_error**2
-            output_test["So"] = self.averaged_fields.sat_err**2
-            output_test["X1"] = self.X1
-            savemat("test_second_iteration.mat", output_test)
-            exit()
-            self.inversion_result = inv_sat_aqs(self.averaged_fields.sat_vcd, AQS_map, self.averaged_fields.sat_err**2,
-                                                self.averaged_fields.ctm_vcd, self.averaged_fields.ctm_surface, self.averaged_fields.ddm_vcd /
-                                                self.averaged_fields.emis_total, self.averaged_fields.ddm_surface /
-                                                self.averaged_fields.emis_total, self.averaged_fields.emis_total, self.X1,
-                                                self.averaged_fields.emis_error**2, self.first_iteration, gasname, sat_type,
-                                                aqs_error_percent=20.0, regularization_on=True)
+            self.inversion_result = inv_sat_aqs_dual(self.averaged_fields.sat_vcd, AQS_map, self.averaged_fields.sat_err**2,
+                                                     self.averaged_fields.ctm_vcd, self.averaged_fields.ctm_surface, self.averaged_fields.ddm_vcd /
+                                                     self.averaged_fields.emis_total, self.averaged_fields.ddm_surface /
+                                                     self.averaged_fields.emis_total, self.averaged_fields.emis_total, self.X1,
+                                                     self.averaged_fields.emis_error**2, self.first_iteration, gasname, sat_type,
+                                                     aqs_error_percent=20.0, regularization_on=True)
 
     def reporting(self, fname: str, gasname, folder='report'):
 
