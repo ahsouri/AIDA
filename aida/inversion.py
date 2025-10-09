@@ -294,13 +294,14 @@ def inv_sat_aqs_dual(Y: np.array, aqs_data: np.array, So: np.array, F_VCD: np.ar
                     OBS = np.array([Y_new[i, j]])
                     So_new = np.array(
                         [So[i, j]])
-                    K = np.array([K_vcd[i, j, 0], K_vcd[i, j, 1]])
+                    K = np.array([[K_vcd[i, j, 0]],
+                              [K_vcd[i, j, 1]]]).transpose()
                     Sa_new = np.array(
-                        [[Sa[i, j, 0]*float(reg), 0], [0, Sa[i, j, 1]*float(reg)]])
+                        [[Sa[i, j, 0], 0], [0, Sa[i, j, 1]]])*float(reg)
                     kalman_gain_tmp = np.matmul(Sa_new, K.transpose()) *\
                         (np.matmul(np.matmul(K, Sa_new), K.transpose())+So_new)**(-1)
-                    Sb_tmp = np.matmul(np.ones_like(
-                        Sa_new)-np.matmul(kalman_gain_tmp, K), Sa_new)
+                    Sb_tmp = np.matmul(np.ones_like(Sa_new) -
+                                   np.matmul(kalman_gain_tmp, K), Sa_new)
                     AK = np.ones_like(Sb_tmp)-(Sb_tmp)/(Sa_new)
                     averaging_kernel.append(np.trace(AK))
 

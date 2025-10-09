@@ -791,11 +791,11 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
     # unit g/s, time: 0~24 UTC but always zero at 0 UTC
     # divide by 12x12 km to ease the interpolation
     # TODO: this approximation will no longer be valid in high latitudes
-    emis_bio = np.sum(emis_bio, axis=0).squeeze()/12.0/12.0
-    emis_bb = np.sum(emis_bb, axis=0).squeeze()/12.0/12.0
-    emis_anthro = np.sum(emis_anthro, axis=0).squeeze()/12.0/12.0
-    emis_light = np.sum(emis_light, axis=0).squeeze()/12.0/12.0
-    emis_avi = np.sum(emis_avi, axis=0).squeeze()/12.0/12.0
+    emis_bio = np.nansum(emis_bio, axis=0).squeeze()/12.0/12.0
+    emis_bb = np.nansum(emis_bb, axis=0).squeeze()/12.0/12.0
+    emis_anthro = np.nansum(emis_anthro, axis=0).squeeze()/12.0/12.0
+    emis_light = np.nansum(emis_light, axis=0).squeeze()/12.0/12.0
+    emis_avi = np.nansum(emis_avi, axis=0).squeeze()/12.0/12.0
 
     # sum over vertical distribution
     # unit g/s, time: 0~24 UTC but always zero at 0 UTC

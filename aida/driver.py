@@ -3,7 +3,7 @@ from pathlib import Path
 from aida.amf_recal import amf_recal
 from aida.averaging import averaging
 from aida.optimal_interpolation import OI
-from aida.inversion import inv_sat, inv_sat_aqs
+from aida.inversion import inv_sat, inv_sat_aqs, inv_sat_aqs_dual
 from aida.report import report
 from aida.ak_conv import ak_conv
 import numpy as np
