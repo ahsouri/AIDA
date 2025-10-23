@@ -865,8 +865,8 @@ def cmaq_reader_ddm_emis_wrapper(dir_ddm: str, dir_emis: str, YYYYMM: str, k: in
 
 
 def CMAQ_reader(product_dir: str, mcip_product_dir: str, ddm_product_dir: str, emis_product_dir: str, YYYYMM: str,
-                gas_to_be_saved: str, read_inv: bool, error_frac: list, emiss_pbl_separation=False,
-                ddm_product_dir2=None, averaging=False):
+                gas_to_be_saved: str, read_inv: bool, error_frac: list, 
+                ddm_product_dir2=None, emiss_pbl_separation=False, averaging=False):
     '''
        GMI reader
        Inputs:
@@ -1013,8 +1013,9 @@ class readers(object):
                                                    self.mcip_product_dir.as_posix(),
                                                    self.ddm_dir.as_posix(),
                                                    self.emis_product_dir.as_posix(),
-                                                   YYYYMM, gas, read_ddm, error_frac, emiss_pbl_separation=emis_pbl_separation,
-                                                   ddm_product_dir2=self.ddm_dir2.as_posix(), averaging=averaging)
+                                                   YYYYMM, gas, read_ddm, error_frac, 
+                                                   self.ddm_dir2.as_posix(),emiss_pbl_separation=emis_pbl_separation,
+                                                   averaging=averaging)
 
 
 # testing
